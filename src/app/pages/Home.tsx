@@ -28,21 +28,15 @@ const STATS = [
   { value: 'UIUC', label: "CS + Econ '28" },
 ];
 
-function AlbumTileComponent({ tile, index, onClick, onHover, isFocused }: {
-  tile: AlbumTile;
-  index: number;
-  onClick: () => void;
-  onHover?: () => void;
-  isFocused?: boolean;
+function AlbumTileComponent({
+  tile, index, onClick, onHover, isFocused,
+}: {
+  tile: AlbumTile; index: number; onClick: () => void; onHover?: () => void; isFocused?: boolean;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
 
-  const handleHoverStart = () => {
-    setIsHovered(true);
-    if (onHover) onHover();
-  };
-
+  const handleHoverStart = () => { setIsHovered(true); if (onHover) onHover(); };
   const handleClick = () => {
     setIsPressed(true);
     setTimeout(() => { setIsPressed(false); onClick(); }, 120);
@@ -105,8 +99,17 @@ function AlbumTileComponent({ tile, index, onClick, onHover, isFocused }: {
         return (
           <>
             <div className="absolute inset-0 bg-gradient-to-br from-[#1C1C1C] to-[#0A0A0A]" />
-            <motion.div animate={{ scaleX: [1, 1.02, 1] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} className="absolute top-1/2 left-0 right-0 h-7 -translate-y-1/2" style={{ background: 'linear-gradient(90deg, #B8960C, #D4AF37, #B8960C)' }} />
-            <motion.div animate={{ x: ['-100%', '250%'] }} transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }} className="absolute top-1/2 left-0 right-0 h-7 -translate-y-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+            <motion.div
+              animate={{ scaleX: [1, 1.02, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute top-1/2 left-0 right-0 h-7 -translate-y-1/2"
+              style={{ background: 'linear-gradient(90deg, #B8960C, #D4AF37, #B8960C)' }}
+            />
+            <motion.div
+              animate={{ x: ['-100%', '250%'] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
+              className="absolute top-1/2 left-0 right-0 h-7 -translate-y-1/2 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"
+            />
             <div className="absolute top-5 left-5 text-[9px] tracking-[0.3em] text-white/30" style={{ fontFamily: 'var(--font-condensed)' }}>ST-006</div>
             <div className="absolute top-6 right-5">
               <div className="text-[2.5rem] leading-none text-white/10 select-none" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900, letterSpacing: '-0.05em' }}>II</div>
@@ -154,8 +157,7 @@ function AlbumTileComponent({ tile, index, onClick, onHover, isFocused }: {
             <div className="absolute top-6 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.3em] text-gray-600 opacity-50">808s</div>
           </>
         );
-      default:
-        return null;
+      default: return null;
     }
   };
 
@@ -174,32 +176,18 @@ function AlbumTileComponent({ tile, index, onClick, onHover, isFocused }: {
       className="relative aspect-square cursor-pointer group outline-none"
     >
       <motion.div
-        animate={{
-          y: isPressed ? 4 : isHovered ? -8 : 0,
-          scale: isPressed ? 0.97 : 1,
-          rotateZ: isHovered && !isPressed ? (index % 2 === 0 ? 1.5 : -1.5) : 0,
-        }}
+        animate={{ y: isPressed ? 4 : isHovered ? -8 : 0, scale: isPressed ? 0.97 : 1, rotateZ: isHovered && !isPressed ? (index % 2 === 0 ? 1.5 : -1.5) : 0 }}
         transition={{ duration: isPressed ? 0.08 : 0.18, ease: [0.25, 0.1, 0.25, 1] }}
         className="relative w-full h-full shadow-lg overflow-hidden flex flex-col items-center justify-center p-6"
-        style={{
-          boxShadow: isFocused ? '0 0 0 2px #fff, 0 20px 40px rgba(0,0,0,0.3)' : isHovered ? '0 20px 40px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.1)' : '0 8px 16px rgba(0,0,0,0.2)',
-        }}
+        style={{ boxShadow: isFocused ? '0 0 0 2px #fff, 0 20px 40px rgba(0,0,0,0.3)' : isHovered ? '0 20px 40px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.1)' : '0 8px 16px rgba(0,0,0,0.2)' }}
       >
         {renderComposition()}
         <div className="relative z-10 text-center px-4">
-          <div className="text-xl md:text-2xl lg:text-3xl tracking-tight leading-none text-white" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900, textShadow: '0 2px 8px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3), 0 0 40px rgba(0,0,0,0.2)', WebkitTextStroke: '1px rgba(0,0,0,0.3)', paintOrder: 'stroke fill' }}>
+          <div className="text-xl md:text-2xl lg:text-3xl tracking-tight leading-none text-white" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900, textShadow: '0 2px 8px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3)', WebkitTextStroke: '1px rgba(0,0,0,0.3)', paintOrder: 'stroke fill' }}>
             {tile.label}
           </div>
         </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isHovered ? 1 : 0 }}
-          transition={{ duration: 0.15 }}
-          className="absolute bottom-4 right-4 text-xs tracking-widest text-white/90 bg-black/40 backdrop-blur-sm px-3 py-1.5"
-          style={{ fontFamily: 'var(--font-condensed)' }}
-        >
-          OPEN
-        </motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: isHovered ? 1 : 0 }} transition={{ duration: 0.15 }} className="absolute bottom-4 right-4 text-xs tracking-widest text-white/90 bg-black/40 backdrop-blur-sm px-3 py-1.5" style={{ fontFamily: 'var(--font-condensed)' }}>OPEN</motion.div>
       </motion.div>
     </motion.div>
   );
@@ -209,7 +197,6 @@ export default function Home() {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const selectedRecord = records.find((r) => r.id === selectedRecordId);
-
   const { initializeAudio, onTileHover, onTileClick, onModalOpen, onModalClose } = useSoundEffects();
 
   useEffect(() => {
@@ -267,6 +254,7 @@ export default function Home() {
               <h1 className="text-2xl tracking-tight" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>SHLOK THAKKAR</h1>
               <p className="text-[8px] font-mono text-neutral-600 tracking-widest mt-0.5">ARCHIVE_01 / SYSTEM PORTFOLIO</p>
             </motion.div>
+
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="flex items-center gap-4 md:gap-6">
               <button onClick={toggleSound} className="text-neutral-400 hover:text-white transition-colors" title={soundEnabled ? 'Sound On' : 'Sound Off'}>
                 {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
@@ -295,7 +283,6 @@ export default function Home() {
           <main className="px-6 md:px-8 py-12 md:py-16">
             <div className="max-w-[1400px] mx-auto w-full relative z-10">
               <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16 items-center">
-
                 <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }} className="space-y-6">
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex items-center gap-3 text-[9px] tracking-[0.3em] text-neutral-500" style={{ fontFamily: 'var(--font-condensed)' }}>
                     <span>CATALOG NO. 0001</span>
@@ -341,7 +328,6 @@ export default function Home() {
                     <AlbumTileComponent key={tile.id} tile={tile} index={index} onClick={() => handleTileClick(tile.id)} onHover={handleTileHover} />
                   ))}
                 </div>
-
               </div>
             </div>
           </main>
