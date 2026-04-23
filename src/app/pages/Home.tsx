@@ -1,9 +1,11 @@
-import { motion, AnimatePresence } from "motion/react";
-import { Github, Linkedin, Volume2, VolumeX, Star } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence, useMotionValue, useSpring } from "motion/react";
+import { Github, Linkedin, Volume2, VolumeX, Star, FileText } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { records } from "../data/records";
 import { VinylDetail } from "../components/VinylDetail";
+import { EraSwitch } from "../components/EraSwitch";
 import { useSoundEffects } from "../hooks/useSoundEffects";
+import { useEra } from "../context/EraContext";
 
 interface AlbumTile {
   id: string;
@@ -12,81 +14,85 @@ interface AlbumTile {
   album: 'graduation' | 'mbdtf' | 'tlop' | 'college-dropout' | 'yeezus' | 'ye' | '808s';
 }
 
-// Experience first — what recruiters look for
 const albumTiles: AlbumTile[] = [
-  {
-    id: 'experience',
-    label: 'EXPERIENCE',
-    subtitle: '',
-    album: 'college-dropout',
-  },
-  {
-    id: 'projects',
-    label: 'PROJECTS',
-    subtitle: '',
-    album: 'mbdtf',
-  },
-  {
-    id: 'skills',
-    label: 'SKILLS',
-    subtitle: '',
-    album: 'ye',
-  },
-  {
-    id: 'education',
-    label: 'EDUCATION',
-    subtitle: '',
-    album: 'tlop',
-  },
-  {
-    id: 'blog',
-    label: 'AWARDS',
-    subtitle: '',
-    album: 'yeezus',
-  },
-  {
-    id: 'contact',
-    label: 'CONTACT',
-    subtitle: '',
-    album: '808s',
-  },
+  { id: 'experience', label: 'EXPERIENCE', subtitle: '', album: 'college-dropout' },
+  { id: 'projects',   label: 'PROJECTS',   subtitle: '', album: 'mbdtf' },
+  { id: 'skills',     label: 'SKILLS',     subtitle: '', album: 'ye' },
+  { id: 'education',  label: 'EDUCATION',  subtitle: '', album: 'tlop' },
+  { id: 'blog',       label: 'AWARDS',     subtitle: '', album: 'yeezus' },
+  { id: 'contact',    label: 'CONTACT',    subtitle: '', album: '808s' },
 ];
 
 const STATS = [
   { value: '3.97', label: 'GPA' },
-  { value: '4', label: 'Roles' },
-  { value: '15+', label: 'Projects' },
-  { value: '2nd', label: 'HERE Chicago Hackathon' },
+  { value: '4',    label: 'Roles' },
+  { value: '15+',  label: 'Projects' },
+  { value: '2nd',  label: 'HERE Chicago Hackathon' },
   { value: 'UIUC', label: "CS + Econ '28" },
 ];
+
+const eraAccentMap: Record<string, string> = {
+  industrial: '#DC2626',
+  earth:      '#D97706',
+  vibrant:    '#EC4899',
+  stark:      '#10B981',
+  emotional:  '#06B6D4',
+};
+
+// Stagger variants for the hero name
+const containerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.35 } },
+};
+const letterVariants = {
+  hidden: { opacity: 0, y: 24, rotateX: -60 },
+  visible: {
+    opacity: 1, y: 0, rotateX: 0,
+    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 function AlbumTileComponent({
   tile,
   index,
   onClick,
   onHover,
-  isFocused,
+  accentColor,
 }: {
   tile: AlbumTile;
   index: number;
   onClick: () => void;
   onHover?: () => void;
-  isFocused?: boolean;
+  accentColor: string;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
+  const tileRef = useRef<HTMLDivElement>(null);
 
-  const handleHoverStart = () => {
-    setIsHovered(true);
-    if (onHover) onHover();
+  // Magnetic hover
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const springMx = useSpring(mx, { damping: 22, stiffness: 300 });
+  const springMy = useSpring(my, { damping: 22, stiffness: 300 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!tileRef.current) return;
+    const rect = tileRef.current.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    mx.set(((e.clientX - cx) / rect.width) * 14);
+    my.set(((e.clientY - cy) / rect.height) * 14);
+  };
+
+  const handleMouseLeave = () => {
+    mx.set(0);
+    my.set(0);
+    setIsHovered(false);
   };
 
   const handleClick = () => {
     setIsPressed(true);
-    setTimeout(() => {
-      setIsPressed(false);
-      onClick();
-    }, 120);
+    setTimeout(() => { setIsPressed(false); onClick(); }, 120);
   };
 
   const renderComposition = () => {
@@ -108,7 +114,6 @@ function AlbumTileComponent({
             <div className="absolute top-1/2 left-1/3 w-8 h-8 rotate-45 bg-[#C9C436]/40" />
           </>
         );
-
       case 'mbdtf':
         return (
           <>
@@ -124,7 +129,6 @@ function AlbumTileComponent({
             />
           </>
         );
-
       case 'tlop':
         return (
           <>
@@ -149,7 +153,6 @@ function AlbumTileComponent({
             />
           </>
         );
-
       case 'college-dropout':
         return (
           <>
@@ -171,7 +174,6 @@ function AlbumTileComponent({
             </div>
           </>
         );
-
       case 'yeezus':
         return (
           <>
@@ -194,7 +196,6 @@ function AlbumTileComponent({
             <div className="absolute bottom-4 right-4 w-10 h-10 border-b-2 border-r-2 border-yellow-500/50" />
           </>
         );
-
       case 'ye':
         return (
           <>
@@ -216,12 +217,9 @@ function AlbumTileComponent({
               </svg>
               <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#2C3530] to-transparent" />
             </div>
-            <div className="absolute top-8 left-8 text-[#90BE6D] font-bold text-sm italic opacity-60">
-              believe
-            </div>
+            <div className="absolute top-8 left-8 text-[#90BE6D] font-bold text-sm italic opacity-60">believe</div>
           </>
         );
-
       case '808s':
         return (
           <>
@@ -244,12 +242,8 @@ function AlbumTileComponent({
               <div className="flex-1 bg-[#F9C74F]/80" />
               <div className="flex-1 bg-[#F8961E]/80" />
             </div>
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.3em] text-gray-600 opacity-50">
-              808s
-            </div>
           </>
         );
-
       default:
         return null;
     }
@@ -257,31 +251,33 @@ function AlbumTileComponent({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.8 + index * 0.08, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
-      onHoverStart={handleHoverStart}
-      onHoverEnd={() => setIsHovered(false)}
+      ref={tileRef}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ delay: index * 0.09, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onHoverStart={() => { setIsHovered(true); if (onHover) onHover(); }}
       onClick={handleClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
       tabIndex={0}
       role="button"
       aria-label={`Open ${tile.label}`}
       className="relative aspect-square cursor-pointer group outline-none"
+      style={{ x: springMx, y: springMy }}
     >
       <motion.div
         animate={{
-          y: isPressed ? 4 : isHovered ? -8 : 0,
+          y: isPressed ? 4 : 0,
           scale: isPressed ? 0.97 : 1,
-          rotateZ: isHovered && !isPressed ? (index % 2 === 0 ? 1.5 : -1.5) : 0,
+          rotateZ: isHovered && !isPressed ? (index % 2 === 0 ? 1.2 : -1.2) : 0,
         }}
         transition={{ duration: isPressed ? 0.08 : 0.18, ease: [0.25, 0.1, 0.25, 1] }}
         className="relative w-full h-full shadow-lg overflow-hidden flex flex-col items-center justify-center p-6"
         style={{
-          boxShadow: isFocused
-            ? '0 0 0 2px #fff, 0 20px 40px rgba(0,0,0,0.3)'
-            : isHovered
-            ? '0 20px 40px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,255,255,0.1)'
+          boxShadow: isHovered
+            ? `0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px ${accentColor}30`
             : '0 8px 16px rgba(0,0,0,0.2)',
         }}
       >
@@ -293,7 +289,7 @@ function AlbumTileComponent({
             style={{
               fontFamily: 'var(--font-gothic)',
               fontWeight: 900,
-              textShadow: '0 2px 8px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3), 0 0 40px rgba(0,0,0,0.2)',
+              textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.4)',
               WebkitTextStroke: '1px rgba(0,0,0,0.3)',
               paintOrder: 'stroke fill',
             }}
@@ -306,10 +302,10 @@ function AlbumTileComponent({
           initial={{ opacity: 0 }}
           animate={{ opacity: isHovered ? 1 : 0 }}
           transition={{ duration: 0.15 }}
-          className="absolute bottom-4 right-4 text-xs tracking-widest text-white/90 bg-black/40 backdrop-blur-sm px-3 py-1.5"
+          className="absolute bottom-4 right-4 text-xs tracking-widest text-white/90 bg-black/50 backdrop-blur-sm px-3 py-1.5"
           style={{ fontFamily: 'var(--font-condensed)' }}
         >
-          OPEN
+          OPEN ↗
         </motion.div>
       </motion.div>
     </motion.div>
@@ -319,21 +315,23 @@ function AlbumTileComponent({
 export default function Home() {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const selectedRecord = records.find((r) => r.id === selectedRecordId);
+  const { currentEra } = useEra();
+  const accentColor = useMemo(() => eraAccentMap[currentEra] ?? '#EC243C', [currentEra]);
 
+  const selectedRecord = records.find((r) => r.id === selectedRecordId);
   const { initializeAudio, onTileHover, onTileClick, onModalOpen, onModalClose } = useSoundEffects();
 
   useEffect(() => {
-    const handleFirstInteraction = () => {
+    const onFirst = () => {
       initializeAudio();
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('click', onFirst);
+      window.removeEventListener('touchstart', onFirst);
     };
-    window.addEventListener('click', handleFirstInteraction);
-    window.addEventListener('touchstart', handleFirstInteraction);
+    window.addEventListener('click', onFirst);
+    window.addEventListener('touchstart', onFirst);
     return () => {
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('click', onFirst);
+      window.removeEventListener('touchstart', onFirst);
     };
   }, [initializeAudio]);
 
@@ -341,13 +339,10 @@ export default function Home() {
     if (selectedRecordId && soundEnabled) onModalOpen();
   }, [selectedRecordId, soundEnabled, onModalOpen]);
 
-  const handleTileClick = useCallback(
-    (tileId: string) => {
-      if (soundEnabled) onTileClick();
-      setSelectedRecordId(tileId);
-    },
-    [soundEnabled, onTileClick]
-  );
+  const handleTileClick = useCallback((id: string) => {
+    if (soundEnabled) onTileClick();
+    setSelectedRecordId(id);
+  }, [soundEnabled, onTileClick]);
 
   const handleModalClose = useCallback(() => {
     if (soundEnabled) onModalClose();
@@ -358,38 +353,35 @@ export default function Home() {
     if (soundEnabled) onTileHover();
   }, [soundEnabled, onTileHover]);
 
-  const toggleSound = () => setSoundEnabled((s) => !s);
-
   return (
     <>
-      <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden relative">
-        {/* Background vinyl groove rings */}
-        <div className="fixed inset-0 opacity-[0.015] pointer-events-none">
+      {/* Ambient background blobs */}
+      <div className="ambient-bg">
+        <div className="ambient-blob ambient-blob-1" style={{ background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)` }} />
+        <div className="ambient-blob ambient-blob-2" />
+      </div>
+
+      <div className="min-h-screen text-white overflow-hidden relative">
+        {/* Vinyl groove rings */}
+        <div className="fixed inset-0 opacity-[0.012] pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vw]">
-            {[...Array(60)].map((_, i) => (
+            {[...Array(50)].map((_, i) => (
               <div
                 key={i}
                 className="absolute rounded-full border border-white/[0.02]"
-                style={{
-                  top: `${2 + i * 1.5}%`,
-                  left: `${2 + i * 1.5}%`,
-                  right: `${2 + i * 1.5}%`,
-                  bottom: `${2 + i * 1.5}%`,
-                }}
+                style={{ top: `${2 + i * 1.8}%`, left: `${2 + i * 1.8}%`, right: `${2 + i * 1.8}%`, bottom: `${2 + i * 1.8}%` }}
               />
             ))}
           </div>
         </div>
 
-        <div className="fixed inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E")`,
-              backgroundRepeat: 'repeat',
-            }}
-          />
-        </div>
+        {/* Noise overlay */}
+        <div className="fixed inset-0 opacity-[0.018] mix-blend-overlay pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'repeat',
+          }}
+        />
 
         <div className="relative z-10">
           {/* Header */}
@@ -399,9 +391,9 @@ export default function Home() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <h1 className="text-2xl tracking-tight" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>
+              <h2 className="text-2xl tracking-tight text-white" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>
                 SHLOK THAKKAR
-              </h1>
+              </h2>
               <p className="text-[8px] font-mono text-neutral-600 tracking-widest mt-0.5">
                 ARCHIVE_01 / SYSTEM PORTFOLIO
               </p>
@@ -414,14 +406,17 @@ export default function Home() {
               className="flex items-center gap-4 md:gap-6"
             >
               <button
-                onClick={toggleSound}
+                onClick={() => setSoundEnabled(s => !s)}
                 className="text-neutral-400 hover:text-white transition-colors"
                 title={soundEnabled ? 'Sound On' : 'Sound Off'}
               >
                 {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
               </button>
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
+                <div
+                  className="w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ backgroundColor: accentColor }}
+                />
                 <span className="text-[8px] font-mono text-neutral-600">ONLINE</span>
               </div>
               <a href="https://github.com/shlok1806" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
@@ -438,11 +433,11 @@ export default function Home() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="border-b border-white/[0.05] bg-white/[0.02] px-6 md:px-8 py-3 flex items-center gap-0 overflow-x-auto"
+            className="border-b border-white/[0.05] bg-white/[0.02] px-6 md:px-8 py-3 flex items-center overflow-x-auto"
             style={{ scrollbarWidth: 'none' }}
           >
             {STATS.map((stat, i) => (
-              <div key={stat.label} className="flex items-center gap-0 flex-shrink-0">
+              <div key={stat.label} className="flex items-center flex-shrink-0">
                 <div className="flex items-baseline gap-2 px-4 md:px-6 py-1">
                   <span className="text-white text-sm md:text-base" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>
                     {stat.value}
@@ -451,9 +446,7 @@ export default function Home() {
                     {stat.label}
                   </span>
                 </div>
-                {i < STATS.length - 1 && (
-                  <div className="w-px h-4 bg-white/10 flex-shrink-0" />
-                )}
+                {i < STATS.length - 1 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
               </div>
             ))}
           </motion.div>
@@ -464,12 +457,7 @@ export default function Home() {
               <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16 items-center">
 
                 {/* Left: Hero */}
-                <motion.div
-                  initial={{ opacity: 0, x: -30 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-                  className="space-y-6"
-                >
+                <div className="space-y-6">
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -478,33 +466,49 @@ export default function Home() {
                     style={{ fontFamily: 'var(--font-condensed)' }}
                   >
                     <span>CATALOG NO. 0001</span>
-                    <span className="inline-block w-1 h-1 bg-red-600 rounded-full" />
+                    <span className="inline-block w-1 h-1 rounded-full" style={{ backgroundColor: accentColor }} />
                     <span>ARCHIVE MODE</span>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                  >
-                    <h1
-                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white mb-2"
+                  {/* Staggered hero name */}
+                  <div style={{ perspective: '600px' }}>
+                    <motion.h1
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white mb-2 flex overflow-hidden"
                       style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}
                     >
-                      SHLOK
-                    </h1>
-                    <h1
-                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white"
-                      style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}
+                      {"SHLOK".split("").map((char, i) => (
+                        <motion.span key={i} variants={letterVariants} className="inline-block">
+                          {char}
+                        </motion.span>
+                      ))}
+                    </motion.h1>
+                    <motion.h1
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white flex overflow-hidden"
+                      style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900, transition: 'none' }}
                     >
-                      THAKKAR
-                    </h1>
-                  </motion.div>
+                      {"THAKKAR".split("").map((char, i) => (
+                        <motion.span
+                          key={i}
+                          variants={letterVariants}
+                          transition={{ delay: 0.35 + (5 + i) * 0.04, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                          className="inline-block"
+                        >
+                          {char}
+                        </motion.span>
+                      ))}
+                    </motion.h1>
+                  </div>
 
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
+                    transition={{ delay: 0.85 }}
                     className="space-y-3"
                   >
                     <p className="text-sm text-neutral-400 tracking-wide" style={{ fontFamily: 'var(--font-body)' }}>
@@ -517,7 +521,7 @@ export default function Home() {
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.75, type: 'spring', stiffness: 200 }}
+                      transition={{ delay: 1, type: 'spring', stiffness: 200 }}
                       className="inline-flex items-center gap-2 border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 rounded-sm"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
@@ -530,8 +534,9 @@ export default function Home() {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                    className="border-l-2 border-red-600 pl-4 py-2"
+                    transition={{ delay: 1.05 }}
+                    className="pl-4 py-2 border-l-2"
+                    style={{ borderColor: accentColor }}
                   >
                     <p
                       className="text-sm text-neutral-400 mb-1"
@@ -540,15 +545,15 @@ export default function Home() {
                       SELECT A TILE TO EXPLORE
                     </p>
                     <p className="text-xs text-neutral-500" style={{ fontFamily: 'var(--font-body)' }}>
-                      Each section has detailed work, projects, and skills — press <kbd className="px-1 py-0.5 rounded border border-white/10 text-[10px]">ESC</kbd> to go back.
+                      Each section has detailed work — press <kbd className="px-1 py-0.5 rounded border border-white/10 text-[10px]">ESC</kbd> to go back.
                     </p>
                   </motion.div>
 
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                    className="flex items-center gap-4"
+                    transition={{ delay: 1.1 }}
+                    className="flex flex-wrap items-center gap-3"
                   >
                     <a
                       href="https://www.linkedin.com/in/shlok-thakkar/"
@@ -568,15 +573,25 @@ export default function Home() {
                       <Github className="w-4 h-4" />
                       <span>GitHub</span>
                     </a>
+                    <a
+                      href="/resume.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[11px] tracking-widest text-white transition-colors border px-3 py-2 rounded-sm hover:opacity-80"
+                      style={{ borderColor: accentColor, backgroundColor: `${accentColor}18`, color: accentColor }}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>Resume</span>
+                    </a>
                     <div className="flex items-center gap-1.5 text-[10px] text-yellow-500/80">
                       <Star className="w-3 h-3 fill-yellow-500/80" />
                       <span className="tracking-wider">2nd @ HERE Chicago</span>
                     </div>
                   </motion.div>
-                </motion.div>
+                </div>
 
                 {/* Right: Album tile grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
+                <div id="tiles" className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
                   {albumTiles.map((tile, index) => (
                     <AlbumTileComponent
                       key={tile.id}
@@ -584,15 +599,18 @@ export default function Home() {
                       index={index}
                       onClick={() => handleTileClick(tile.id)}
                       onHover={handleTileHover}
+                      accentColor={accentColor}
                     />
                   ))}
                 </div>
-
               </div>
             </div>
           </main>
         </div>
       </div>
+
+      {/* Era switch — bottom-right, visible on home */}
+      <EraSwitch />
 
       <AnimatePresence>
         {selectedRecord && (

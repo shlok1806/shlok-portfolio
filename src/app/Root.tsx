@@ -1,14 +1,19 @@
-import { Outlet, useLocation } from "react-router";
+import { Outlet } from "react-router";
 import { Navigation } from "./components/Navigation";
+import { CustomCursor } from "./components/CustomCursor";
+import { ScrollProgress } from "./components/ScrollProgress";
+import { Footer } from "./components/Footer";
 
 export default function Root() {
-  const location = useLocation();
-  const isHome = location.pathname === "/";
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
+      <CustomCursor />
+      <ScrollProgress />
       <Navigation />
-      <Outlet />
+      <div className="flex-1">
+        <Outlet />
+      </div>
+      <Footer />
     </div>
   );
 }
