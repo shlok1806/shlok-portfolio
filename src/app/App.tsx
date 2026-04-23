@@ -10,7 +10,6 @@ function App() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   useEffect(() => {
-    // Check if user has already seen the loading screen this session
     const hasSeenLoading = sessionStorage.getItem('hasSeenLoading');
     if (hasSeenLoading) {
       setShowLoading(false);
