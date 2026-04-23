@@ -1,9 +1,7 @@
 import { useCallback, useRef, useEffect } from 'react';
 
-// Sound effect types
 type SoundEffect = 'hover' | 'click' | 'open' | 'close' | 'ambient';
 
-// Haptic patterns
 const hapticPatterns = {
   light: [10],
   medium: [20],
@@ -99,18 +97,6 @@ export function useSoundEffects() {
       oscillator.start(startTime);
       oscillator.stop(startTime + duration);
     });
-    const bassOsc = ctx.createOscillator();
-    const bassGain = ctx.createGain();
-    bassOsc.type = 'sine';
-    bassOsc.frequency.value = 130.81;
-    const bassStart = ctx.currentTime + 0.16;
-    bassGain.gain.setValueAtTime(0, bassStart);
-    bassGain.gain.linearRampToValueAtTime(0.08, bassStart + 0.02);
-    bassGain.gain.exponentialRampToValueAtTime(0.001, bassStart + 0.15);
-    bassOsc.connect(bassGain);
-    bassGain.connect(ctx.destination);
-    bassOsc.start(bassStart);
-    bassOsc.stop(bassStart + 0.15);
   }, [initializeAudio]);
 
   const playClose = useCallback(() => {
@@ -146,25 +132,10 @@ export function useSoundEffects() {
     }
   }, []);
 
-  const onTileHover = useCallback(() => {
-    playHover();
-    triggerHaptic('light');
-  }, [playHover, triggerHaptic]);
-
-  const onTileClick = useCallback(() => {
-    playClick();
-    triggerHaptic('medium');
-  }, [playClick, triggerHaptic]);
-
-  const onModalOpen = useCallback(() => {
-    playOpen();
-    triggerHaptic('double');
-  }, [playOpen, triggerHaptic]);
-
-  const onModalClose = useCallback(() => {
-    playClose();
-    triggerHaptic('light');
-  }, [playClose, triggerHaptic]);
+  const onTileHover = useCallback(() => { playHover(); triggerHaptic('light'); }, [playHover, triggerHaptic]);
+  const onTileClick = useCallback(() => { playClick(); triggerHaptic('medium'); }, [playClick, triggerHaptic]);
+  const onModalOpen = useCallback(() => { playOpen(); triggerHaptic('double'); }, [playOpen, triggerHaptic]);
+  const onModalClose = useCallback(() => { playClose(); triggerHaptic('light'); }, [playClose, triggerHaptic]);
 
   useEffect(() => {
     return () => {
@@ -176,16 +147,5 @@ export function useSoundEffects() {
     };
   }, []);
 
-  return {
-    initializeAudio,
-    playHover,
-    playClick,
-    playOpen,
-    playClose,
-    triggerHaptic,
-    onTileHover,
-    onTileClick,
-    onModalOpen,
-    onModalClose,
-  };
+  return { initializeAudio, playHover, playClick, playOpen, playClose, triggerHaptic, onTileHover, onTileClick, onModalOpen, onModalClose };
 }
