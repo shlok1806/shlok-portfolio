@@ -434,6 +434,27 @@ export default function Home() {
             ))}
           </motion.div>
 
+          {/* Skill ticker — vinyl label band */}
+          <div className="overflow-hidden border-b border-white/[0.05]" style={{ background: 'rgba(236,36,60,0.06)' }}>
+            <div className="flex items-center gap-0 py-2 skill-ticker-track">
+              {[...Array(3)].map((_, pass) => (
+                <span key={pass} className="flex items-center gap-0 flex-shrink-0 skill-ticker-set">
+                  {['C++', 'PYTHON', 'AWS', 'FASTAPI', 'POSTGRESQL', 'NEO4J', 'DOCKER', 'REACT', 'SYSTEMS', 'JAVA', 'LINUX', 'REST APIs', 'AZURE', 'SPRING BOOT', 'GDB / VALGRIND'].map((skill) => (
+                    <span key={skill} className="flex items-center gap-3 flex-shrink-0">
+                      <span
+                        className="text-[9px] tracking-[0.3em] text-neutral-500 whitespace-nowrap px-4"
+                        style={{ fontFamily: 'var(--font-condensed)' }}
+                      >
+                        {skill}
+                      </span>
+                      <span className="w-px h-3 bg-white/10 flex-shrink-0" />
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </div>
+          </div>
+
           {/* Main Content */}
           <main className="px-6 md:px-8 py-12 md:py-16">
             <div className="max-w-[1400px] mx-auto w-full relative z-10">
@@ -479,7 +500,7 @@ export default function Home() {
                       CS + Economics • Statistics minor • UIUC • Champaign, IL
                     </p>
                     <p className="text-base text-neutral-300 max-w-md leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
-                      Backend systems and data-driven products at the intersection of software and finance.
+                      Systems software, backend APIs, and data infrastructure — CS + Economics at UIUC.
                     </p>
 
                     <motion.div
@@ -490,9 +511,48 @@ export default function Home() {
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
                       <span className="text-[11px] tracking-[0.15em] text-emerald-400 font-medium">
-                        OPEN TO INTERNSHIPS — SUMMER / FALL 2026
+                        ACTIVELY SEEKING — SWE INTERNSHIPS 2026
                       </span>
                     </motion.div>
+                  </motion.div>
+
+                  {/* Liner notes — recent roles */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.95 }}
+                    className="border border-white/[0.07] bg-white/[0.025] px-4 py-3 space-y-2"
+                  >
+                    <div
+                      className="text-[8px] tracking-[0.45em] text-neutral-600 mb-3 pb-2 border-b border-white/[0.06]"
+                      style={{ fontFamily: 'var(--font-condensed)' }}
+                    >
+                      — SELECTED TRACKS —
+                    </div>
+                    {[
+                      { company: 'IQM CORPORATION',    role: 'SWE INTERN',   note: 'AWS Bedrock · FastAPI · 10K profiles' },
+                      { company: 'UIUC FINANCE DEPT',  role: 'RESEARCHER',   note: '73% runtime ↓ · 10M+ records' },
+                      { company: 'DISRUPTION LAB',     role: 'SWE',          note: 'Neo4j · 40+ researchers' },
+                      { company: 'PARALLEL PROG. LAB', role: 'RESEARCHER',   note: 'C++ · HPC · UIUC' },
+                    ].map((row) => (
+                      <div key={row.company} className="flex items-baseline gap-2 min-w-0">
+                        <span
+                          className="text-[9px] tracking-[0.15em] text-white/50 whitespace-nowrap flex-shrink-0 w-[148px]"
+                          style={{ fontFamily: 'var(--font-condensed)' }}
+                        >
+                          {row.company}
+                        </span>
+                        <span
+                          className="text-[9px] tracking-[0.1em] text-white/30 whitespace-nowrap flex-shrink-0 w-[80px]"
+                          style={{ fontFamily: 'var(--font-condensed)' }}
+                        >
+                          {row.role}
+                        </span>
+                        <span className="text-[9px] text-neutral-600 truncate" style={{ fontFamily: 'var(--font-body)' }}>
+                          › {row.note}
+                        </span>
+                      </div>
+                    ))}
                   </motion.div>
 
                   <motion.div

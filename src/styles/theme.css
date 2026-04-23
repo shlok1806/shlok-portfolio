@@ -143,3 +143,18 @@ body {
   66%  { transform: translate(-4%, 4%) scale(0.96); }
   100% { transform: translate(5%, -2%) scale(1.02); }
 }
+
+/* Skill ticker marquee */
+.skill-ticker-track {
+  animation: ticker-scroll 40s linear infinite;
+  width: max-content;
+}
+
+.skill-ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}

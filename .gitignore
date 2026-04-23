@@ -28,3 +28,4 @@ pnpm-debug.log*
 
 # Figma Make specific
 __figma__entrypoint__.ts
+.vercel

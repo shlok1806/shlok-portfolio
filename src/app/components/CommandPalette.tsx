@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 import {
   Search, ArrowRight, Github, Linkedin, Mail,
-  FileText, ChevronRight, Download, Copy,
+  ChevronRight, Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -75,14 +75,6 @@ export function CommandPalette() {
       icon: <Mail className="w-4 h-4" />,
       group: 'Connect',
       action: () => { window.open('mailto:shlokthakkar1806@gmail.com', '_blank'); setCommandPaletteOpen(false); setQuery(''); },
-    },
-    {
-      id: 'download-resume',
-      label: 'Download Resume',
-      description: "Get a copy of Shlok's resume",
-      icon: <Download className="w-4 h-4" />,
-      group: 'Resume',
-      action: () => { window.open('/resume.pdf', '_blank'); setCommandPaletteOpen(false); setQuery(''); },
     },
   ], [setSelectedRecordId, setCommandPaletteOpen]);
 
