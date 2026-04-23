@@ -3,7 +3,10 @@ import { Github, Linkedin, Volume2, VolumeX, Star } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { records } from "../data/records";
 import { VinylDetail } from "../components/VinylDetail";
+import { MagneticButton } from "../components/MagneticButton";
 import { useSoundEffects } from "../hooks/useSoundEffects";
+import { usePortfolio } from "../context/PortfolioContext";
+import { useTextScramble } from "../hooks/useTextScramble";
 
 const ACCENT = '#EC243C';
 
@@ -32,17 +35,6 @@ const STATS = [
 ];
 
 // Stagger variants for the hero name
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.04, delayChildren: 0.35 } },
-};
-const letterVariants = {
-  hidden: { opacity: 0, y: 24, rotateX: -60 },
-  visible: {
-    opacity: 1, y: 0, rotateX: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
-  },
-};
 
 function AlbumTileComponent({
   tile,
@@ -303,8 +295,11 @@ function AlbumTileComponent({
 }
 
 export default function Home() {
-  const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const { selectedRecordId, setSelectedRecordId } = usePortfolio();
   const [soundEnabled, setSoundEnabled] = useState(true);
+
+  const shlok   = useTextScramble('SHLOK',   600);
+  const thakkar = useTextScramble('THAKKAR', 900);
 
   const selectedRecord = records.find((r) => r.id === selectedRecordId);
   const { initializeAudio, onTileHover, onTileClick, onModalOpen, onModalClose } = useSoundEffects();
@@ -371,7 +366,7 @@ export default function Home() {
           }}
         />
 
-        <div className="relative z-10">
+        <div className="relative z-10 pb-14">
           {/* Header */}
           <header className="px-6 md:px-8 py-5 flex justify-between items-center border-b border-white/[0.05]">
             <motion.div
@@ -458,39 +453,20 @@ export default function Home() {
                     <span>ARCHIVE MODE</span>
                   </motion.div>
 
-                  {/* Staggered hero name */}
-                  <div style={{ perspective: '600px' }}>
-                    <motion.h1
-                      variants={containerVariants}
-                      initial="hidden"
-                      animate="visible"
-                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white mb-2 flex overflow-hidden"
+                  {/* Text-scramble hero name */}
+                  <div>
+                    <h1
+                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white mb-2"
                       style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}
                     >
-                      {"SHLOK".split("").map((char, i) => (
-                        <motion.span key={i} variants={letterVariants} className="inline-block">
-                          {char}
-                        </motion.span>
-                      ))}
-                    </motion.h1>
-                    <motion.h1
-                      variants={containerVariants}
-                      initial="hidden"
-                      animate="visible"
-                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white flex overflow-hidden"
-                      style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900, transition: 'none' }}
+                      {shlok}
+                    </h1>
+                    <h1
+                      className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white"
+                      style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}
                     >
-                      {"THAKKAR".split("").map((char, i) => (
-                        <motion.span
-                          key={i}
-                          variants={letterVariants}
-                          transition={{ delay: 0.35 + (5 + i) * 0.04, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                          className="inline-block"
-                        >
-                          {char}
-                        </motion.span>
-                      ))}
-                    </motion.h1>
+                      {thakkar}
+                    </h1>
                   </div>
 
                   <motion.div
@@ -543,28 +519,44 @@ export default function Home() {
                     transition={{ delay: 1.1 }}
                     className="flex flex-wrap items-center gap-3"
                   >
-                    <a
-                      href="https://www.linkedin.com/in/shlok-thakkar/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[11px] tracking-widest text-neutral-400 hover:text-white transition-colors border border-white/10 hover:border-white/30 px-3 py-2 rounded-sm"
-                    >
-                      <Linkedin className="w-4 h-4" />
-                      <span>LinkedIn</span>
-                    </a>
-                    <a
-                      href="https://github.com/shlok1806"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[11px] tracking-widest text-neutral-400 hover:text-white transition-colors border border-white/10 hover:border-white/30 px-3 py-2 rounded-sm"
-                    >
-                      <Github className="w-4 h-4" />
-                      <span>GitHub</span>
-                    </a>
+                    <MagneticButton>
+                      <a
+                        href="https://www.linkedin.com/in/shlok-thakkar/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-[11px] tracking-widest text-neutral-400 hover:text-white transition-colors border border-white/10 hover:border-white/30 px-3 py-2 rounded-sm"
+                      >
+                        <Linkedin className="w-4 h-4" />
+                        <span>LinkedIn</span>
+                      </a>
+                    </MagneticButton>
+                    <MagneticButton>
+                      <a
+                        href="https://github.com/shlok1806"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-[11px] tracking-widest text-neutral-400 hover:text-white transition-colors border border-white/10 hover:border-white/30 px-3 py-2 rounded-sm"
+                      >
+                        <Github className="w-4 h-4" />
+                        <span>GitHub</span>
+                      </a>
+                    </MagneticButton>
                     <div className="flex items-center gap-1.5 text-[10px] text-yellow-500/80">
                       <Star className="w-3 h-3 fill-yellow-500/80" />
                       <span className="tracking-wider">2nd @ HERE Chicago</span>
                     </div>
+                  </motion.div>
+
+                  {/* ⌘K hint */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.3 }}
+                    className="flex items-center gap-2 text-[9px] text-neutral-700"
+                    style={{ fontFamily: 'var(--font-condensed)', letterSpacing: '0.15em' }}
+                  >
+                    <kbd className="px-1.5 py-0.5 border border-white/10 text-neutral-600">⌘K</kbd>
+                    <span>COMMAND PALETTE</span>
                   </motion.div>
                 </div>
 

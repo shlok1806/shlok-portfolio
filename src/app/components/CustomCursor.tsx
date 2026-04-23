@@ -1,140 +1,87 @@
-import { useEffect, useRef, useState } from "react";
-
-const CANVAS_W = 128;
-const CANVAS_H = 30;
-const WAVE_PERIODS = 2.5;
-const DECAY = 0.88;        // amplitude decay per frame
-const VELOCITY_SCALE = 0.18; // how much mouse speed drives amplitude
-const MAX_AMP = 11;        // max half-height of the wave
-const MIN_AMP = 0.5;       // resting line (barely visible)
-const DOT_R = 2.5;
-
-const COLOR_DEFAULT = "rgba(255,255,255,0.75)";
-const COLOR_HOVER   = "#EC243C";
+import { motion, useMotionValue, useSpring } from 'motion/react';
+import { useEffect, useState } from 'react';
 
 export function CustomCursor() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const posRef    = useRef({ x: -300, y: -300 });
-  const prevRef   = useRef({ x: -300, y: -300 });
-  const ampRef    = useRef(MIN_AMP);
-  const hoverRef  = useRef(false);
-  const visibleRef = useRef(false);
-  const rafRef    = useRef<number>(0);
+  const mouseX = useMotionValue(-200);
+  const mouseY = useMotionValue(-200);
+  const [hovering, setHovering] = useState(false);
+  const [clicking, setClicking] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+
+  const dotX = useSpring(mouseX, { stiffness: 900, damping: 45, restDelta: 0.001 });
+  const dotY = useSpring(mouseY, { stiffness: 900, damping: 45, restDelta: 0.001 });
+  const ringX = useSpring(mouseX, { stiffness: 140, damping: 18, restDelta: 0.001 });
+  const ringY = useSpring(mouseY, { stiffness: 140, damping: 18, restDelta: 0.001 });
 
   useEffect(() => {
-    if (window.matchMedia("(pointer: coarse)").matches) return;
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      setIsTouch(true);
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'custom-cursor-style';
+    style.textContent = '@media (pointer: fine) { *, *::before, *::after { cursor: none !important; } }';
+    document.head.appendChild(style);
 
     const onMove = (e: MouseEvent) => {
-      const dx = e.clientX - prevRef.current.x;
-      const dy = e.clientY - prevRef.current.y;
-      const speed = Math.sqrt(dx * dx + dy * dy);
-      const newAmp = Math.min(MAX_AMP, ampRef.current + speed * VELOCITY_SCALE);
-      ampRef.current = newAmp;
-      prevRef.current = { x: e.clientX, y: e.clientY };
-      posRef.current  = { x: e.clientX, y: e.clientY };
-      if (!visibleRef.current) {
-        visibleRef.current = true;
-        setVisible(true);
-      }
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+      if (!visible) setVisible(true);
     };
-
     const onOver = (e: MouseEvent) => {
-      const el = (e.target as HTMLElement).closest(
-        'a, button, [role="button"], [tabindex="0"]'
-      );
-      const wasHover = hoverRef.current;
-      hoverRef.current = !!el;
-      // spike the amplitude on hover-enter
-      if (!wasHover && hoverRef.current) {
-        ampRef.current = MAX_AMP;
-      }
+      const target = e.target as HTMLElement;
+      const interactive = target.closest('a, button, [role="button"], input, textarea, select, label, [tabindex="0"]');
+      setHovering(!!interactive);
     };
+    const onDown = () => setClicking(true);
+    const onUp = () => setClicking(false);
 
-    const onLeave = () => { visibleRef.current = false; setVisible(false); };
-    const onEnter = () => { visibleRef.current = true;  setVisible(true); };
-
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseover", onOver);
-    document.addEventListener("mouseleave", onLeave);
-    document.addEventListener("mouseenter", onEnter);
-
-    let phase = 0;
-
-    const draw = () => {
-      rafRef.current = requestAnimationFrame(draw);
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      // Decay amplitude toward resting value
-      const target = hoverRef.current ? MAX_AMP * 0.7 : MIN_AMP;
-      ampRef.current = ampRef.current * DECAY + target * (1 - DECAY);
-
-      // Advance phase — faster when hovering
-      phase += hoverRef.current ? 0.18 : 0.12;
-
-      const amp   = ampRef.current;
-      const color = hoverRef.current ? COLOR_HOVER : COLOR_DEFAULT;
-      const cx    = posRef.current.x;
-      const cy    = posRef.current.y;
-
-      // Position canvas centered on cursor
-      canvas.style.left = `${cx - CANVAS_W / 2}px`;
-      canvas.style.top  = `${cy - CANVAS_H / 2}px`;
-
-      ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-
-      if (!visibleRef.current) return;
-
-      const midY = CANVAS_H / 2;
-
-      // Draw sine wave
-      ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = 1.5;
-      ctx.shadowColor = color;
-      ctx.shadowBlur  = hoverRef.current ? 6 : 3;
-
-      for (let px = 0; px <= CANVAS_W; px++) {
-        const t = (px / CANVAS_W) * Math.PI * 2 * WAVE_PERIODS + phase;
-        const y = midY + Math.sin(t) * amp;
-        if (px === 0) ctx.moveTo(px, y);
-        else ctx.lineTo(px, y);
-      }
-      ctx.stroke();
-
-      // Center dot — exact click point
-      ctx.beginPath();
-      ctx.fillStyle = color;
-      ctx.shadowBlur = 8;
-      ctx.arc(CANVAS_W / 2, midY, DOT_R, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    rafRef.current = requestAnimationFrame(draw);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseover', onOver);
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('mouseup', onUp);
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseover", onOver);
-      document.removeEventListener("mouseleave", onLeave);
-      document.removeEventListener("mouseenter", onEnter);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseover', onOver);
+      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mouseup', onUp);
+      document.getElementById('custom-cursor-style')?.remove();
     };
-  }, []);
+  }, [mouseX, mouseY, visible]);
 
-  if (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches) {
-    return null;
-  }
+  if (isTouch || !visible) return null;
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={CANVAS_W}
-      height={CANVAS_H}
-      className="fixed top-0 left-0 pointer-events-none z-[9999]"
-      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.2s" }}
-    />
+    <>
+      <motion.div className="fixed top-0 left-0 z-[9999] pointer-events-none" style={{ x: dotX, y: dotY }}>
+        <motion.div
+          animate={{ scale: clicking ? 0.55 : 1, rotate: hovering ? -135 : 0 }}
+          transition={{ duration: 0.12, ease: [0.25, 0.1, 0.25, 1] }}
+          style={{ translateX: '-50%', translateY: '-50%' }}
+        >
+          <div
+            className="w-3 h-3 rounded-full transition-colors duration-150 shadow-lg"
+            style={{ backgroundColor: hovering ? '#ffffff' : '#DC2626', boxShadow: hovering ? '0 0 12px rgba(255,255,255,0.4)' : '0 0 8px rgba(220,38,38,0.5)' }}
+          />
+          {!hovering && (
+            <div
+              className="absolute top-full left-1/2 -translate-x-1/2"
+              style={{ width: '1.5px', height: '20px', background: 'linear-gradient(to bottom, rgba(220,38,38,0.9), transparent)', borderRadius: '1px' }}
+            />
+          )}
+        </motion.div>
+      </motion.div>
+
+      <motion.div className="fixed top-0 left-0 z-[9998] pointer-events-none" style={{ x: ringX, y: ringY }}>
+        <motion.div
+          animate={{ scale: clicking ? 0.6 : hovering ? 2.2 : 1, opacity: clicking ? 0.6 : hovering ? 0.45 : 0.22, borderColor: hovering ? 'rgba(255,255,255,0.7)' : 'rgba(220,38,38,0.7)' }}
+          transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
+          style={{ translateX: '-50%', translateY: '-50%', width: 30, height: 30, borderRadius: '50%', border: '1px solid rgba(220,38,38,0.7)' }}
+        />
+      </motion.div>
+    </>
   );
 }
