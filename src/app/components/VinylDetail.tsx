@@ -9,12 +9,7 @@ interface VinylDetailProps {
   onClose: () => void;
 }
 
-const albumThemes: Record<string, {
-  labelColor: string;
-  accentColor: string;
-  textColor: string;
-  bg: string;
-}> = {
+const albumThemes: Record<string, { labelColor: string; accentColor: string; textColor: string; bg: string }> = {
   projects: { labelColor: '#EC243C', accentColor: '#D4AF37', textColor: '#FFFFFF', bg: 'from-[#1a0508] via-[#0d0d0d] to-[#0a0a0a]' },
   experience: { labelColor: '#F3CF8C', accentColor: '#D4AF37', textColor: '#000000', bg: 'from-[#1a1508] via-[#0d0d0d] to-[#0a0a0a]' },
   skills: { labelColor: '#4CAF50', accentColor: '#2E7D32', textColor: '#FFFFFF', bg: 'from-[#051a08] via-[#0d0d0d] to-[#0a0a0a]' },
@@ -55,7 +50,9 @@ function TrackCard({ track, index, theme, recordId }: {
       <p className="text-white/65 text-sm leading-relaxed mb-3 ml-9">{track.description}</p>
       {track.impact && (
         <div className="ml-9 mb-3">
-          <span className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold" style={{ backgroundColor: theme.accentColor + '22', color: theme.accentColor, border: `1px solid ${theme.accentColor}44` }}>↑ {track.impact}</span>
+          <span className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold" style={{ backgroundColor: theme.accentColor + '22', color: theme.accentColor, border: `1px solid ${theme.accentColor}44` }}>
+            ↑ {track.impact}
+          </span>
         </div>
       )}
       {track.tech && track.tech.length > 0 && (
@@ -96,39 +93,16 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
 
   const dragY = useMotionValue(0);
   const overlayOpacity = useTransform(dragY, [0, 200], [1, 0.3]);
-
   const featuredTracks = record.tracks.filter(t => t.featured);
   const otherTracks = record.tracks.filter(t => !t.featured);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{ opacity: overlayOpacity }}
-      className="fixed inset-0 bg-black/95 z-50 flex flex-col"
-      onClick={onClose}
-    >
-      <motion.div
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 300 }}
-        dragElastic={0.1}
-        style={{ y: dragY }}
-        onDragEnd={(_, info) => { if (info.offset.y > 120) onClose(); }}
-        onClick={(e) => e.stopPropagation()}
-        className="md:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
-      >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ opacity: overlayOpacity }} className="fixed inset-0 bg-black/95 z-50 flex flex-col" onClick={onClose}>
+      <motion.div drag="y" dragConstraints={{ top: 0, bottom: 300 }} dragElastic={0.1} style={{ y: dragY }} onDragEnd={(_, info) => { if (info.offset.y > 120) onClose(); }} onClick={(e) => e.stopPropagation()} className="md:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
         <div className="w-12 h-1 rounded-full bg-white/20" />
       </motion.div>
 
-      <motion.div
-        initial={{ y: 60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 60, opacity: 0 }}
-        transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="flex-1 overflow-hidden flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }} className="flex-1 overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className={`bg-gradient-to-r ${theme.bg} border-b border-white/10 px-6 md:px-10 py-5 flex items-center justify-between flex-shrink-0`}>
           <div className="flex items-center gap-4">
             <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: theme.labelColor }} />
@@ -148,37 +122,28 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 md:px-10 py-8" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
           <div className="max-w-3xl mx-auto space-y-4">
-
             {record.id === 'experience' && (
               <>
                 <div className="text-[10px] tracking-[0.4em] text-white/35 mb-6">WORK HISTORY</div>
                 {record.tracks.map((track, i) => <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />)}
               </>
             )}
-
             {record.id === 'projects' && (
               <>
                 {featuredTracks.length > 0 && (
                   <>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-[10px] tracking-[0.4em] text-white/35">PLATINUM CUTS</span>
-                      <div className="flex-1 h-px bg-white/10" />
-                    </div>
+                    <div className="flex items-center gap-3 mb-2"><span className="text-[10px] tracking-[0.4em] text-white/35">PLATINUM CUTS</span><div className="flex-1 h-px bg-white/10" /></div>
                     {featuredTracks.map((track, i) => <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />)}
                   </>
                 )}
                 {otherTracks.length > 0 && (
                   <>
-                    <div className="flex items-center gap-3 mt-8 mb-2">
-                      <span className="text-[10px] tracking-[0.4em] text-white/35">DEEP CUTS</span>
-                      <div className="flex-1 h-px bg-white/10" />
-                    </div>
+                    <div className="flex items-center gap-3 mt-8 mb-2"><span className="text-[10px] tracking-[0.4em] text-white/35">DEEP CUTS</span><div className="flex-1 h-px bg-white/10" /></div>
                     {otherTracks.map((track, i) => <TrackCard key={i} track={{ ...track, featured: false }} index={featuredTracks.length + i} theme={theme} recordId={record.id} />)}
                   </>
                 )}
               </>
             )}
-
             {record.id === 'skills' && (
               <>
                 <div className="text-[10px] tracking-[0.4em] text-white/35 mb-6">TECHNICAL PROFICIENCIES</div>
@@ -196,14 +161,12 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                 </div>
               </>
             )}
-
             {record.id === 'education' && (
               <>
                 <div className="text-[10px] tracking-[0.4em] text-white/35 mb-6">ACADEMIC BACKGROUND</div>
                 {record.tracks.map((track, i) => <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />)}
               </>
             )}
-
             {record.id === 'blog' && (
               <>
                 <div className="flex items-center gap-2 mb-6">
@@ -211,79 +174,44 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                   <span className="text-[10px] tracking-[0.4em] text-white/35">HACKATHONS & RECOGNITION</span>
                 </div>
                 {record.tracks.map((track, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + i * 0.1 }}
-                    className={`relative rounded-sm border p-6 overflow-hidden ${
-                      track.featured ? 'border-yellow-500/40 bg-yellow-500/5' : 'border-white/10 bg-white/[0.04]'
-                    }`}
-                  >
+                  <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.1 }} className={`relative rounded-sm border p-6 overflow-hidden ${ track.featured ? 'border-yellow-500/40 bg-yellow-500/5' : 'border-white/10 bg-white/[0.04]' }`}>
                     {track.featured && (
-                      <motion.div
-                        animate={{ x: ['-100%', '200%'] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }}
-                        className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent pointer-events-none"
-                      />
+                      <motion.div animate={{ x: ['-100%', '200%'] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', repeatDelay: 2 }} className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent pointer-events-none" />
                     )}
                     <div className="flex items-start gap-4">
                       <div className="text-3xl">{track.featured ? '🥈' : '🏆'}</div>
                       <div className="flex-1">
                         <h3 className="text-white text-lg mb-1" style={{ fontWeight: 700 }}>{track.title.replace(/^[🥈🏆]\s*/, '')}</h3>
-                        {track.date && (
-                          <div className="flex items-center gap-1.5 text-[11px] text-white/40 mb-2">
-                            <Calendar className="w-3 h-3" /><span>{track.date}</span>
-                          </div>
-                        )}
+                        {track.date && (<div className="flex items-center gap-1.5 text-[11px] text-white/40 mb-2"><Calendar className="w-3 h-3" /><span>{track.date}</span></div>)}
                         <p className="text-white/65 text-sm leading-relaxed mb-3">{track.description}</p>
-                        {track.impact && (
-                          <span className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold" style={{ backgroundColor: '#FFD70022', color: '#FFD700', border: '1px solid #FFD70044' }}>{track.impact}</span>
-                        )}
-                        {track.tech && (
-                          <div className="flex flex-wrap gap-1.5 mt-3">
-                            {track.tech.map((t) => (
-                              <span key={t} className="text-[10px] px-2 py-0.5 rounded-sm border border-yellow-500/20 text-yellow-400/60 bg-yellow-500/5">{t}</span>
-                            ))}
-                          </div>
-                        )}
+                        {track.impact && (<span className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold" style={{ backgroundColor: '#FFD70022', color: '#FFD700', border: '1px solid #FFD70044' }}>{track.impact}</span>)}
+                        {track.tech && (<div className="flex flex-wrap gap-1.5 mt-3">{track.tech.map((t) => (<span key={t} className="text-[10px] px-2 py-0.5 rounded-sm border border-yellow-500/20 text-yellow-400/60 bg-yellow-500/5">{t}</span>))}</div>)}
                       </div>
                     </div>
                   </motion.div>
                 ))}
               </>
             )}
-
             {record.id === 'contact' && (
               <>
                 <div className="text-[10px] tracking-[0.4em] text-white/35 mb-6">GET IN TOUCH</div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {record.tracks.map((track, i) => {
                     const iconMap: Record<string, React.ReactNode> = {
-                      Email: <Mail className="w-5 h-5" />,
-                      Phone: <Phone className="w-5 h-5" />,
-                      LinkedIn: <Linkedin className="w-5 h-5" />,
-                      GitHub: <Github className="w-5 h-5" />,
-                      Location: <MapPin className="w-5 h-5" />,
+                      Email: <Mail className="w-5 h-5" />, Phone: <Phone className="w-5 h-5" />, LinkedIn: <Linkedin className="w-5 h-5" />, GitHub: <Github className="w-5 h-5" />, Location: <MapPin className="w-5 h-5" />,
                     };
                     return (
                       <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.08 }}>
                         {track.links?.demo ? (
                           <a href={track.links.demo} target={track.links.demo.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="flex items-center gap-4 border border-white/10 bg-white/[0.04] p-5 rounded-sm hover:bg-white/[0.08] hover:border-white/25 transition-all group">
                             <div style={{ color: theme.labelColor }}>{iconMap[track.title]}</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[10px] tracking-widest text-white/35 mb-1">{track.title.toUpperCase()}</div>
-                              <div className="text-white/80 text-sm truncate group-hover:text-white transition-colors">{track.description}</div>
-                            </div>
+                            <div className="flex-1 min-w-0"><div className="text-[10px] tracking-widest text-white/35 mb-1">{track.title.toUpperCase()}</div><div className="text-white/80 text-sm truncate group-hover:text-white transition-colors">{track.description}</div></div>
                             <ArrowUpRight className="w-4 h-4 text-white/25 group-hover:text-white/60 transition-colors flex-shrink-0" />
                           </a>
                         ) : (
                           <div className="flex items-center gap-4 border border-white/10 bg-white/[0.04] p-5 rounded-sm">
                             <div style={{ color: theme.labelColor }}>{iconMap[track.title]}</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[10px] tracking-widest text-white/35 mb-1">{track.title.toUpperCase()}</div>
-                              <div className="text-white/70 text-sm">{track.description}</div>
-                            </div>
+                            <div className="flex-1 min-w-0"><div className="text-[10px] tracking-widest text-white/35 mb-1">{track.title.toUpperCase()}</div><div className="text-white/70 text-sm">{track.description}</div></div>
                           </div>
                         )}
                       </motion.div>
@@ -292,7 +220,6 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                 </div>
               </>
             )}
-
           </div>
           <div className="h-16" />
         </div>

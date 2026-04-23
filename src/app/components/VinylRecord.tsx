@@ -14,7 +14,6 @@ export function VinylRecord({ record, index, isSelected, onClick }: VinylRecordP
   const [isHovered, setIsHovered] = useState(false);
   const [animationStage, setAnimationStage] = useState<'idle' | 'nudge' | 'slide' | 'expand'>('idle');
   const { currentEra } = useEra();
-
   const theme = eraThemes[currentEra] || eraThemes[record.era];
 
   const handleClick = () => {
@@ -24,10 +23,7 @@ export function VinylRecord({ record, index, isSelected, onClick }: VinylRecordP
         setAnimationStage('slide');
         setTimeout(() => {
           setAnimationStage('expand');
-          setTimeout(() => {
-            onClick();
-            setAnimationStage('idle');
-          }, 350);
+          setTimeout(() => { onClick(); setAnimationStage('idle'); }, 350);
         }, 320);
       }, 100);
     }
@@ -44,33 +40,18 @@ export function VinylRecord({ record, index, isSelected, onClick }: VinylRecordP
       onHoverEnd={() => setIsHovered(false)}
     >
       <motion.div
-        animate={{
-          y: isHovered && !isSelected ? -8 : animationStage === 'nudge' ? 4 : 0,
-          rotateX: isHovered && !isSelected ? 2 : 0,
-          scale: animationStage === 'expand' ? 1.05 : 1,
-        }}
+        animate={{ y: isHovered && !isSelected ? -8 : animationStage === 'nudge' ? 4 : 0, rotateX: isHovered && !isSelected ? 2 : 0, scale: animationStage === 'expand' ? 1.05 : 1 }}
         transition={{ duration: animationStage === 'nudge' ? 0.1 : animationStage === 'expand' ? 0.35 : 0.18, ease: animationStage === 'nudge' ? [0.34, 1.56, 0.64, 1] : [0.25, 0.46, 0.45, 0.94] }}
         className="relative"
         style={{ transformStyle: "preserve-3d", perspective: 1200 }}
       >
-        <motion.div
-          className="w-80 h-80 relative overflow-hidden"
-          style={{ background: theme.sleeveColor, boxShadow: isHovered || animationStage !== 'idle' ? "0 25px 50px rgba(0,0,0,0.5)" : "0 10px 30px rgba(0,0,0,0.3)" }}
-        >
+        <motion.div className="w-80 h-80 relative overflow-hidden" style={{ background: theme.sleeveColor, boxShadow: isHovered || animationStage !== 'idle' ? "0 25px 50px rgba(0,0,0,0.5)" : "0 10px 30px rgba(0,0,0,0.3)" }}>
           <div className="absolute inset-0 p-10 flex flex-col items-center justify-center">
-            <div className="absolute top-6 left-6 text-xs tracking-[0.4em] opacity-40" style={{ color: theme.textColor, fontFamily: 'var(--font-condensed)' }}>
-              {record.catalogNumber}
-            </div>
-            <div className="absolute top-6 right-6 px-2 py-1 border opacity-60 text-[8px] tracking-widest rotate-6" style={{ borderColor: theme.accentColor, color: theme.accentColor, fontFamily: 'var(--font-gothic)', fontWeight: 700 }}>
-              {record.era.toUpperCase()}
-            </div>
+            <div className="absolute top-6 left-6 text-xs tracking-[0.4em] opacity-40" style={{ color: theme.textColor, fontFamily: 'var(--font-condensed)' }}>{record.catalogNumber}</div>
+            <div className="absolute top-6 right-6 px-2 py-1 border opacity-60 text-[8px] tracking-widest rotate-6" style={{ borderColor: theme.accentColor, color: theme.accentColor, fontFamily: 'var(--font-gothic)', fontWeight: 700 }}>{record.era.toUpperCase()}</div>
             <div className="relative z-10 text-center mb-4">
-              <div className="text-7xl tracking-tighter mb-4" style={{ fontWeight: 900, color: theme.textColor, fontFamily: currentEra === 'stark' ? 'var(--font-gothic)' : currentEra === 'earth' ? 'var(--font-serif)' : currentEra === 'industrial' ? 'var(--font-condensed)' : 'var(--font-display)', fontStyle: currentEra === 'earth' ? 'italic' : 'normal' }}>
-                {record.title.toUpperCase()}
-              </div>
-              <div className="text-sm tracking-[0.35em] opacity-70" style={{ color: theme.textColor, fontFamily: 'var(--font-condensed)' }}>
-                {record.subtitle}
-              </div>
+              <div className="text-7xl tracking-tighter mb-4" style={{ fontWeight: 900, color: theme.textColor, fontFamily: currentEra === 'stark' ? 'var(--font-gothic)' : currentEra === 'earth' ? 'var(--font-serif)' : currentEra === 'industrial' ? 'var(--font-condensed)' : 'var(--font-display)', fontStyle: currentEra === 'earth' ? 'italic' : 'normal' }}>{record.title.toUpperCase()}</div>
+              <div className="text-sm tracking-[0.35em] opacity-70" style={{ color: theme.textColor, fontFamily: 'var(--font-condensed)' }}>{record.subtitle}</div>
             </div>
             <div className="w-32 h-1 mt-4" style={{ backgroundColor: theme.accentColor }} />
           </div>
@@ -110,12 +91,7 @@ export function VinylRecord({ record, index, isSelected, onClick }: VinylRecordP
         )}
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.12 + 0.3 }}
-        className="mt-4 text-center text-xs text-neutral-500 tracking-wide"
-      >
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.12 + 0.3 }} className="mt-4 text-center text-xs text-neutral-500 tracking-wide">
         <div className="mb-1 opacity-60">Section {String(index + 1).padStart(2, '0')}</div>
         <div className="text-black tracking-widest">{record.title.toUpperCase()}</div>
       </motion.div>
