@@ -19,7 +19,9 @@ export function EraSwitch() {
         animate={{ opacity: 1, scale: 1 }}
         className="bg-black/90 backdrop-blur-sm border border-white/10 rounded-full px-6 py-3 shadow-2xl"
       >
-        <div className="text-[10px] tracking-widest text-white/40 mb-2 text-center">ERA SWITCH</div>
+        <div className="text-[10px] tracking-widest text-white/40 mb-2 text-center">
+          ERA SWITCH
+        </div>
         <div className="flex gap-2">
           {eras.map((era) => (
             <motion.button
@@ -31,7 +33,9 @@ export function EraSwitch() {
             >
               <div
                 className={`w-10 h-10 rounded-full border-2 transition-all ${
-                  currentEra === era.id ? 'border-white scale-110' : 'border-white/20 hover:border-white/40'
+                  currentEra === era.id
+                    ? 'border-white scale-110'
+                    : 'border-white/20 hover:border-white/40'
                 }`}
                 style={{ backgroundColor: era.color }}
               />

@@ -4,11 +4,14 @@ Personal portfolio website with a vinyl record/album theme inspired by Kanye Wes
 
 ## Features
 
-- 6 interactive album tiles representing different sections (Projects, Experience, Skills, Education, Contact, Blog)
+- 6 interactive album tiles representing different sections (Experience, Projects, Skills, Education, Awards, Contact)
 - Each section uses authentic color schemes from specific Kanye albums
-- Rotating vinyl record background
-- Sophisticated loading animation combining vinyl aesthetics with technical engineering vibes
-- Responsive design with premium gallery wall layout
+- Rotating vinyl record background with loading animation
+- Quick Stats Bar, Open to Internships badge
+- Keyboard navigation (ESC to close, Enter/Space to open)
+- Mobile swipe-to-dismiss on modals
+- Subtle sound effects
+- Responsive design
 
 ## Tech Stack
 
@@ -33,13 +36,13 @@ pnpm build
 
 ## Portfolio Sections
 
-- **Projects** - PLATINUM CUTS featuring OrderBook, ScrollClash, blueprint-qa, and more
-- **Experience** - Professional work history
-- **Skills** - Technical expertise
-- **Education** - Academic background
-- **Contact** - Get in touch
-- **Blog** - Thoughts and writings
+- **Experience** - Work & Research (College Dropout palette)
+- **Projects** - PLATINUM CUTS featuring OrderBook, ScrollClash, blueprint-qa, and more (MBDTF palette)
+- **Skills** - Technical expertise (ye palette)
+- **Education** - Academic background (TLOP palette)
+- **Awards** - 2nd @ HERE Chicago Hackathon + HackIllinois (Yeezus palette)
+- **Contact** - Get in touch (808s & Heartbreak palette)
 
 ---
 
-Built by Shlok Thakkar
+Built by Shlok Thakkar — https://github.com/shlok1806

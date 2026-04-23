@@ -1,0 +1,14 @@
+{
+  "person": {
+    "name": "Shlok Thakkar",
+    "location": "Champaign, IL",
+    "headline": "Computer Science + Economics @ UIUC • Statistics minor",
+    "tagline": "I build backend systems and data-driven products at the intersection of software and finance.",
+    "contact": {
+      "email": "shlokthakkar1806@gmail.com",
+      "phone": "+1 217-255-3034",
+      "github": "https://github.com/shlok1806",
+      "linkedin": "https://www.linkedin.com/in/shlok-thakkar/"
+    }
+  }
+}
