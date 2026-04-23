@@ -1,12 +1,10 @@
 import { motion, AnimatePresence, useMotionValue, useSpring } from "motion/react";
-import { Github, Linkedin, Volume2, VolumeX, Star } from "lucide-react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { Github, Linkedin, Star } from "lucide-react";
+import { useState, useRef } from "react";
 import { records } from "../data/records";
 import { VinylDetail } from "../components/VinylDetail";
 import { MagneticButton } from "../components/MagneticButton";
-import { useSoundEffects } from "../hooks/useSoundEffects";
 import { usePortfolio } from "../context/PortfolioContext";
-import { useTextScramble } from "../hooks/useTextScramble";
 
 const ACCENT = '#EC243C';
 
@@ -29,29 +27,22 @@ const albumTiles: AlbumTile[] = [
 const STATS = [
   { value: '3.97', label: 'GPA' },
   { value: '4',    label: 'Roles' },
-  { value: '15+',  label: 'Projects' },
-  { value: '2nd',  label: 'HERE Chicago Hackathon' },
   { value: 'UIUC', label: "CS + Econ '28" },
 ];
-
-// Stagger variants for the hero name
 
 function AlbumTileComponent({
   tile,
   index,
   onClick,
-  onHover,
 }: {
   tile: AlbumTile;
   index: number;
   onClick: () => void;
-  onHover?: () => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const tileRef = useRef<HTMLDivElement>(null);
 
-  // Magnetic hover
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const springMx = useSpring(mx, { damping: 22, stiffness: 300 });
@@ -168,7 +159,7 @@ function AlbumTileComponent({
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
                 animate={{ scale: [1, 1.06, 1] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 className="text-5xl"
               >
                 🥈
@@ -240,7 +231,7 @@ function AlbumTileComponent({
       transition={{ delay: index * 0.09, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onHoverStart={() => { setIsHovered(true); if (onHover) onHover(); }}
+      onHoverStart={() => setIsHovered(true)}
       onClick={handleClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
       tabIndex={0}
@@ -296,129 +287,19 @@ function AlbumTileComponent({
 
 export default function Home() {
   const { selectedRecordId, setSelectedRecordId } = usePortfolio();
-  const [soundEnabled, setSoundEnabled] = useState(true);
-
-  const shlok   = useTextScramble('SHLOK',   600);
-  const thakkar = useTextScramble('THAKKAR', 900);
 
   const selectedRecord = records.find((r) => r.id === selectedRecordId);
-  const { initializeAudio, onTileHover, onTileClick, onModalOpen, onModalClose } = useSoundEffects();
 
-  useEffect(() => {
-    const onFirst = () => {
-      initializeAudio();
-      window.removeEventListener('click', onFirst);
-      window.removeEventListener('touchstart', onFirst);
-    };
-    window.addEventListener('click', onFirst);
-    window.addEventListener('touchstart', onFirst);
-    return () => {
-      window.removeEventListener('click', onFirst);
-      window.removeEventListener('touchstart', onFirst);
-    };
-  }, [initializeAudio]);
-
-  useEffect(() => {
-    if (selectedRecordId && soundEnabled) onModalOpen();
-  }, [selectedRecordId, soundEnabled, onModalOpen]);
-
-  const handleTileClick = useCallback((id: string) => {
-    if (soundEnabled) onTileClick();
-    setSelectedRecordId(id);
-  }, [soundEnabled, onTileClick]);
-
-  const handleModalClose = useCallback(() => {
-    if (soundEnabled) onModalClose();
-    setSelectedRecordId(null);
-  }, [soundEnabled, onModalClose]);
-
-  const handleTileHover = useCallback(() => {
-    if (soundEnabled) onTileHover();
-  }, [soundEnabled, onTileHover]);
+  const handleTileClick = (id: string) => setSelectedRecordId(id);
+  const handleModalClose = () => setSelectedRecordId(null);
 
   return (
     <>
-      {/* Ambient background blobs */}
-      <div className="ambient-bg">
-        <div className="ambient-blob ambient-blob-1" style={{ background: `radial-gradient(circle, ${ACCENT} 0%, transparent 70%)` }} />
-        <div className="ambient-blob ambient-blob-2" />
-      </div>
-
-      <div className="min-h-screen text-white overflow-hidden relative">
-        {/* Vinyl groove rings */}
-        <div className="fixed inset-0 opacity-[0.012] pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] h-[120vw]">
-            {[...Array(50)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute rounded-full border border-white/[0.02]"
-                style={{ top: `${2 + i * 1.8}%`, left: `${2 + i * 1.8}%`, right: `${2 + i * 1.8}%`, bottom: `${2 + i * 1.8}%` }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Noise overlay */}
-        <div className="fixed inset-0 opacity-[0.018] mix-blend-overlay pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat',
-          }}
-        />
-
+      <div className="min-h-screen text-white">
         <div className="relative z-10 pb-14">
-          {/* Header */}
-          <header className="px-6 md:px-8 py-5 flex justify-between items-center border-b border-white/[0.05]">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <h2 className="text-2xl tracking-tight text-white" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>
-                SHLOK THAKKAR
-              </h2>
-              <p className="text-[8px] font-mono text-neutral-600 tracking-widest mt-0.5">
-                ARCHIVE_01 / SYSTEM PORTFOLIO
-              </p>
-            </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex items-center gap-4 md:gap-6"
-            >
-              <button
-                onClick={() => setSoundEnabled(s => !s)}
-                className="text-neutral-400 hover:text-white transition-colors"
-                title={soundEnabled ? 'Sound On' : 'Sound Off'}
-              >
-                {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-              </button>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-1.5 h-1.5 rounded-full animate-pulse"
-                  style={{ backgroundColor: ACCENT }}
-                />
-                <span className="text-[8px] font-mono text-neutral-600">ONLINE</span>
-              </div>
-              <a href="https://github.com/shlok1806" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
-                <Github className="w-5 h-5" />
-              </a>
-              <a href="https://www.linkedin.com/in/shlok-thakkar/" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white transition-colors">
-                <Linkedin className="w-5 h-5" />
-              </a>
-            </motion.div>
-          </header>
-
-          {/* Quick Stats Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="border-b border-white/[0.05] bg-white/[0.02] px-6 md:px-8 py-3 flex items-center overflow-x-auto"
-            style={{ scrollbarWidth: 'none' }}
-          >
+          {/* Stats bar */}
+          <div className="border-b border-white/[0.05] bg-white/[0.02] px-6 md:px-8 py-3 flex items-center">
             {STATS.map((stat, i) => (
               <div key={stat.label} className="flex items-center flex-shrink-0">
                 <div className="flex items-baseline gap-2 px-4 md:px-6 py-1">
@@ -432,153 +313,88 @@ export default function Home() {
                 {i < STATS.length - 1 && <div className="w-px h-4 bg-white/10 flex-shrink-0" />}
               </div>
             ))}
-          </motion.div>
-
-          {/* Skill ticker — vinyl label band */}
-          <div className="overflow-hidden border-b border-white/[0.05]" style={{ background: 'rgba(236,36,60,0.06)' }}>
-            <div className="flex items-center gap-0 py-2 skill-ticker-track">
-              {[...Array(3)].map((_, pass) => (
-                <span key={pass} className="flex items-center gap-0 flex-shrink-0 skill-ticker-set">
-                  {['C++', 'PYTHON', 'AWS', 'FASTAPI', 'POSTGRESQL', 'NEO4J', 'DOCKER', 'REACT', 'SYSTEMS', 'JAVA', 'LINUX', 'REST APIs', 'AZURE', 'SPRING BOOT', 'GDB / VALGRIND'].map((skill) => (
-                    <span key={skill} className="flex items-center gap-3 flex-shrink-0">
-                      <span
-                        className="text-[9px] tracking-[0.3em] text-neutral-500 whitespace-nowrap px-4"
-                        style={{ fontFamily: 'var(--font-condensed)' }}
-                      >
-                        {skill}
-                      </span>
-                      <span className="w-px h-3 bg-white/10 flex-shrink-0" />
-                    </span>
-                  ))}
-                </span>
-              ))}
-            </div>
           </div>
 
-          {/* Main Content */}
+          {/* Main content */}
           <main className="px-6 md:px-8 py-12 md:py-16">
-            <div className="max-w-[1400px] mx-auto w-full relative z-10">
+            <div className="max-w-[1400px] mx-auto w-full">
               <div className="grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-16 items-center">
 
                 {/* Left: Hero */}
-                <div className="space-y-6">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center gap-3 text-[9px] tracking-[0.3em] text-neutral-500"
-                    style={{ fontFamily: 'var(--font-condensed)' }}
-                  >
-                    <span>CATALOG NO. 0001</span>
-                    <span className="inline-block w-1 h-1 rounded-full" style={{ backgroundColor: ACCENT }} />
-                    <span>ARCHIVE MODE</span>
-                  </motion.div>
-
-                  {/* Text-scramble hero name */}
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="space-y-6"
+                >
+                  {/* Name */}
                   <div>
                     <h1
                       className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white mb-2"
                       style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}
                     >
-                      {shlok}
+                      SHLOK
                     </h1>
                     <h1
                       className="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] leading-[0.9] tracking-[-0.02em] text-white"
                       style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}
                     >
-                      {thakkar}
+                      THAKKAR
                     </h1>
                   </div>
 
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.85 }}
-                    className="space-y-3"
-                  >
+                  {/* Tagline + badge */}
+                  <div className="space-y-3">
                     <p className="text-sm text-neutral-400 tracking-wide" style={{ fontFamily: 'var(--font-body)' }}>
                       CS + Economics • Statistics minor • UIUC • Champaign, IL
                     </p>
                     <p className="text-base text-neutral-300 max-w-md leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
                       Systems software, backend APIs, and data infrastructure — CS + Economics at UIUC.
                     </p>
-
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 1, type: 'spring', stiffness: 200 }}
-                      className="inline-flex items-center gap-2 border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 rounded-sm"
-                    >
+                    <div className="inline-flex items-center gap-2 border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 rounded-sm">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
                       <span className="text-[11px] tracking-[0.15em] text-emerald-400 font-medium">
                         ACTIVELY SEEKING — SWE INTERNSHIPS 2026
                       </span>
-                    </motion.div>
-                  </motion.div>
+                    </div>
+                  </div>
 
-                  {/* Liner notes — recent roles */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.95 }}
-                    className="border border-white/[0.07] bg-white/[0.025] px-4 py-3 space-y-2"
-                  >
+                  {/* Experience — liner notes */}
+                  <div className="border border-white/[0.07] bg-white/[0.025] px-4 py-3 space-y-2">
                     <div
-                      className="text-[8px] tracking-[0.45em] text-neutral-600 mb-3 pb-2 border-b border-white/[0.06]"
+                      className="text-[10px] tracking-[0.2em] text-neutral-500 mb-3 pb-2 border-b border-white/[0.06]"
                       style={{ fontFamily: 'var(--font-condensed)' }}
                     >
-                      — SELECTED TRACKS —
+                      Experience
                     </div>
                     {[
-                      { company: 'IQM CORPORATION',    role: 'SWE INTERN',   note: 'AWS Bedrock · FastAPI · 10K profiles' },
-                      { company: 'UIUC FINANCE DEPT',  role: 'RESEARCHER',   note: '73% runtime ↓ · 10M+ records' },
-                      { company: 'DISRUPTION LAB',     role: 'SWE',          note: 'Neo4j · 40+ researchers' },
-                      { company: 'PARALLEL PROG. LAB', role: 'RESEARCHER',   note: 'C++ · HPC · UIUC' },
+                      { company: 'IQM Corporation',    role: 'SWE Intern',   note: 'AWS Bedrock · FastAPI · 10K profiles' },
+                      { company: 'UIUC Finance Dept',  role: 'Researcher',   note: '73% runtime ↓ · 10M+ records' },
+                      { company: 'Disruption Lab',     role: 'SWE',          note: 'Neo4j · 40+ researchers' },
+                      { company: 'Parallel Prog. Lab', role: 'Researcher',   note: 'C++ · HPC · UIUC' },
                     ].map((row) => (
                       <div key={row.company} className="flex items-baseline gap-2 min-w-0">
                         <span
-                          className="text-[9px] tracking-[0.15em] text-white/50 whitespace-nowrap flex-shrink-0 w-[148px]"
-                          style={{ fontFamily: 'var(--font-condensed)' }}
+                          className="text-[11px] text-white/55 whitespace-nowrap flex-shrink-0 w-[148px]"
+                          style={{ fontFamily: 'var(--font-body)' }}
                         >
                           {row.company}
                         </span>
                         <span
-                          className="text-[9px] tracking-[0.1em] text-white/30 whitespace-nowrap flex-shrink-0 w-[80px]"
-                          style={{ fontFamily: 'var(--font-condensed)' }}
+                          className="text-[11px] text-white/30 whitespace-nowrap flex-shrink-0 w-[80px]"
+                          style={{ fontFamily: 'var(--font-body)' }}
                         >
                           {row.role}
                         </span>
-                        <span className="text-[9px] text-neutral-600 truncate" style={{ fontFamily: 'var(--font-body)' }}>
-                          › {row.note}
+                        <span className="text-[10px] text-neutral-600 truncate" style={{ fontFamily: 'var(--font-body)' }}>
+                          {row.note}
                         </span>
                       </div>
                     ))}
-                  </motion.div>
+                  </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.05 }}
-                    className="pl-4 py-2 border-l-2"
-                    style={{ borderColor: ACCENT }}
-                  >
-                    <p
-                      className="text-sm text-neutral-400 mb-1"
-                      style={{ fontFamily: 'var(--font-condensed)', letterSpacing: '0.1em' }}
-                    >
-                      SELECT A TILE TO EXPLORE
-                    </p>
-                    <p className="text-xs text-neutral-500" style={{ fontFamily: 'var(--font-body)' }}>
-                      Each section has detailed work — press <kbd className="px-1 py-0.5 rounded border border-white/10 text-[10px]">ESC</kbd> to go back.
-                    </p>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.1 }}
-                    className="flex flex-wrap items-center gap-3"
-                  >
+                  {/* Social links */}
+                  <div className="flex flex-wrap items-center gap-3">
                     <MagneticButton>
                       <a
                         href="https://www.linkedin.com/in/shlok-thakkar/"
@@ -605,20 +421,17 @@ export default function Home() {
                       <Star className="w-3 h-3 fill-yellow-500/80" />
                       <span className="tracking-wider">2nd @ HERE Chicago</span>
                     </div>
-                  </motion.div>
+                  </div>
 
                   {/* ⌘K hint */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.3 }}
+                  <div
                     className="flex items-center gap-2 text-[9px] text-neutral-700"
                     style={{ fontFamily: 'var(--font-condensed)', letterSpacing: '0.15em' }}
                   >
                     <kbd className="px-1.5 py-0.5 border border-white/10 text-neutral-600">⌘K</kbd>
                     <span>COMMAND PALETTE</span>
-                  </motion.div>
-                </div>
+                  </div>
+                </motion.div>
 
                 {/* Right: Album tile grid */}
                 <div id="tiles" className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
@@ -628,17 +441,16 @@ export default function Home() {
                       tile={tile}
                       index={index}
                       onClick={() => handleTileClick(tile.id)}
-                      onHover={handleTileHover}
                     />
                   ))}
                 </div>
+
               </div>
             </div>
           </main>
         </div>
       </div>
 
-      {/* Era switch — bottom-right, visible on home */}
       <AnimatePresence>
         {selectedRecord && (
           <VinylDetail record={selectedRecord} onClose={handleModalClose} />

@@ -1,9 +1,7 @@
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { PortfolioProvider } from './context/PortfolioContext';
-import { useState, useEffect } from 'react';
-import { LoadingScreen } from './components/LoadingScreen';
-import { AnimatePresence } from 'motion/react';
+import { useEffect } from 'react';
 import { CustomCursor } from './components/CustomCursor';
 import { CommandPalette } from './components/CommandPalette';
 import { NowPlayingBar } from './components/NowPlayingBar';
@@ -12,9 +10,6 @@ import { Analytics } from '@vercel/analytics/react';
 import Lenis from 'lenis';
 
 function App() {
-  const [showLoading, setShowLoading] = useState(true);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-
   // Physics-based smooth scroll
   useEffect(() => {
     const lenis = new Lenis({
@@ -27,23 +22,9 @@ function App() {
     return () => { cancelAnimationFrame(raf); lenis.destroy(); };
   }, []);
 
-  useEffect(() => {
-    const hasSeenLoading = sessionStorage.getItem('hasSeenLoading');
-    if (hasSeenLoading) { setShowLoading(false); setHasLoadedOnce(true); }
-  }, []);
-
-  const handleLoadingComplete = () => {
-    sessionStorage.setItem('hasSeenLoading', 'true');
-    setShowLoading(false);
-    setHasLoadedOnce(true);
-  };
-
   return (
     <PortfolioProvider>
       <CustomCursor />
-      <AnimatePresence mode="wait">
-        {showLoading && !hasLoadedOnce && <LoadingScreen onComplete={handleLoadingComplete} />}
-      </AnimatePresence>
       <RouterProvider router={router} />
       <CommandPalette />
       <NowPlayingBar />
