@@ -1,0 +1,24 @@
+/* Kanye West Album Typography System */
+
+/* Helvetica Neue Heavy - Used in Yeezus, DONDA, College Dropout */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+
+/* Gothic Bold - DONDA era */
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap');
+
+/* Serif for TLOP italic moments */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* Condensed for brutalist layouts */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+/* Standard sans-serif for body */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --font-display: 'Roboto', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-gothic: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-serif: 'Libre Baskerville', Georgia, serif;
+  --font-condensed: 'Bebas Neue', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
