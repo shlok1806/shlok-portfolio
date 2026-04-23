@@ -37,22 +37,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-@layer base {
-  * { @apply border-border outline-ring/50; }
-  body { @apply bg-background text-foreground; font-family: var(--font-body); }
-  html { font-size: var(--font-size); }
-  h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-medium); line-height: 1.5; font-family: var(--font-display); }
-  h2 { font-size: var(--text-xl); font-weight: var(--font-weight-medium); line-height: 1.5; font-family: var(--font-display); }
-  h3 { font-size: var(--text-lg); font-weight: var(--font-weight-medium); line-height: 1.5; font-family: var(--font-display); }
-  h4 { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  label { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  button { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
-  input { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
-}
-
 /* ─── Portfolio global styles ─── */
-
-color-scheme: dark;
 
 *, *::before, *::after {
   box-sizing: border-box;
