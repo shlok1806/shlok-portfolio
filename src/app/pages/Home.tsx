@@ -1,5 +1,5 @@
 import { motion, AnimatePresence, useMotionValue, useSpring } from "motion/react";
-import { Github, Linkedin, Volume2, VolumeX, Star, FileText } from "lucide-react";
+import { Github, Linkedin, Volume2, VolumeX, Star } from "lucide-react";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { records } from "../data/records";
 import { VinylDetail } from "../components/VinylDetail";
@@ -572,16 +572,6 @@ export default function Home() {
                     >
                       <Github className="w-4 h-4" />
                       <span>GitHub</span>
-                    </a>
-                    <a
-                      href="/resume.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[11px] tracking-widest text-white transition-colors border px-3 py-2 rounded-sm hover:opacity-80"
-                      style={{ borderColor: accentColor, backgroundColor: `${accentColor}18`, color: accentColor }}
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>Resume</span>
                     </a>
                     <div className="flex items-center gap-1.5 text-[10px] text-yellow-500/80">
                       <Star className="w-3 h-3 fill-yellow-500/80" />

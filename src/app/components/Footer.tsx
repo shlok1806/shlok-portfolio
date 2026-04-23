@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, FileText } from "lucide-react";
+import { Github, Linkedin, Mail } from "lucide-react";
 
 export function Footer() {
   return (
@@ -54,16 +54,6 @@ export function Footer() {
             >
               <Github className="w-3.5 h-3.5" />
               GITHUB
-            </a>
-            <a
-              href="/resume.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-[11px] tracking-widest text-white transition-colors border border-white/30 hover:border-white px-3 py-2 bg-white/5 hover:bg-white/10"
-              style={{ fontFamily: "var(--font-condensed)" }}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              RESUME
             </a>
           </div>
         </div>
