@@ -3,6 +3,7 @@ import { Navigation } from "./components/Navigation";
 
 export default function Root() {
   const location = useLocation();
+  const isHome = location.pathname === "/";
 
   return (
     <div className="min-h-screen">

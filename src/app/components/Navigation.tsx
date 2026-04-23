@@ -20,11 +20,9 @@ export function Navigation() {
         <Link to="/" className="text-2xl tracking-tight" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>
           ST
         </Link>
-
         <div className="flex items-center gap-8">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
-
             return (
               <Link
                 key={item.path}

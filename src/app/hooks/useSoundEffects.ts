@@ -1,9 +1,7 @@
 import { useCallback, useRef, useEffect } from 'react';
 
-// Sound effect types
 type SoundEffect = 'hover' | 'click' | 'open' | 'close' | 'ambient';
 
-// Haptic patterns
 const hapticPatterns = {
   light: [10],
   medium: [20],

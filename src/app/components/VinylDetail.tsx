@@ -15,42 +15,12 @@ const albumThemes: Record<string, {
   textColor: string;
   bg: string;
 }> = {
-  projects: {
-    labelColor: '#EC243C',
-    accentColor: '#D4AF37',
-    textColor: '#FFFFFF',
-    bg: 'from-[#1a0508] via-[#0d0d0d] to-[#0a0a0a]',
-  },
-  experience: {
-    labelColor: '#F3CF8C',
-    accentColor: '#D4AF37',
-    textColor: '#000000',
-    bg: 'from-[#1a1508] via-[#0d0d0d] to-[#0a0a0a]',
-  },
-  skills: {
-    labelColor: '#4CAF50',
-    accentColor: '#2E7D32',
-    textColor: '#FFFFFF',
-    bg: 'from-[#051a08] via-[#0d0d0d] to-[#0a0a0a]',
-  },
-  education: {
-    labelColor: '#F48C54',
-    accentColor: '#F48C54',
-    textColor: '#FFFFFF',
-    bg: 'from-[#1a0e05] via-[#0d0d0d] to-[#0a0a0a]',
-  },
-  contact: {
-    labelColor: '#A8ADB3',
-    accentColor: '#E63946',
-    textColor: '#000000',
-    bg: 'from-[#0a0f14] via-[#0d0d0d] to-[#0a0a0a]',
-  },
-  blog: {
-    labelColor: '#D4AF37',
-    accentColor: '#FFD700',
-    textColor: '#000000',
-    bg: 'from-[#1a1505] via-[#0d0d0d] to-[#0a0a0a]',
-  },
+  projects: { labelColor: '#EC243C', accentColor: '#D4AF37', textColor: '#FFFFFF', bg: 'from-[#1a0508] via-[#0d0d0d] to-[#0a0a0a]' },
+  experience: { labelColor: '#F3CF8C', accentColor: '#D4AF37', textColor: '#000000', bg: 'from-[#1a1508] via-[#0d0d0d] to-[#0a0a0a]' },
+  skills: { labelColor: '#4CAF50', accentColor: '#2E7D32', textColor: '#FFFFFF', bg: 'from-[#051a08] via-[#0d0d0d] to-[#0a0a0a]' },
+  education: { labelColor: '#F48C54', accentColor: '#F48C54', textColor: '#FFFFFF', bg: 'from-[#1a0e05] via-[#0d0d0d] to-[#0a0a0a]' },
+  contact: { labelColor: '#A8ADB3', accentColor: '#E63946', textColor: '#000000', bg: 'from-[#0a0f14] via-[#0d0d0d] to-[#0a0a0a]' },
+  blog: { labelColor: '#D4AF37', accentColor: '#FFD700', textColor: '#000000', bg: 'from-[#1a1505] via-[#0d0d0d] to-[#0a0a0a]' },
 };
 
 function TrackCard({ track, index, theme, recordId }: {
@@ -65,84 +35,46 @@ function TrackCard({ track, index, theme, recordId }: {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.15 + index * 0.07 }}
       className={`relative rounded-sm border p-5 group transition-all duration-200 ${
-        track.featured
-          ? 'border-white/20 bg-white/[0.07] hover:bg-white/[0.11]'
-          : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]'
+        track.featured ? 'border-white/20 bg-white/[0.07] hover:bg-white/[0.11]' : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]'
       }`}
     >
       {track.featured && (
-        <div
-          className="absolute top-0 right-0 text-[9px] tracking-[0.2em] px-2 py-1 font-bold"
-          style={{ backgroundColor: theme.accentColor, color: '#000' }}
-        >
-          FEATURED
-        </div>
+        <div className="absolute top-0 right-0 text-[9px] tracking-[0.2em] px-2 py-1 font-bold" style={{ backgroundColor: theme.accentColor, color: '#000' }}>FEATURED</div>
       )}
       <div className="flex items-start gap-3 mb-3">
-        <span className="text-[10px] text-white/25 font-mono mt-0.5 min-w-[1.5rem]">
-          {String(index + 1).padStart(2, '0')}
-        </span>
+        <span className="text-[10px] text-white/25 font-mono mt-0.5 min-w-[1.5rem]">{String(index + 1).padStart(2, '0')}</span>
         <div className="flex-1 min-w-0">
-          <h3 className="text-white text-base leading-snug mb-1" style={{ fontWeight: 700 }}>
-            {track.title}
-          </h3>
+          <h3 className="text-white text-base leading-snug mb-1" style={{ fontWeight: 700 }}>{track.title}</h3>
           {track.date && (
             <div className="flex items-center gap-1.5 text-[11px] text-white/40 mb-2">
-              <Calendar className="w-3 h-3" />
-              <span>{track.date}</span>
+              <Calendar className="w-3 h-3" /><span>{track.date}</span>
             </div>
           )}
         </div>
       </div>
-      <p className="text-white/65 text-sm leading-relaxed mb-3 ml-9">
-        {track.description}
-      </p>
+      <p className="text-white/65 text-sm leading-relaxed mb-3 ml-9">{track.description}</p>
       {track.impact && (
         <div className="ml-9 mb-3">
-          <span
-            className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold"
-            style={{ backgroundColor: theme.accentColor + '22', color: theme.accentColor, border: `1px solid ${theme.accentColor}44` }}
-          >
-            ↑ {track.impact}
-          </span>
+          <span className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold" style={{ backgroundColor: theme.accentColor + '22', color: theme.accentColor, border: `1px solid ${theme.accentColor}44` }}>↑ {track.impact}</span>
         </div>
       )}
       {track.tech && track.tech.length > 0 && (
         <div className="flex flex-wrap gap-1.5 ml-9 mb-3">
           {track.tech.map((t) => (
-            <span
-              key={t}
-              className="text-[10px] px-2 py-0.5 rounded-sm border border-white/15 text-white/55 bg-white/5"
-            >
-              {t}
-            </span>
+            <span key={t} className="text-[10px] px-2 py-0.5 rounded-sm border border-white/15 text-white/55 bg-white/5">{t}</span>
           ))}
         </div>
       )}
       {track.links && (
         <div className="flex gap-2 ml-9 mt-3 flex-wrap">
           {track.links.repo && (
-            <a
-              href={track.links.repo}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 border border-white/20 text-white/70 hover:text-white hover:border-white/50 transition-all rounded-sm group/btn"
-            >
-              <Github className="w-3.5 h-3.5" />
-              <span>Repo</span>
-              <ArrowUpRight className="w-3 h-3 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+            <a href={track.links.repo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 border border-white/20 text-white/70 hover:text-white hover:border-white/50 transition-all rounded-sm group/btn">
+              <Github className="w-3.5 h-3.5" /><span>Repo</span><ArrowUpRight className="w-3 h-3 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
             </a>
           )}
           {track.links.demo && (
-            <a
-              href={track.links.demo}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 border border-white/20 text-white/70 hover:text-white hover:border-white/50 transition-all rounded-sm group/btn"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Live Demo</span>
-              <ArrowUpRight className="w-3 h-3 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+            <a href={track.links.demo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 border border-white/20 text-white/70 hover:text-white hover:border-white/50 transition-all rounded-sm group/btn">
+              <ExternalLink className="w-3.5 h-3.5" /><span>Live Demo</span><ArrowUpRight className="w-3 h-3 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
             </a>
           )}
         </div>
@@ -157,9 +89,7 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
@@ -203,40 +133,26 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
           <div className="flex items-center gap-4">
             <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: theme.labelColor }} />
             <div>
-              <div className="text-[9px] tracking-[0.4em] text-white/35 mb-0.5">
-                {record.catalogNumber} • NOW PLAYING
-              </div>
-              <h2 className="text-2xl md:text-3xl text-white tracking-tight" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>
-                {record.title}
-              </h2>
+              <div className="text-[9px] tracking-[0.4em] text-white/35 mb-0.5">{record.catalogNumber} • NOW PLAYING</div>
+              <h2 className="text-2xl md:text-3xl text-white tracking-tight" style={{ fontFamily: 'var(--font-gothic)', fontWeight: 900 }}>{record.title}</h2>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <span className="hidden md:block text-[10px] tracking-[0.3em] text-white/30">ESC TO CLOSE</span>
-            <button
-              onClick={onClose}
-              className="flex items-center gap-2 text-white/50 hover:text-white transition-colors group"
-              aria-label="Close"
-            >
+            <button onClick={onClose} className="flex items-center gap-2 text-white/50 hover:text-white transition-colors group" aria-label="Close">
               <span className="hidden md:block text-xs tracking-widest group-hover:text-white/80 transition-colors">CLOSE</span>
               <X className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto px-6 md:px-10 py-8"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}
-        >
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 md:px-10 py-8" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
           <div className="max-w-3xl mx-auto space-y-4">
 
             {record.id === 'experience' && (
               <>
                 <div className="text-[10px] tracking-[0.4em] text-white/35 mb-6">WORK HISTORY</div>
-                {record.tracks.map((track, i) => (
-                  <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />
-                ))}
+                {record.tracks.map((track, i) => <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />)}
               </>
             )}
 
@@ -248,9 +164,7 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                       <span className="text-[10px] tracking-[0.4em] text-white/35">PLATINUM CUTS</span>
                       <div className="flex-1 h-px bg-white/10" />
                     </div>
-                    {featuredTracks.map((track, i) => (
-                      <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />
-                    ))}
+                    {featuredTracks.map((track, i) => <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />)}
                   </>
                 )}
                 {otherTracks.length > 0 && (
@@ -259,9 +173,7 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                       <span className="text-[10px] tracking-[0.4em] text-white/35">DEEP CUTS</span>
                       <div className="flex-1 h-px bg-white/10" />
                     </div>
-                    {otherTracks.map((track, i) => (
-                      <TrackCard key={i} track={{ ...track, featured: false }} index={featuredTracks.length + i} theme={theme} recordId={record.id} />
-                    ))}
+                    {otherTracks.map((track, i) => <TrackCard key={i} track={{ ...track, featured: false }} index={featuredTracks.length + i} theme={theme} recordId={record.id} />)}
                   </>
                 )}
               </>
@@ -272,24 +184,11 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                 <div className="text-[10px] tracking-[0.4em] text-white/35 mb-6">TECHNICAL PROFICIENCIES</div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {record.tracks.map((track, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 + i * 0.08 }}
-                      className="border border-white/10 bg-white/[0.04] p-5 rounded-sm hover:bg-white/[0.07] transition-all"
-                    >
-                      <div className="text-[10px] tracking-[0.3em] mb-3 font-bold" style={{ color: theme.labelColor }}>
-                        {track.title.toUpperCase()}
-                      </div>
+                    <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.08 }} className="border border-white/10 bg-white/[0.04] p-5 rounded-sm hover:bg-white/[0.07] transition-all">
+                      <div className="text-[10px] tracking-[0.3em] mb-3 font-bold" style={{ color: theme.labelColor }}>{track.title.toUpperCase()}</div>
                       <div className="flex flex-wrap gap-2">
                         {track.description.split(', ').map((skill) => (
-                          <span
-                            key={skill}
-                            className="text-xs px-2.5 py-1 rounded-sm border border-white/15 text-white/70 bg-white/5 hover:border-white/30 hover:text-white transition-all"
-                          >
-                            {skill.trim()}
-                          </span>
+                          <span key={skill} className="text-xs px-2.5 py-1 rounded-sm border border-white/15 text-white/70 bg-white/5 hover:border-white/30 hover:text-white transition-all">{skill.trim()}</span>
                         ))}
                       </div>
                     </motion.div>
@@ -301,9 +200,7 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
             {record.id === 'education' && (
               <>
                 <div className="text-[10px] tracking-[0.4em] text-white/35 mb-6">ACADEMIC BACKGROUND</div>
-                {record.tracks.map((track, i) => (
-                  <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />
-                ))}
+                {record.tracks.map((track, i) => <TrackCard key={i} track={track} index={i} theme={theme} recordId={record.id} />)}
               </>
             )}
 
@@ -333,30 +230,20 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                     <div className="flex items-start gap-4">
                       <div className="text-3xl">{track.featured ? '🥈' : '🏆'}</div>
                       <div className="flex-1">
-                        <h3 className="text-white text-lg mb-1" style={{ fontWeight: 700 }}>
-                          {track.title.replace(/^[🥈🏆]\s*/, '')}
-                        </h3>
+                        <h3 className="text-white text-lg mb-1" style={{ fontWeight: 700 }}>{track.title.replace(/^[🥈🏆]\s*/, '')}</h3>
                         {track.date && (
                           <div className="flex items-center gap-1.5 text-[11px] text-white/40 mb-2">
-                            <Calendar className="w-3 h-3" />
-                            <span>{track.date}</span>
+                            <Calendar className="w-3 h-3" /><span>{track.date}</span>
                           </div>
                         )}
                         <p className="text-white/65 text-sm leading-relaxed mb-3">{track.description}</p>
                         {track.impact && (
-                          <span
-                            className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold"
-                            style={{ backgroundColor: '#FFD70022', color: '#FFD700', border: '1px solid #FFD70044' }}
-                          >
-                            {track.impact}
-                          </span>
+                          <span className="inline-block text-[10px] tracking-wider px-2.5 py-1 rounded-sm font-bold" style={{ backgroundColor: '#FFD70022', color: '#FFD700', border: '1px solid #FFD70044' }}>{track.impact}</span>
                         )}
                         {track.tech && (
                           <div className="flex flex-wrap gap-1.5 mt-3">
                             {track.tech.map((t) => (
-                              <span key={t} className="text-[10px] px-2 py-0.5 rounded-sm border border-yellow-500/20 text-yellow-400/60 bg-yellow-500/5">
-                                {t}
-                              </span>
+                              <span key={t} className="text-[10px] px-2 py-0.5 rounded-sm border border-yellow-500/20 text-yellow-400/60 bg-yellow-500/5">{t}</span>
                             ))}
                           </div>
                         )}
@@ -382,12 +269,7 @@ export function VinylDetail({ record, onClose }: VinylDetailProps) {
                     return (
                       <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.08 }}>
                         {track.links?.demo ? (
-                          <a
-                            href={track.links.demo}
-                            target={track.links.demo.startsWith('http') ? '_blank' : undefined}
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-4 border border-white/10 bg-white/[0.04] p-5 rounded-sm hover:bg-white/[0.08] hover:border-white/25 transition-all group"
-                          >
+                          <a href={track.links.demo} target={track.links.demo.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="flex items-center gap-4 border border-white/10 bg-white/[0.04] p-5 rounded-sm hover:bg-white/[0.08] hover:border-white/25 transition-all group">
                             <div style={{ color: theme.labelColor }}>{iconMap[track.title]}</div>
                             <div className="flex-1 min-w-0">
                               <div className="text-[10px] tracking-widest text-white/35 mb-1">{track.title.toUpperCase()}</div>
