@@ -3,6 +3,7 @@ import { router } from "./routes";
 import { useState, useEffect } from "react";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { AnimatePresence } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
 
 function App() {
   const [showLoading, setShowLoading] = useState(true);
@@ -30,6 +31,7 @@ function App() {
         )}
       </AnimatePresence>
       <RouterProvider router={router} />
+      <Analytics />
     </>
   );
 }
