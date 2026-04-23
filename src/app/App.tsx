@@ -1,20 +1,35 @@
-import { RouterProvider } from "react-router";
-import { router } from "./routes";
-import { EraProvider } from "./context/EraContext";
-import { useState, useEffect } from "react";
-import { LoadingScreen } from "./components/LoadingScreen";
-import { AnimatePresence } from "motion/react";
+import { RouterProvider } from 'react-router';
+import { router } from './routes';
+import { EraProvider } from './context/EraContext';
+import { PortfolioProvider } from './context/PortfolioContext';
+import { useState, useEffect } from 'react';
+import { LoadingScreen } from './components/LoadingScreen';
+import { AnimatePresence } from 'motion/react';
+import { CustomCursor } from './components/CustomCursor';
+import { CommandPalette } from './components/CommandPalette';
+import { NowPlayingBar } from './components/NowPlayingBar';
+import { Toaster } from 'sonner';
+import Lenis from 'lenis';
 
 function App() {
   const [showLoading, setShowLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
+  // Lenis smooth scroll
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.15,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+    let raf: number;
+    const animate = (time: number) => { lenis.raf(time); raf = requestAnimationFrame(animate); };
+    raf = requestAnimationFrame(animate);
+    return () => { cancelAnimationFrame(raf); lenis.destroy(); };
+  }, []);
+
   useEffect(() => {
     const hasSeenLoading = sessionStorage.getItem('hasSeenLoading');
-    if (hasSeenLoading) {
-      setShowLoading(false);
-      setHasLoadedOnce(true);
-    }
+    if (hasSeenLoading) { setShowLoading(false); setHasLoadedOnce(true); }
   }, []);
 
   const handleLoadingComplete = () => {
@@ -24,14 +39,30 @@ function App() {
   };
 
   return (
-    <EraProvider>
-      <AnimatePresence mode="wait">
-        {showLoading && !hasLoadedOnce && (
-          <LoadingScreen onComplete={handleLoadingComplete} />
-        )}
-      </AnimatePresence>
-      <RouterProvider router={router} />
-    </EraProvider>
+    <PortfolioProvider>
+      <EraProvider>
+        <CustomCursor />
+        <AnimatePresence mode="wait">
+          {showLoading && !hasLoadedOnce && <LoadingScreen onComplete={handleLoadingComplete} />}
+        </AnimatePresence>
+        <RouterProvider router={router} />
+        <CommandPalette />
+        <NowPlayingBar />
+        <Toaster
+          position="bottom-left"
+          toastOptions={{
+            style: {
+              background: '#0a0a0a',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#fff',
+              fontFamily: 'var(--font-body)',
+              fontSize: '12px',
+              letterSpacing: '0.05em',
+            },
+          }}
+        />
+      </EraProvider>
+    </PortfolioProvider>
   );
 }
 
