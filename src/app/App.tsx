@@ -1,6 +1,5 @@
 import { RouterProvider } from "react-router";
 import { router } from "./routes";
-import { EraProvider } from "./context/EraContext";
 import { useState, useEffect } from "react";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { AnimatePresence } from "motion/react";
@@ -24,14 +23,14 @@ function App() {
   };
 
   return (
-    <EraProvider>
+    <>
       <AnimatePresence mode="wait">
         {showLoading && !hasLoadedOnce && (
           <LoadingScreen onComplete={handleLoadingComplete} />
         )}
       </AnimatePresence>
       <RouterProvider router={router} />
-    </EraProvider>
+    </>
   );
 }
 

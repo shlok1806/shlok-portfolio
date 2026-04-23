@@ -1,11 +1,11 @@
 import { motion, AnimatePresence, useMotionValue, useSpring } from "motion/react";
 import { Github, Linkedin, Volume2, VolumeX, Star } from "lucide-react";
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { records } from "../data/records";
 import { VinylDetail } from "../components/VinylDetail";
-import { EraSwitch } from "../components/EraSwitch";
 import { useSoundEffects } from "../hooks/useSoundEffects";
-import { useEra } from "../context/EraContext";
+
+const ACCENT = '#EC243C';
 
 interface AlbumTile {
   id: string;
@@ -31,14 +31,6 @@ const STATS = [
   { value: 'UIUC', label: "CS + Econ '28" },
 ];
 
-const eraAccentMap: Record<string, string> = {
-  industrial: '#DC2626',
-  earth:      '#D97706',
-  vibrant:    '#EC4899',
-  stark:      '#10B981',
-  emotional:  '#06B6D4',
-};
-
 // Stagger variants for the hero name
 const containerVariants = {
   hidden: {},
@@ -57,13 +49,11 @@ function AlbumTileComponent({
   index,
   onClick,
   onHover,
-  accentColor,
 }: {
   tile: AlbumTile;
   index: number;
   onClick: () => void;
   onHover?: () => void;
-  accentColor: string;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -277,7 +267,7 @@ function AlbumTileComponent({
         className="relative w-full h-full shadow-lg overflow-hidden flex flex-col items-center justify-center p-6"
         style={{
           boxShadow: isHovered
-            ? `0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px ${accentColor}30`
+            ? `0 24px 48px rgba(0,0,0,0.4), 0 0 0 1px ${ACCENT}30`
             : '0 8px 16px rgba(0,0,0,0.2)',
         }}
       >
@@ -315,8 +305,6 @@ function AlbumTileComponent({
 export default function Home() {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const { currentEra } = useEra();
-  const accentColor = useMemo(() => eraAccentMap[currentEra] ?? '#EC243C', [currentEra]);
 
   const selectedRecord = records.find((r) => r.id === selectedRecordId);
   const { initializeAudio, onTileHover, onTileClick, onModalOpen, onModalClose } = useSoundEffects();
@@ -357,7 +345,7 @@ export default function Home() {
     <>
       {/* Ambient background blobs */}
       <div className="ambient-bg">
-        <div className="ambient-blob ambient-blob-1" style={{ background: `radial-gradient(circle, ${accentColor} 0%, transparent 70%)` }} />
+        <div className="ambient-blob ambient-blob-1" style={{ background: `radial-gradient(circle, ${ACCENT} 0%, transparent 70%)` }} />
         <div className="ambient-blob ambient-blob-2" />
       </div>
 
@@ -415,7 +403,7 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <div
                   className="w-1.5 h-1.5 rounded-full animate-pulse"
-                  style={{ backgroundColor: accentColor }}
+                  style={{ backgroundColor: ACCENT }}
                 />
                 <span className="text-[8px] font-mono text-neutral-600">ONLINE</span>
               </div>
@@ -466,7 +454,7 @@ export default function Home() {
                     style={{ fontFamily: 'var(--font-condensed)' }}
                   >
                     <span>CATALOG NO. 0001</span>
-                    <span className="inline-block w-1 h-1 rounded-full" style={{ backgroundColor: accentColor }} />
+                    <span className="inline-block w-1 h-1 rounded-full" style={{ backgroundColor: ACCENT }} />
                     <span>ARCHIVE MODE</span>
                   </motion.div>
 
@@ -536,7 +524,7 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.05 }}
                     className="pl-4 py-2 border-l-2"
-                    style={{ borderColor: accentColor }}
+                    style={{ borderColor: ACCENT }}
                   >
                     <p
                       className="text-sm text-neutral-400 mb-1"
@@ -589,7 +577,6 @@ export default function Home() {
                       index={index}
                       onClick={() => handleTileClick(tile.id)}
                       onHover={handleTileHover}
-                      accentColor={accentColor}
                     />
                   ))}
                 </div>
@@ -600,8 +587,6 @@ export default function Home() {
       </div>
 
       {/* Era switch — bottom-right, visible on home */}
-      <EraSwitch />
-
       <AnimatePresence>
         {selectedRecord && (
           <VinylDetail record={selectedRecord} onClose={handleModalClose} />

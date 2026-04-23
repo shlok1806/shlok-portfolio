@@ -1,7 +1,6 @@
 import { motion, useMotionValue, useTransform } from "motion/react";
 import { Record, eraThemes } from "../data/records";
 import { X, ExternalLink, Github, MapPin, Calendar, Trophy, Mail, Phone, Linkedin, ArrowUpRight } from "lucide-react";
-import { useEra } from "../context/EraContext";
 import { useEffect, useRef } from "react";
 
 interface VinylDetailProps {
@@ -81,8 +80,7 @@ function TrackCard({ track, index, theme, recordId }: {
 }
 
 export function VinylDetail({ record, onClose }: VinylDetailProps) {
-  const { currentEra } = useEra();
-  const theme = albumThemes[record.id] || { ...eraThemes[currentEra], bg: 'from-[#0d0d0d] to-[#0a0a0a]' };
+  const theme = albumThemes[record.id] || { ...eraThemes['vibrant'], bg: 'from-[#0d0d0d] to-[#0a0a0a]' };
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
