@@ -32,17 +32,45 @@ const socialLinks = [
 const projects = [
   {
     name: "raft-kv",
-    desc: "Raft consensus from scratch in Go — leader election, log replication, snapshotting, and fast log backup supporting a fault-tolerant distributed key-value store. Validated with chaos tests across concurrent clients.",
+    desc: "Raft consensus from scratch in Go — leader election, log replication, snapshotting, fast log backup, and exactly-once semantics. Chaos-tested across concurrent clients with zero data loss.",
     stack: ["Go"],
     year: "Apr 2026",
     href: "https://github.com/shlok1806/raft-kv",
   },
   {
     name: "Limit Order Book",
-    desc: "Thread-safe C++20 limit order book with 5 order types and FIFO price-time priority matching. O(1) cancellation via per-order iterators; incremental LevelData cache gives ~500x FOK pre-check improvement.",
+    desc: "Thread-safe C++20 LOB with 5 order types and FIFO price-time priority matching. O(1) cancellation via per-order iterators; incremental LevelData cache gives ~500x FOK pre-check improvement.",
     stack: ["C++20", "CMake", "Catch2"],
     year: "Mar 2026",
-    href: "https://github.com/shlok1806/limit-order-book",
+    href: "https://github.com/shlok1806/OrderBook",
+  },
+  {
+    name: "Scroll Royale",
+    desc: "1v1 competitive iOS doomscrolling game built at HackIllinois. Real-time telemetry scoring over Supabase, matchmaking, live leaderboard via PostgreSQL RPC, and a TTL-based feed cache with stale-while-revalidate.",
+    stack: ["SwiftUI", "Combine", "Supabase", "PostgreSQL"],
+    year: "Feb 2026",
+    href: "https://github.com/shlok1806/ScrollClash",
+  },
+  {
+    name: "Blueprint QA",
+    desc: "AI-powered construction drawing QA tool — multimodal Claude API flags missing tags, dimension mismatches, and unlabeled elements across PDFs via a multi-stage OCR pipeline. Containerized with Azure Blob storage support.",
+    stack: ["FastAPI", "SvelteKit", "Claude API", "Docker", "Azure"],
+    year: "2025",
+    href: "https://github.com/shlok1806/blueprint-qa",
+  },
+  {
+    name: "FeeLens",
+    desc: "Stripe fee analytics dashboard surfacing hidden costs — Amex premiums, international surcharges, refund fee retention, dispute losses — with per-transaction breakdown and Claude-generated optimization recommendations.",
+    stack: ["Next.js", "TypeScript", "Stripe", "Supabase", "Claude API"],
+    year: "2025",
+    href: "https://github.com/shlok1806/feelens",
+  },
+  {
+    name: "VibeSafe",
+    desc: "GitHub Action that uses Claude to scan PRs for exposed secrets, insecure configs, and vulnerable dependencies, posting structured security findings as PR comments. Configurable severity thresholds and ignore patterns.",
+    stack: ["TypeScript", "GitHub Actions", "Claude API"],
+    year: "2025",
+    href: "https://github.com/shlok1806/vibesafe",
   },
 ];
 

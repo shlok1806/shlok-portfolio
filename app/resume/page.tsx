@@ -193,11 +193,55 @@ export default function Resume() {
                 name: "Limit Order Book",
                 stack: "C++20, CMake, Catch2",
                 date: "Mar 2026",
-                href: "https://github.com/shlok1806/limit-order-book",
+                href: "https://github.com/shlok1806/OrderBook",
                 bullets: [
                   "Engineered a thread-safe C++20 limit order book with 5 order types (GTC, FOK, FAK, GFD, Market) and FIFO price-time priority matching.",
                   "Achieved O(1) cancellation by storing per-order iterators into price-level linked lists, eliminating linear scans across resting orders.",
                   "Built an incremental LevelData cache reducing FOK pre-check complexity from O(N) to O(P), a ~500x improvement for sparse price-level books.",
+                ],
+              },
+              {
+                name: "Scroll Royale",
+                stack: "SwiftUI, Combine, AVKit, Supabase, PostgreSQL",
+                date: "Feb 2026",
+                href: "https://github.com/shlok1806/ScrollClash",
+                bullets: [
+                  "Built a 1v1 competitive iOS doomscrolling game at HackIllinois using SwiftUI and Supabase with real-time telemetry-driven scoring.",
+                  "Implemented matchmaking and live leaderboard sync over Supabase PostgreSQL RPC functions with JWT auth and proactive token refresh.",
+                  "Designed a TTL-based feed cache with stale-while-revalidate and adaptive score polling to minimize cold-start latency.",
+                ],
+              },
+              {
+                name: "Blueprint QA",
+                stack: "FastAPI, SvelteKit, Claude API, PostgreSQL, Docker, Azure",
+                date: "2025",
+                href: "https://github.com/shlok1806/blueprint-qa",
+                bullets: [
+                  "Built an AI-powered construction drawing QA tool using FastAPI and Claude's multimodal API, automatically flagging missing tags, dimension mismatches, and unlabeled elements across uploaded PDFs.",
+                  "Engineered a multi-stage OCR pipeline using pdf2image and pytesseract to extract text from engineering drawings, feeding structured page data into Claude for per-page issue detection.",
+                  "Designed a pluggable storage backend supporting both local filesystem and Azure Blob Storage, and containerized the full stack in a multi-stage Docker build serving the SvelteKit SPA and API from a single origin.",
+                ],
+              },
+              {
+                name: "FeeLens",
+                stack: "Next.js, TypeScript, Stripe, Supabase, Claude API",
+                date: "2025",
+                href: "https://github.com/shlok1806/feelens",
+                bullets: [
+                  "Built a Stripe fee analytics dashboard in Next.js that surfaces hidden costs — Amex premiums, international surcharges, refund fee retention, and dispute losses — giving startups a true effective rate breakdown by card brand, geography, and payment method.",
+                  "Engineered a Stripe data pipeline using paginated balance_transactions fetching with concurrent charge enrichment via p-limit, computing per-transaction fee leakage and persisting structured records to Supabase with row-level security.",
+                  "Integrated Claude API to generate ranked, data-driven fee optimization recommendations cached by SHA-256 input hash, with AES-256-GCM encryption of Stripe keys at rest.",
+                ],
+              },
+              {
+                name: "VibeSafe",
+                stack: "TypeScript, GitHub Actions, Claude API",
+                date: "2025",
+                href: "https://github.com/shlok1806/vibesafe",
+                bullets: [
+                  "Built a GitHub Action in TypeScript that uses Claude to automatically scan pull requests for exposed secrets, insecure configs, and vulnerable dependencies, posting structured security findings as PR comments.",
+                  "Implemented multi-category static analysis covering hardcoded API keys, high-entropy strings, permissive CORS configs, and missing HTTP security headers across any language codebase.",
+                  "Designed the action as a reusable workflow with configurable severity thresholds and ignore patterns, enabling teams to enforce security gates on every PR without modifying existing CI pipelines.",
                 ],
               },
             ].map((p) => (
