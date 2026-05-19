@@ -91,7 +91,7 @@ const experience = [
     period: "Aug 2024 – Present",
     role: "Software Developer",
     company: "Disruption Lab @ UIUC",
-    desc: "Built a Python XSD parser for a 44-jurisdiction tax schema pipeline (CSC Global). Previously developed a Flask + Neo4j REST API enabling 40+ users to visualize project-resource dependency networks (DSRS).",
+    desc: "Built a Python XSD parser for a 44-jurisdiction tax schema pipeline (Fortune 500 financial services client). Previously developed a Flask + Neo4j REST API enabling 40+ users to visualize project-resource dependency networks (DSRS).",
   },
   {
     period: "May – Aug 2024",

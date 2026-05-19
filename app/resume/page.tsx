@@ -100,7 +100,7 @@ export default function Resume() {
                 company: "Disruption Lab @ UIUC · Champaign, IL",
                 subRoles: [
                   {
-                    name: "CSC Global",
+                    name: "Fortune 500 financial services client",
                     period: "Jan – Apr 2026",
                     bullets: [
                       "Built a Python-based XSD parser for a 44-jurisdiction tax schema pipeline using recursive lxml traversal and XLSX business rules ingestion.",
