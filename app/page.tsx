@@ -161,20 +161,18 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="mt-8 flex items-center gap-5">
-            {socialLinks.map(({ label, href, icon }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                className="text-white/25 hover:text-white/70 transition-colors"
-              >
-                {icon}
-              </a>
-            ))}
-            <span className="text-white/15 text-xs font-mono">shlokthakkar1806@gmail.com</span>
+          <div className="mt-8 flex items-center gap-6">
+            <a href="https://github.com/shlok1806" target="_blank" rel="noopener noreferrer"
+              className="text-white/25 hover:text-white/70 text-[11px] font-mono tracking-[0.08em] transition-colors">
+              GitHub
+            </a>
+            <a href="https://linkedin.com/in/shlok-thakkar/" target="_blank" rel="noopener noreferrer"
+              className="text-white/25 hover:text-white/70 text-[11px] font-mono tracking-[0.08em] transition-colors">
+              LinkedIn
+            </a>
+            <span className="text-white/15 text-[11px] font-mono tracking-[0.08em]">
+              shlokthakkar1806@gmail.com
+            </span>
           </div>
         </div>
       </section>
@@ -203,11 +201,11 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-white/45 text-sm leading-relaxed mb-6">{p.desc}</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {p.stack.map((s) => (
                   <span
                     key={s}
-                    className="text-[11px] font-mono text-white/30 border border-white/[0.08] rounded px-2 py-0.5"
+                    className="text-[10px] font-mono text-white/30 bg-white/[0.05] border border-white/[0.08] rounded-sm px-2 py-[3px]"
                   >
                     {s}
                   </span>
@@ -223,18 +221,15 @@ export default function Home() {
         <motion.p {...fadeUp()} className={SECTION_LABEL}>
           02 — Experience
         </motion.p>
-        <div className="space-y-10 max-w-2xl">
+        <div className="space-y-10 max-w-[900px]">
           {experience.map((e, i) => (
             <motion.div key={e.company} {...fadeUp(i * 0.06)} className="flex gap-8">
-              <div className="w-32 shrink-0 pt-0.5">
+              <div className="w-[140px] shrink-0 pt-0.5">
                 <span className="text-white/20 text-xs font-mono">{e.period}</span>
               </div>
               <div>
-                <div className="flex items-baseline flex-wrap gap-x-2 mb-2">
-                  <h3 className="text-white text-sm font-medium">{e.role}</h3>
-                  <span className="text-white/20 text-xs">·</span>
-                  <span className="text-white/35 text-xs font-mono">{e.company}</span>
-                </div>
+                <h3 className="text-white text-sm font-medium mb-1">{e.role}</h3>
+                <p className="text-white/35 text-xs font-mono mb-2">{e.company}</p>
                 <p className="text-white/45 text-sm leading-relaxed">{e.desc}</p>
               </div>
             </motion.div>
@@ -247,17 +242,17 @@ export default function Home() {
         <motion.p {...fadeUp()} className={SECTION_LABEL}>
           03 — Skills
         </motion.p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 max-w-2xl">
+        <div className="flex flex-wrap gap-16">
           {skills.map((group, gi) => (
             <motion.div key={group.category} {...fadeUp(gi * 0.08)}>
-              <p className="text-white/20 text-xs font-mono tracking-widest uppercase mb-4">
+              <p className="text-white/20 text-[10px] font-mono tracking-[0.2em] uppercase mb-4">
                 {group.category}
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {group.items.map((item) => (
                   <span
                     key={item}
-                    className="text-xs font-mono text-white/50 border border-white/[0.08] rounded px-2.5 py-1 hover:border-accent/30 hover:text-white/70 transition-all cursor-default"
+                    className="text-[11px] font-mono text-white/50 bg-white/[0.05] border border-white/[0.08] rounded-sm px-[10px] py-[5px] hover:border-accent/30 hover:text-white/70 transition-all cursor-default"
                   >
                     {item}
                   </span>
