@@ -151,7 +151,7 @@ export default function Home() {
           </p>
 
           {/* Recruiter badges — accent-variable driven */}
-          <div className="mt-6 flex flex-wrap items-center gap-2">
+          <div className="mt-6 flex flex-wrap items-start gap-2">
             <span className="inline-flex items-center gap-1.5 border border-accent/35 bg-accent/[0.08] px-3 py-1 text-[11px] font-mono tracking-[0.15em] text-accent">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               OPEN TO SWE INTERNSHIPS 2026
@@ -242,7 +242,7 @@ export default function Home() {
         <motion.p {...fadeUp()} className={SECTION_LABEL}>
           03 — Skills
         </motion.p>
-        <div className="flex flex-wrap gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16">
           {skills.map((group, gi) => (
             <motion.div key={group.category} {...fadeUp(gi * 0.08)}>
               <p className="text-white/20 text-[10px] font-mono tracking-[0.2em] uppercase mb-4">
