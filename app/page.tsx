@@ -136,7 +136,19 @@ export default function Home() {
             services under real constraints. Currently at UIUC (CS + Economics +
             Statistics, GPA 3.97), graduating May 2027.
           </p>
-          <div className="mt-10 flex items-center gap-5">
+
+          {/* Recruiter badges */}
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 border border-emerald-500/35 bg-emerald-500/8 px-3 py-1 text-[11px] font-mono tracking-[0.15em] text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              OPEN TO SWE INTERNSHIPS 2026
+            </span>
+            <span className="inline-flex items-center gap-1.5 border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-mono tracking-[0.12em] text-white/35">
+              📍 Champaign, IL · open to relocation
+            </span>
+          </div>
+
+          <div className="mt-8 flex items-center gap-5">
             {socialLinks.map(({ label, href, icon }) => (
               <a
                 key={label}
@@ -149,6 +161,7 @@ export default function Home() {
                 {icon}
               </a>
             ))}
+            <span className="text-white/15 text-xs font-mono">shlokthakkar1806@gmail.com</span>
           </div>
         </div>
       </section>
