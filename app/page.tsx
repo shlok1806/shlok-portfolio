@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "motion/react";
+
 const socialLinks = [
   {
     label: "GitHub",
@@ -116,10 +120,19 @@ const skills = [
   },
 ];
 
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 12 },
+  whileInView: { opacity: 1, y: 0 } as const,
+  viewport: { once: true, margin: "-40px" },
+  transition: { duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] as const },
+});
+
+const SECTION_LABEL = "text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-12 border-l-2 border-accent/50 pl-3";
+
 export default function Home() {
   return (
     <main className="min-h-screen pt-14">
-      {/* Hero */}
+      {/* Hero — loads instantly, no entrance delay */}
       <section className="flex flex-col justify-center px-8 lg:px-24 py-20 min-h-[calc(100vh-56px)]">
         <div className="max-w-xl">
           <h1 className="text-[clamp(52px,6.5vw,88px)] font-bold leading-[0.95] tracking-tight">
@@ -137,10 +150,10 @@ export default function Home() {
             Statistics, GPA 3.97), graduating May 2027.
           </p>
 
-          {/* Recruiter badges */}
+          {/* Recruiter badges — accent-variable driven */}
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 border border-emerald-500/35 bg-emerald-500/8 px-3 py-1 text-[11px] font-mono tracking-[0.15em] text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 border border-accent/35 bg-accent/[0.08] px-3 py-1 text-[11px] font-mono tracking-[0.15em] text-accent">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               OPEN TO SWE INTERNSHIPS 2026
             </span>
             <span className="inline-flex items-center gap-1.5 border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-mono tracking-[0.12em] text-white/35">
@@ -168,20 +181,21 @@ export default function Home() {
 
       {/* Projects */}
       <section id="projects" className="px-8 lg:px-24 py-24 border-t border-white/[0.06]">
-        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-12">
+        <motion.p {...fadeUp()} className={SECTION_LABEL}>
           01 — Projects
-        </p>
+        </motion.p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.06]">
-          {projects.map((p) => (
-            <a
+          {projects.map((p, i) => (
+            <motion.a
               key={p.name}
               href={p.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#0a0a0a] p-8 hover:bg-white/[0.025] transition-colors"
+              {...fadeUp(i * 0.04)}
+              className="group bg-[#0a0a0a] p-8 hover:bg-accent/[0.04] transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
-                <h3 className="font-mono text-white font-bold text-sm tracking-wide">
+                <h3 className="font-mono text-white font-bold text-sm tracking-wide group-hover:text-accent transition-colors">
                   {p.name}
                 </h3>
                 <span className="text-white/20 text-xs font-mono shrink-0 ml-4">
@@ -199,19 +213,19 @@ export default function Home() {
                   </span>
                 ))}
               </div>
-            </a>
+            </motion.a>
           ))}
         </div>
       </section>
 
       {/* Experience */}
       <section id="experience" className="px-8 lg:px-24 py-24 border-t border-white/[0.06]">
-        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-12">
+        <motion.p {...fadeUp()} className={SECTION_LABEL}>
           02 — Experience
-        </p>
+        </motion.p>
         <div className="space-y-10 max-w-2xl">
-          {experience.map((e) => (
-            <div key={e.company} className="flex gap-8">
+          {experience.map((e, i) => (
+            <motion.div key={e.company} {...fadeUp(i * 0.06)} className="flex gap-8">
               <div className="w-32 shrink-0 pt-0.5">
                 <span className="text-white/20 text-xs font-mono">{e.period}</span>
               </div>
@@ -223,19 +237,19 @@ export default function Home() {
                 </div>
                 <p className="text-white/45 text-sm leading-relaxed">{e.desc}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
       {/* Skills */}
       <section id="skills" className="px-8 lg:px-24 py-24 border-t border-white/[0.06]">
-        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-12">
+        <motion.p {...fadeUp()} className={SECTION_LABEL}>
           03 — Skills
-        </p>
+        </motion.p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 max-w-2xl">
-          {skills.map((group) => (
-            <div key={group.category}>
+          {skills.map((group, gi) => (
+            <motion.div key={group.category} {...fadeUp(gi * 0.08)}>
               <p className="text-white/20 text-xs font-mono tracking-widest uppercase mb-4">
                 {group.category}
               </p>
@@ -243,23 +257,23 @@ export default function Home() {
                 {group.items.map((item) => (
                   <span
                     key={item}
-                    className="text-xs font-mono text-white/50 border border-white/[0.08] rounded px-2.5 py-1"
+                    className="text-xs font-mono text-white/50 border border-white/[0.08] rounded px-2.5 py-1 hover:border-accent/30 hover:text-white/70 transition-all cursor-default"
                   >
                     {item}
                   </span>
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
       {/* Education */}
       <section id="education" className="px-8 lg:px-24 py-24 border-t border-white/[0.06]">
-        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-12">
+        <motion.p {...fadeUp()} className={SECTION_LABEL}>
           04 — Education
-        </p>
-        <div className="flex gap-8 max-w-2xl">
+        </motion.p>
+        <motion.div {...fadeUp(0.1)} className="flex gap-8 max-w-2xl">
           <div className="w-32 shrink-0 pt-0.5">
             <span className="text-white/20 text-xs font-mono">2023 – 2027</span>
           </div>
@@ -278,7 +292,7 @@ export default function Home() {
               database systems, operating systems, and econometrics.
             </p>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Footer */}

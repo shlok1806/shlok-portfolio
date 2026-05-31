@@ -24,8 +24,10 @@ export default function Nav() {
             <li key={href}>
               <Link
                 href={href}
-                className={`text-xs font-mono tracking-widest uppercase transition-colors ${
-                  isActive ? "text-white" : "text-white/35 hover:text-white/70"
+                className={`text-xs font-mono tracking-widest uppercase transition-colors pb-1 ${
+                  isActive
+                    ? "text-white border-b border-[rgb(var(--accent))]"
+                    : "text-white/35 hover:text-white/70"
                 }`}
               >
                 {label}

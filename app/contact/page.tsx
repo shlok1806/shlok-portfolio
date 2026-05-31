@@ -13,7 +13,7 @@ export default function Contact() {
   return (
     <main className="min-h-screen pt-14">
       <section className="px-8 lg:px-24 pt-20 pb-12 border-b border-white/[0.06]">
-        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-6">
+        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-6 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
           Get In Touch
         </p>
         <h1 className="text-[clamp(48px,6vw,80px)] font-bold leading-[0.95] tracking-tight">
@@ -29,7 +29,7 @@ export default function Contact() {
         {/* Links */}
         <div className="space-y-10">
           <div>
-            <p className="text-white/20 text-xs font-mono tracking-widest uppercase mb-5">
+            <p className="text-white/20 text-xs font-mono tracking-widest uppercase mb-5 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
               Links
             </p>
             <div className="space-y-4">
@@ -68,7 +68,7 @@ export default function Contact() {
           </div>
 
           <div className="border-t border-white/[0.06] pt-10">
-            <p className="text-white/20 text-xs font-mono tracking-widest uppercase mb-4">
+            <p className="text-white/20 text-xs font-mono tracking-widest uppercase mb-4 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
               Availability
             </p>
             <p className="text-white/45 text-sm leading-relaxed">
@@ -95,7 +95,7 @@ export default function Contact() {
                   required
                   type="text"
                   placeholder="Your name"
-                  className="w-full bg-transparent border border-white/[0.1] rounded-lg px-4 py-3 text-sm text-white placeholder-white/15 focus:outline-none focus:border-white/25 transition-colors"
+                  className="w-full bg-transparent border border-white/[0.1] rounded-lg px-4 py-3 text-sm text-white placeholder-white/15 focus:outline-none focus:border-[rgb(var(--accent)/0.45)] transition-colors"
                 />
               </div>
               <div>
@@ -106,7 +106,7 @@ export default function Contact() {
                   required
                   type="email"
                   placeholder="you@example.com"
-                  className="w-full bg-transparent border border-white/[0.1] rounded-lg px-4 py-3 text-sm text-white placeholder-white/15 focus:outline-none focus:border-white/25 transition-colors"
+                  className="w-full bg-transparent border border-white/[0.1] rounded-lg px-4 py-3 text-sm text-white placeholder-white/15 focus:outline-none focus:border-[rgb(var(--accent)/0.45)] transition-colors"
                 />
               </div>
               <div>
@@ -117,7 +117,7 @@ export default function Contact() {
                   required
                   rows={5}
                   placeholder="What's on your mind?"
-                  className="w-full bg-transparent border border-white/[0.1] rounded-lg px-4 py-3 text-sm text-white placeholder-white/15 focus:outline-none focus:border-white/25 transition-colors resize-none"
+                  className="w-full bg-transparent border border-white/[0.1] rounded-lg px-4 py-3 text-sm text-white placeholder-white/15 focus:outline-none focus:border-[rgb(var(--accent)/0.45)] transition-colors resize-none"
                 />
               </div>
               <button

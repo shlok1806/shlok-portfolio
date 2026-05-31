@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --accent: 16 185 129; /* emerald-500 — swap to "234 179 8" (amber) or "56 189 248" (sky) to change palette */
+}
+
 * {
   box-sizing: border-box;
 }

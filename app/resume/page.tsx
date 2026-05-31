@@ -2,7 +2,7 @@ export default function Resume() {
   return (
     <main className="min-h-screen pt-14">
       <section className="px-8 lg:px-24 pt-20 pb-12 border-b border-white/[0.06]">
-        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-6">
+        <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-6 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
           Resume
         </p>
         <h1 className="text-[clamp(48px,6vw,80px)] font-bold leading-[0.95] tracking-tight">
@@ -16,7 +16,7 @@ export default function Resume() {
       <div className="px-8 lg:px-24 py-16 max-w-3xl space-y-16">
         {/* Education */}
         <section>
-          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8">
+          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
             Education
           </p>
           <div className="flex gap-8">
@@ -45,7 +45,7 @@ export default function Resume() {
 
         {/* Skills */}
         <section>
-          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8">
+          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
             Technical Skills
           </p>
           <div className="space-y-4">
@@ -70,7 +70,7 @@ export default function Resume() {
 
         {/* Experience */}
         <section>
-          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8">
+          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
             Experience
           </p>
           <div className="space-y-10">
@@ -173,7 +173,7 @@ export default function Resume() {
 
         {/* Projects */}
         <section>
-          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8">
+          <p className="text-white/25 text-xs font-mono tracking-[0.25em] uppercase mb-8 border-l-2 border-[rgb(var(--accent)/0.5)] pl-3">
             Projects
           </p>
           <div className="space-y-8">
