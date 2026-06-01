@@ -19,6 +19,7 @@ interface State {
 type Action =
   | { type: "SET_INPUT"; payload: string }
   | { type: "SUBMIT"; entry: HistoryEntry }
+  | { type: "SILENT_SUBMIT"; entry: HistoryEntry }
   | { type: "CLEAR" }
   | { type: "ARROW_UP" }
   | { type: "ARROW_DOWN" };
@@ -41,6 +42,9 @@ function reducer(state: State, action: Action): State {
         commandHistory: newCmdHistory,
       };
     }
+
+    case "SILENT_SUBMIT":
+      return { ...state, history: [...state.history, action.entry] };
 
     case "CLEAR":
       return { ...state, history: [], input: "", historyIndex: -1 };
@@ -87,9 +91,13 @@ export function useTerminal() {
     });
   }, [state.input]);
 
+  const silentSubmit = useCallback((command: string, output: React.ReactNode) => {
+    dispatch({ type: "SILENT_SUBMIT", entry: { id: nanoid(), command, output } });
+  }, []);
+
   const clear = useCallback(() => dispatch({ type: "CLEAR" }), []);
   const arrowUp = useCallback(() => dispatch({ type: "ARROW_UP" }), []);
   const arrowDown = useCallback(() => dispatch({ type: "ARROW_DOWN" }), []);
 
-  return { state, setInput, submit, clear, arrowUp, arrowDown };
+  return { state, setInput, submit, silentSubmit, clear, arrowUp, arrowDown };
 }

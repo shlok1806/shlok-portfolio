@@ -1,30 +1,40 @@
 const COMMANDS = [
-  { cmd: "whoami",      desc: "Display name, role, and status" },
-  { cmd: "about",       desc: "Same as whoami" },
-  { cmd: "projects",    desc: "List all projects (ls -la style)" },
-  { cmd: "experience",  desc: "Work history log" },
-  { cmd: "resume",      desc: "Full resume — education + experience + skills" },
-  { cmd: "skills",      desc: "Skills as syntax-highlighted JSON" },
-  { cmd: "education",   desc: "Degree and coursework" },
+  { cmd: "projects",    desc: "Browse all my projects" },
+  { cmd: "resume",      desc: "Full resume in one command" },
+  { cmd: "experience",  desc: "Work history" },
+  { cmd: "skills",      desc: "Technical skills" },
   { cmd: "contact",     desc: "Email, GitHub, LinkedIn" },
-  { cmd: "open <dest>", desc: "Open github | linkedin | email in new tab" },
-  { cmd: "ls",          desc: "List available files" },
-  { cmd: "cat <file>",  desc: "Alias: cat resume | skills | projects" },
-  { cmd: "sound on|off",desc: "Toggle keyboard sounds" },
-  { cmd: "clear",       desc: "Clear the terminal" },
+  { cmd: "whoami",      desc: "About me" },
+  { cmd: "open github", desc: "Open GitHub profile in new tab" },
+  { cmd: "clear",       desc: "Clear the screen" },
+  { cmd: "sound on",    desc: "Enable keyboard sounds" },
 ];
 
 export function HelpOutput() {
   return (
-    <div className="space-y-1">
-      <p className="text-accent/60 text-[11px] tracking-widest mb-2">AVAILABLE COMMANDS</p>
-      {COMMANDS.map(({ cmd, desc }) => (
-        <div key={cmd} className="flex gap-4 text-[13px]">
-          <span className="text-accent font-bold w-36 shrink-0">{cmd}</span>
-          <span className="text-white/45">{desc}</span>
-        </div>
-      ))}
-      <p className="text-white/20 text-[11px] mt-3">↑ ↓  cycle command history · Tab  autocomplete</p>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <p className="text-white/70 text-[13px]">
+          This is an interactive terminal. Type a command below and press <span className="text-accent font-bold">Enter</span>.
+        </p>
+        <p className="text-white/35 text-[12px]">
+          Use <span className="text-accent/70">↑ ↓</span> arrow keys to cycle through history.
+        </p>
+      </div>
+
+      <div className="border-t border-white/[0.06] pt-4 space-y-[5px]">
+        <p className="text-accent/50 text-[10px] tracking-[0.3em] mb-3">COMMANDS</p>
+        {COMMANDS.map(({ cmd, desc }) => (
+          <div key={cmd} className="flex gap-4 text-[13px] items-baseline">
+            <span className="text-accent font-bold w-32 shrink-0">{cmd}</span>
+            <span className="text-white/40">{desc}</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-white/20 text-[11px] pt-1">
+        Try typing <span className="text-accent/60">projects</span> and pressing Enter to get started →
+      </p>
     </div>
   );
 }
