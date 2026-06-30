@@ -1,9 +1,11 @@
 const SKILLS = [
-  { key: "languages",  values: ["Go", "C/C++", "Python", "TypeScript", "Swift", "SQL", "Java", "R"],                   amber: false },
-  { key: "frameworks", values: ["FastAPI", "Flask", "SvelteKit", "LangChain", "Supabase"],                              amber: false },
-  { key: "databases",  values: ["PostgreSQL", "Neo4j", "Supabase"],                                                     amber: false },
-  { key: "cloud",      values: ["AWS Bedrock", "AWS S3", "Azure Blob", "Docker", "CMake", "Git"],                       amber: false },
-  { key: "interests",  values: ["distributed systems", "low-latency", "compilers", "quant"],                            amber: true  },
+  { key: "languages",  values: ["Python", "TypeScript/JavaScript", "Go", "C/C++", "Java", "SQL", "R"],            amber: false },
+  { key: "ai/llm",     values: ["LangChain", "pgvector", "AWS Bedrock", "Anthropic Claude", "RAG + eval pipelines"], amber: false },
+  { key: "frameworks", values: ["FastAPI", "Next.js", "React", "Flask", "SwiftUI"],                               amber: false },
+  { key: "databases",  values: ["PostgreSQL", "pgvector", "Supabase", "Aurora", "Neo4j", "NoSQL"],                amber: false },
+  { key: "cloud",      values: ["AWS (Lambda, S3, EC2, Bedrock)", "Terraform", "Docker", "Git", "CMake"],         amber: false },
+  { key: "libraries",  values: ["NumPy", "Pandas", "Scikit-learn", "lxml"],                                       amber: false },
+  { key: "interests",  values: ["distributed systems", "low-latency", "compilers", "quant"],                      amber: true  },
 ];
 
 export function SkillsOutput() {

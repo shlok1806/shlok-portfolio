@@ -90,7 +90,7 @@ export function TerminalPage() {
 
   return (
     <div
-      className="min-h-[calc(100vh-48px)] px-6 lg:px-16 py-12 flex flex-col items-center"
+      className="min-h-screen px-6 lg:px-16 py-12 flex flex-col items-center"
       onClick={focusInput}
     >
       <div className="w-full max-w-[900px]" ref={shellRef}>

@@ -1,7 +1,7 @@
 const PROJECTS = [
-  { date: "Apr 26", name: "raft-kv/",        stack: "Go",         desc: "Raft consensus · leader election · log replication · exactly-once semantics", href: "https://github.com/shlok1806/raft-kv" },
+  { date: "Apr 26", name: "raft-kv/",        stack: "Go",         desc: "Raft consensus from scratch · leader election · log replication · snapshotting · 5-node cluster", href: "https://github.com/shlok1806/raft-kv" },
   { date: "Mar 26", name: "orderbook/",       stack: "C++20",      desc: "Thread-safe LOB · 5 order types · O(1) cancel · ~500x FOK improvement",       href: "https://github.com/shlok1806/OrderBook" },
-  { date: "Feb 26", name: "scroll-royale/",   stack: "SwiftUI",    desc: "1v1 iOS doomscrolling · real-time matchmaking · Supabase PostgreSQL RPC",     href: "https://github.com/shlok1806/ScrollClash" },
+  { date: "Feb 26", name: "scroll-royale/",   stack: "SwiftUI",    desc: "1v1 real-time iOS multiplayer · SwiftUI + Combine · Supabase Postgres RPC · TTL cache",     href: "https://github.com/shlok1806/ScrollClash" },
   { date: "2025  ", name: "blueprint-qa/",    stack: "FastAPI",    desc: "AI construction QA · Claude API · multi-stage OCR · Azure Blob · Docker",      href: "https://github.com/shlok1806/blueprint-qa" },
   { date: "2025  ", name: "feelens/",         stack: "Next.js",    desc: "Stripe fee analytics · Amex premiums · international surcharges",              href: "https://github.com/shlok1806/feelens" },
   { date: "2025  ", name: "vibesafe/",        stack: "TypeScript", desc: "GitHub Action · Claude scans PRs for secrets and vulnerable deps",             href: "https://github.com/shlok1806/vibesafe" },
