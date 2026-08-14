@@ -27,7 +27,7 @@ const CAT_ALIASES: Record<string, string> = {
 
 export interface CommandResult {
   output: React.ReactNode;
-  action?: "clear" | "sound-on" | "sound-off";
+  action?: "clear" | "sound-on" | "sound-off" | "exit";
 }
 
 export function runCommand(
@@ -78,13 +78,13 @@ export function runCommand(
       const url = OPEN_URLS[dest ?? ""];
       if (url) {
         if (typeof window !== "undefined") window.open(url, "_blank");
-        return { output: <p className="text-accent/70 text-[13px]">Opening {dest}...</p> };
+        return { output: <p className="text-primary/70 text-[13px]">Opening {dest}...</p> };
       }
       return {
         output: (
-          <p className="text-red-400/80 text-[13px]">
+          <p className="text-destructive/80 text-[13px]">
             open: unknown destination &quot;{dest ?? ""}&quot;
-            <span className="text-white/25 ml-2 text-[11px]">— try: open github | linkedin | email</span>
+            <span className="text-foreground/25 ml-2 text-[11px]">- try: open github | linkedin | email</span>
           </p>
         ),
       };
@@ -95,29 +95,32 @@ export function runCommand(
 
     case "sound": {
       const flag = args[0]?.toLowerCase();
-      if (flag === "on")  return { output: <p className="text-accent text-[13px]">[●] Sound enabled</p>, action: "sound-on" };
-      if (flag === "off") return { output: <p className="text-white/40 text-[13px]">[○] Sound disabled</p>, action: "sound-off" };
-      return { output: <p className="text-red-400/80 text-[13px]">Usage: sound on | sound off</p> };
+      if (flag === "on")  return { output: <p className="text-primary text-[13px]">[●] Sound enabled</p>, action: "sound-on" };
+      if (flag === "off") return { output: <p className="text-foreground/40 text-[13px]">[○] Sound disabled</p>, action: "sound-off" };
+      return { output: <p className="text-destructive/80 text-[13px]">Usage: sound on | sound off</p> };
     }
 
     case "pwd":
-      return { output: <p className="text-white/55 text-[13px]">/home/shlok/portfolio</p> };
+      return { output: <p className="text-foreground/55 text-[13px]">/home/shlok/portfolio</p> };
 
     case "date":
-      return { output: <p className="text-white/55 text-[13px]">{new Date().toUTCString()}</p> };
+      return { output: <p className="text-foreground/55 text-[13px]">{new Date().toUTCString()}</p> };
 
     case "uname":
-      return { output: <p className="text-white/55 text-[13px]">ShlokOS 2.0.26 portfolio-aarch64 GNU/Linux</p> };
+      return { output: <p className="text-foreground/55 text-[13px]">ShlokOS 2.0.26 portfolio-aarch64 GNU/Linux</p> };
 
     case "echo":
-      return { output: <p className="text-white/55 text-[13px]">{args.join(" ")}</p> };
+      return { output: <p className="text-foreground/55 text-[13px]">{args.join(" ")}</p> };
 
     case "exit":
     case "quit":
-      return { output: <p className="text-white/30 text-[13px]">There is no escape. You&apos;re already home.</p> };
+      return {
+        output: <p className="text-foreground/40 text-[13px]">Back to the site.</p>,
+        action: "exit",
+      };
 
     case "sudo":
-      return { output: <p className="text-red-400/80 text-[13px]">Nice try. Permission denied.</p> };
+      return { output: <p className="text-destructive/80 text-[13px]">Nice try. Permission denied.</p> };
 
     case "":
       return { output: null };

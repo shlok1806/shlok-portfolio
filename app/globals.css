@@ -2,25 +2,294 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --accent: 16 185 129; /* emerald-500 — swap to "234 179 8" (amber) or "56 189 248" (sky) to change palette */
+/*
+ * Four real UNIX desktops rather than four tints of one colour. What makes
+ * these read as Linux is the split between chrome and content: a grey beveled
+ * frame around a white document, with the desktop itself a dark stipple behind.
+ *
+ * Deliberately NOT inside @layer - Tailwind only keeps custom classes declared
+ * in a layer when it finds the class name in a scanned file, and these names
+ * live in lib/theme/presets.ts as data.
+ */
+:root,
+.motif {
+  --desktop: 210 23% 37.6%;
+  --background: 210 23% 37.6%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10.2%;
+  --popover: 37 9% 82.4%;
+  --popover-foreground: 0 0% 10.2%;
+  --foreground: 0 0% 10.2%;
+  --primary: 240 100% 25.1%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 37 9% 82.4%;
+  --secondary-foreground: 0 0% 10.2%;
+  --muted: 37 9% 82.4%;
+  --muted-foreground: 0 0% 29%;
+  --accent: 240 100% 25.1%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 65% 42%;
+  --destructive-foreground: 0 0% 100%;
+  --faint: 38 3% 47.5%;
+  --border: 37 3% 46.3%;
+  --input: 37 3% 46.3%;
+  --ring: 240 100% 25.1%;
+  --bevel-light: 0 0% 100%;
+  --bevel-dark: 37 4% 41.6%;
+  --stipple-ink: 0 0% 0%;
+  --stipple-alpha: 0.16;
+  --on-desktop: 0 0% 100%;
+  --on-desktop-shadow: 0 0% 0%;
+  --glow-strength: 0;
+  --scanline-opacity: 0;
+  --vignette-strength: 0;
 }
 
-* {
-  box-sizing: border-box;
+.cde {
+  --desktop: 216 30% 26.3%;
+  --background: 216 30% 26.3%;
+  --card: 233 15% 88%;
+  --card-foreground: 225 17% 9.4%;
+  --popover: 229 15% 72.4%;
+  --popover-foreground: 225 17% 9.4%;
+  --foreground: 225 17% 9.4%;
+  --primary: 210 33% 41.2%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 229 15% 72.4%;
+  --secondary-foreground: 225 17% 9.4%;
+  --muted: 229 15% 72.4%;
+  --muted-foreground: 227 13% 27.6%;
+  --accent: 210 33% 41.2%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 60% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --faint: 227 8% 47.3%;
+  --border: 227 8% 47.3%;
+  --input: 227 8% 47.3%;
+  --ring: 210 33% 41.2%;
+  --bevel-light: 233 15% 88%;
+  --bevel-dark: 228 10% 41.2%;
+  --stipple-ink: 0 0% 0%;
+  --stipple-alpha: 0.18;
+  --on-desktop: 0 0% 100%;
+  --on-desktop-shadow: 0 0% 0%;
+  --glow-strength: 0;
+  --scanline-opacity: 0;
+  --vignette-strength: 0;
 }
 
-html {
-  scroll-behavior: smooth;
+/* Tango: the palette most Linux terminals actually shipped */
+.tango {
+  --desktop: 195 7% 11.8%;
+  --background: 195 7% 11.8%;
+  --card: 195 11% 7.1%;
+  --card-foreground: 90 9% 82.7%;
+  --popover: 195 8% 19.6%;
+  --popover-foreground: 90 9% 82.7%;
+  --foreground: 90 9% 82.7%;
+  --primary: 91 93% 31.4%;
+  --primary-foreground: 120 11% 5.3%;
+  --secondary: 195 8% 19.6%;
+  --secondary-foreground: 90 9% 82.7%;
+  --muted: 195 8% 19.6%;
+  --muted-foreground: 90 3% 66.3%;
+  --accent: 91 93% 31.4%;
+  --accent-foreground: 120 11% 5.3%;
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 120 11% 5.3%;
+  --faint: 150 3% 43.9%;
+  --border: 90 2% 33.3%;
+  --input: 90 2% 33.3%;
+  --ring: 91 93% 31.4%;
+  --bevel-light: 90 2% 33.3%;
+  --bevel-dark: 195 9% 8.6%;
+  --stipple-ink: 0 0% 100%;
+  --stipple-alpha: 0.04;
+  --on-desktop: 0 0% 100%;
+  --on-desktop-shadow: 0 0% 0%;
+  --glow-strength: 0;
+  --scanline-opacity: 0.10;
+  --vignette-strength: 0.25;
 }
 
-body {
-  background-color: #0d0d0d;
-  color: #ffffff;
-  font-family: var(--font-mono), monospace;
+/* twm shipped black on white and nothing else */
+.twm {
+  --desktop: 0 0% 54.1%;
+  --background: 0 0% 54.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --foreground: 0 0% 0%;
+  --primary: 0 0% 0%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 100%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 100%;
+  --muted-foreground: 0 0% 20%;
+  --accent: 0 0% 0%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 0% 0%;
+  --destructive-foreground: 0 0% 100%;
+  --faint: 0 0% 46.3%;
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 0 0% 0%;
+  --bevel-light: 0 0% 0%;
+  --bevel-dark: 0 0% 0%;
+  --stipple-ink: 0 0% 0%;
+  --stipple-alpha: 0.40;
+  --on-desktop: 0 0% 0%;
+  --on-desktop-shadow: 0 0% 100%;
+  --glow-strength: 0;
+  --scanline-opacity: 0;
+  --vignette-strength: 0;
 }
 
-::selection {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #fff;
+:root, .motif, .cde, .tango, .twm {
+  --radius: 0px;
+  --font-display: var(--font-ui);
+  --font-body: var(--font-ui);
+  --font-code: var(--font-mono-src);
+  --display-weight: 700;
+  --display-tracking: 0;
+  --display-case: none;
+  --display-leading: 1.1;
+  --section-gap: 2rem;
+  --speed: 1;
+  --grain: 0;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-body), system-ui, sans-serif;
+    /* Swapping tubes should feel like a hardware switch, not a CSS fade */
+    transition: background-color 180ms steps(3), color 180ms steps(3);
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.25);
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /*
+   * The 3D bevel is the single most recognisable thing about Motif and every
+   * toolkit that copied it: light on the top-left, dark on the bottom-right,
+   * inverted when a control is pressed or a field is inset.
+   */
+  .bevel-out {
+    border-style: solid;
+    border-width: 2px;
+    border-color: hsl(var(--bevel-light)) hsl(var(--bevel-dark)) hsl(var(--bevel-dark))
+      hsl(var(--bevel-light));
+  }
+
+  .bevel-in {
+    border-style: solid;
+    border-width: 2px;
+    border-color: hsl(var(--bevel-dark)) hsl(var(--bevel-light)) hsl(var(--bevel-light))
+      hsl(var(--bevel-dark));
+  }
+
+  .bevel-thin {
+    border-style: solid;
+    border-width: 1px;
+    border-color: hsl(var(--bevel-light)) hsl(var(--bevel-dark)) hsl(var(--bevel-dark))
+      hsl(var(--bevel-light));
+  }
+
+  /* An X11 root window was a two-tone 50% dither, never a flat fill */
+  .stipple {
+    background-color: hsl(var(--desktop));
+    background-image:
+      linear-gradient(45deg, hsl(var(--stipple-ink) / var(--stipple-alpha)) 25%, transparent 25%, transparent 75%, hsl(var(--stipple-ink) / var(--stipple-alpha)) 75%),
+      linear-gradient(45deg, hsl(var(--stipple-ink) / var(--stipple-alpha)) 25%, transparent 25%, transparent 75%, hsl(var(--stipple-ink) / var(--stipple-alpha)) 75%);
+    background-size: 4px 4px;
+    background-position: 0 0, 2px 2px;
+  }
+
+  /* Kept token-driven so only the console theme pays for them */
+  .scanlines::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      hsl(0 0% 0% / var(--scanline-opacity, 0)) 0px,
+      hsl(0 0% 0% / var(--scanline-opacity, 0)) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+
+  .vignette::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 91;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 55%,
+      hsl(0 0% 0% / var(--vignette-strength, 0)) 100%
+    );
+  }
+
+  /* No-op on the light themes; only the console theme sets a strength */
+  .glow {
+    text-shadow: 0 0 calc(6px * var(--glow-strength, 0)) hsl(var(--primary) / 0.5);
+  }
+
+  .type-label {
+    font-family: var(--font-code), monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .measure { max-width: 74ch; }
+
+  /* An X11 title bar was solid when focused and washed out when not */
+  .titlebar-active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .titlebar-idle {
+    background: hsl(var(--secondary));
+    color: hsl(var(--muted-foreground));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

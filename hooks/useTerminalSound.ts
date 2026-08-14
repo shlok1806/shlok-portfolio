@@ -22,7 +22,7 @@ export function useTerminalSound() {
   }, []);
 
   const playKey = useCallback((ctx: AudioContext) => {
-    // Short white-noise burst — sounds like a real key press
+    // Short white-noise burst - sounds like a real key press
     const len = Math.floor(ctx.sampleRate * 0.022);
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const data = buf.getChannelData(0);
@@ -48,7 +48,7 @@ export function useTerminalSound() {
   }, []);
 
   const playEnter = useCallback((ctx: AudioContext) => {
-    // Low "thock" — a sine that drops in pitch quickly
+    // Low "thock" - a sine that drops in pitch quickly
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
@@ -86,7 +86,7 @@ export function useTerminalSound() {
       if (type === "enter") playEnter(ctx);
       if (type === "error") playError(ctx);
     } catch {
-      // AudioContext blocked — fail silently
+      // AudioContext blocked - fail silently
     }
   }, [soundEnabled, getCtx, playKey, playEnter, playError]);
 
