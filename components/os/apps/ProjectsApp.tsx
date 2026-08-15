@@ -70,8 +70,8 @@ export function ProjectApp({ arg }: AppProps) {
 
       <p className="mt-4 text-faint">{p.stackFull.join("  ·  ")}</p>
 
-      {p.href && (
-        <p className="mt-4">
+      <p className="mt-4">
+        {p.href ? (
           <a
             href={p.href}
             target="_blank"
@@ -80,8 +80,10 @@ export function ProjectApp({ arg }: AppProps) {
           >
             {p.href.replace("https://", "")}
           </a>
-        </p>
-      )}
+        ) : (
+          <span className="text-faint">No public repository yet.</span>
+        )}
+      </p>
     </DocShell>
   );
 }

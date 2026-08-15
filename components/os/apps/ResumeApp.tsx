@@ -12,7 +12,20 @@ function Head({ children }: { children: React.ReactNode }) {
 /** The whole resume in one scroll, the way `less resume.txt` would give it to you. */
 export function ResumeApp() {
   return (
-    <DocShell status="resume.txt  ·  END">
+    <DocShell
+      status={
+        <>
+          resume.txt · END ·{" "}
+          <a href="/resume.pdf" download className="text-primary underline underline-offset-2">
+            download PDF
+          </a>{" "}
+          ·{" "}
+          <a href="/resume" className="text-primary underline underline-offset-2">
+            text version
+          </a>
+        </>
+      }
+    >
       <p className="font-[family-name:var(--font-ui)] text-[28px] leading-none text-primary glow">
         {PROFILE.name}
       </p>

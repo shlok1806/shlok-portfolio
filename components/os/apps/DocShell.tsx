@@ -7,7 +7,7 @@ export function DocShell({
   status,
   children,
 }: {
-  status: string;
+  status: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (

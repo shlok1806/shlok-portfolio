@@ -15,6 +15,8 @@ export interface Preset {
   code: string;
   blurb: string;
   swatch: { bg: string; primary: string };
+  /** the root window is light, so backdrop contrast flips */
+  desktopLight: boolean;
   /** equalizer character, reused by the audio meter */
   wave: { tempo: number; amplitude: number; jitter: number; bars: number };
   /** chord played on switch when sound is on, in Hz */
@@ -25,6 +27,7 @@ export interface Preset {
 export const PRESETS: Preset[] = [
   {
     id: "motif",
+    desktopLight: false,
     name: "Motif",
     code: "OSF/1",
     blurb: "grey bevels, navy title bars",
@@ -35,6 +38,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "cde",
+    desktopLight: false,
     name: "CDE",
     code: "1996",
     blurb: "the workstation standard",
@@ -45,6 +49,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "tango",
+    desktopLight: false,
     name: "Console",
     code: "Tango",
     blurb: "the palette every terminal shipped",
@@ -55,6 +60,7 @@ export const PRESETS: Preset[] = [
   },
   {
     id: "twm",
+    desktopLight: true,
     name: "twm",
     code: "X11R5",
     blurb: "black on white, nothing else",

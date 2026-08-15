@@ -15,6 +15,8 @@ export interface AppDef {
   w: number;
   h: number;
   Component: (props: AppProps) => React.ReactNode;
+  /** downloads instead of opening a window */
+  download?: string;
   /** on the desktop, in this order */
   onDesktop?: boolean;
   /** in the applications menu */
@@ -39,6 +41,17 @@ export const APPS: AppDef[] = [
     w: 700,
     h: 520,
     Component: ResumeApp,
+    onDesktop: true,
+    inMenu: true,
+  },
+  {
+    id: "resume-pdf",
+    title: "resume.pdf",
+    icon: "⇩",
+    w: 0,
+    h: 0,
+    download: "/resume.pdf",
+    Component: () => null,
     onDesktop: true,
     inMenu: true,
   },

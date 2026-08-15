@@ -5,6 +5,7 @@ import { useRemix } from "@/hooks/useRemix";
 import { useWindowManager } from "@/hooks/useWindowManager";
 import { APPS, DESKTOP_APPS, MENU_APPS, appById } from "@/lib/os/registry";
 import { PROFILE } from "@/lib/content";
+import { WALLPAPERS, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
 import { BootScreen } from "./BootScreen";
 import { Window } from "./Window";
 import { Panel } from "./Panel";
@@ -20,12 +21,55 @@ export function Desktop() {
   const [selected, setSelected] = useState<string | null>(null);
   /** touch has no double-click and no right-click, so the desktop adapts */
   const [touch, setTouch] = useState(false);
+  const [wallpaperId, setWallpaperId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setWallpaperId(localStorage.getItem("os-wallpaper"));
+    } catch {
+      /* storage blocked - the default is fine */
+    }
+  }, []);
+
+  const chooseWallpaper = useCallback((id: string) => {
+    setWallpaperId(id);
+    try {
+      localStorage.setItem("os-wallpaper", id);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     setTouch(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
+  /*
+   * The desktop owns the viewport, so lock page scrolling while it is mounted
+   * rather than on <body> globally - /resume is a normal scrolling document.
+   */
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   const { preset, mounted, select, soundOn, toggleSound } = useRemix();
+  const wallpaper = wallpaperById(wallpaperId);
+
+  /*
+   * Generated backdrops know their own contrast, so labels can follow the theme.
+   * A photo does not, so over one we fall back to white with a hard shadow -
+   * legible over both the sun and the buildings.
+   */
+  const labelStyle: React.CSSProperties = wallpaper.src
+    ? { color: "#ffffff", textShadow: "0 1px 2px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.7)" }
+    : {
+        color: "hsl(var(--on-desktop))",
+        textShadow: "1px 1px 0 hsl(var(--on-desktop-shadow) / 0.55)",
+      };
   const wm = useWindowManager();
   const { open, windows, focusedId, PANEL_H } = wm;
 
@@ -33,6 +77,15 @@ export function Desktop() {
     (appId: string) => {
       const app = appById(appId);
       if (!app) return;
+      // Some entries are documents rather than programs
+      if (app.download) {
+        const a = document.createElement("a");
+        a.href = app.download;
+        a.download = "";
+        a.rel = "noopener";
+        a.click();
+        return;
+      }
       open({ appId: app.id, title: app.title, w: app.w, h: app.h });
     },
     [open],
@@ -74,7 +127,12 @@ export function Desktop() {
   return (
     <div className="scanlines vignette">
       <div
-        className="stipple relative h-screen w-screen overflow-hidden"
+        className="relative h-screen w-screen overflow-hidden"
+        style={wallpaperStyle(wallpaper, {
+          bg: preset.swatch.bg,
+          ink: preset.swatch.primary,
+          light: preset.desktopLight,
+        })}
         onPointerDown={() => {
           setRootMenu(null);
           setSelected(null);
@@ -111,14 +169,7 @@ export function Desktop() {
                 </span>
                 <span
                   className="w-full break-words"
-                  style={
-                    selected === app.id
-                      ? undefined
-                      : {
-                          color: "hsl(var(--on-desktop))",
-                          textShadow: "1px 1px 0 hsl(var(--on-desktop-shadow) / 0.55)",
-                        }
-                  }
+                  style={selected === app.id ? undefined : labelStyle}
                 >
                   {app.title}
                 </span>
@@ -131,7 +182,7 @@ export function Desktop() {
         <p
           aria-hidden
           className="pointer-events-none absolute right-4 font-[family-name:var(--font-ui)] text-[11px] leading-relaxed"
-          style={{ bottom: PANEL_H + 12, color: "hsl(var(--on-desktop) / 0.65)" }}
+          style={{ bottom: PANEL_H + 12, ...labelStyle, opacity: 0.85 }}
         >
           <span className="block text-right">{PROFILE.name}</span>
           <span className="block text-right">
@@ -165,6 +216,25 @@ export function Desktop() {
                   {app.icon}
                 </span>
                 {app.title}
+              </button>
+            ))}
+
+            <p className="mt-1 border-b border-t border-border px-3 py-1 text-[11px] uppercase leading-none tracking-wider text-faint">
+              Background
+            </p>
+            {WALLPAPERS.map((w) => (
+              <button
+                key={w.id}
+                onClick={() => {
+                  chooseWallpaper(w.id);
+                  setRootMenu(null);
+                }}
+                className="flex w-full items-center gap-3 px-3 py-[5px] text-left leading-none hover:bg-primary hover:text-primary-foreground"
+              >
+                <span aria-hidden className="w-5 shrink-0 text-center">
+                  {w.id === wallpaper.id ? "•" : ""}
+                </span>
+                {w.name}
               </button>
             ))}
           </div>

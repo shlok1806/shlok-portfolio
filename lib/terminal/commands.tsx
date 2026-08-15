@@ -37,6 +37,7 @@ export function runCommand(
 ): CommandResult {
   switch (name) {
     case "help":
+    case "?":
       return { output: <HelpOutput /> };
 
     case "whoami":
@@ -58,8 +59,16 @@ export function runCommand(
     case "contact":
       return { output: <ContactOutput /> };
 
-    case "resume":
+    case "resume": {
+      // `resume --pdf` hands over the real document
+      if (args.some((a) => a === "--pdf" || a === "-p")) {
+        if (typeof window !== "undefined") window.open("/resume.pdf", "_blank");
+        return {
+          output: <p className="text-primary/70 text-[13px]">Opening resume.pdf ...</p>,
+        };
+      }
       return { output: <ResumeOutput /> };
+    }
 
     case "ls":
     case "ls -la":

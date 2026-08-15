@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Space_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/site/ThemeProvider";
 import { RotatePresetScript } from "@/components/site/RotatePresetScript";
+import { Analytics } from "@vercel/analytics/react";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 /*
@@ -22,16 +24,34 @@ const spaceMono = Space_Mono({
   display: "swap",
 });
 
+const DESCRIPTION =
+  "Shlok Thakkar - software engineer. CS + Economics @ UIUC. Building agentic AI, distributed systems, and low-latency infrastructure.";
+
 export const metadata: Metadata = {
-  title: "ShlokOS",
-  description:
-    "Shlok Thakkar - software engineer. CS + Economics @ UIUC. Building agentic AI, distributed systems, and low-latency infrastructure.",
+  // Open Graph and sitemap URLs must be absolute; without this they resolve
+  // relative and the preview card silently breaks.
+  metadataBase: new URL(SITE_URL),
+  title: { default: "ShlokOS - Shlok Thakkar", template: "%s" },
+  description: DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Shlok Thakkar",
+    title: "Shlok Thakkar - Software Engineer",
+    description: DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Shlok Thakkar - Software Engineer",
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceMono.variable}`}>
-      <body className="min-h-screen overflow-hidden antialiased">
+      <body className="min-h-screen antialiased">
         {/*
           Entrance animations server-render with opacity:0 and only become
           visible once Motion runs. Without JS that would hide the content, so
@@ -43,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Must precede ThemeProvider - it decides which tube next-themes reads */}
         <RotatePresetScript />
         <ThemeProvider>{children}</ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
