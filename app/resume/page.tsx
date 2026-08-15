@@ -119,7 +119,21 @@ export default function ResumePage() {
               <span className="font-normal text-neutral-600"> — {p.tagline}</span>
               {p.note && <span className="font-normal text-neutral-500"> ({p.note})</span>}
             </h3>
-            <p className="text-[13px] text-neutral-600">{p.stackFull.join(" · ")}</p>
+            <p className="text-[13px] text-neutral-600">
+              {p.stackFull.join(" · ")}
+              {p.demo && (
+                <>
+                  {" · "}
+                  <a
+                    className="text-blue-800 underline underline-offset-2"
+                    href={p.demo.href}
+                    rel="noopener noreferrer"
+                  >
+                    {p.demo.label}
+                  </a>
+                </>
+              )}
+            </p>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               {p.bullets.map((b, i) => (
                 <li key={i}>{b}</li>

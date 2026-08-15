@@ -130,6 +130,8 @@ export interface Project {
   tagline: string;
   bullets: string[];
   href?: string;
+  /** a video or live demo, when there is one */
+  demo?: { label: string; href: string };
   note?: string;
 }
 
@@ -190,6 +192,7 @@ export const PROJECTS: Project[] = [
       "Near-real-time score sync via batched telemetry writes, adaptive polling, and a TTL cache with stale-while-revalidate",
     ],
     href: "https://github.com/shlok1806/ScrollClash",
+    demo: { label: "demo video", href: "https://youtu.be/240xIn0RHH4" },
   },
   {
     slug: "raft-kv",

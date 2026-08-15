@@ -5,6 +5,8 @@ import { ProjectsApp, ProjectApp } from "@/components/os/apps/ProjectsApp";
 import { SysInfoApp } from "@/components/os/apps/SysInfoApp";
 import { SkillsApp, EducationApp, ContactApp } from "@/components/os/apps/MiscApps";
 import { XtermApp } from "@/components/os/apps/XtermApp";
+import { ReadmeApp } from "@/components/os/apps/ReadmeApp";
+import { TopApp } from "@/components/os/apps/TopApp";
 
 export interface AppDef {
   id: string;
@@ -24,6 +26,16 @@ export interface AppDef {
 }
 
 export const APPS: AppDef[] = [
+  {
+    id: "readme",
+    title: "README",
+    icon: "?",
+    w: 560,
+    h: 520,
+    Component: ReadmeApp,
+    onDesktop: true,
+    inMenu: true,
+  },
   {
     id: "xterm",
     title: "xterm",
@@ -93,6 +105,15 @@ export const APPS: AppDef[] = [
     h: 320,
     Component: ContactApp,
     onDesktop: true,
+    inMenu: true,
+  },
+  {
+    id: "top",
+    title: "top",
+    icon: "▩",
+    w: 640,
+    h: 420,
+    Component: TopApp,
     inMenu: true,
   },
   {

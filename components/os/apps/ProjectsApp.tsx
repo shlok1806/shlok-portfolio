@@ -83,6 +83,19 @@ export function ProjectApp({ arg }: AppProps) {
         ) : (
           <span className="text-faint">No public repository yet.</span>
         )}
+        {p.demo && (
+          <>
+            <span className="text-faint"> · </span>
+            <a
+              href={p.demo.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
+            >
+              {p.demo.label}
+            </a>
+          </>
+        )}
       </p>
     </DocShell>
   );

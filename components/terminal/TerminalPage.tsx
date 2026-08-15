@@ -91,7 +91,7 @@ export function TerminalPage({
 
     // Simpler heuristic: check if name is in known commands
     const KNOWN = new Set(["help","?","whoami","about","projects","experience","resume","skills",
-      "education","contact","open","ls","cat","clear","sound","pwd","date","uname","echo","exit","quit","sudo","dir"]);
+      "education","contact","open","ls","cat","clear","sound","pwd","date","uname","echo","exit","quit","sudo","dir","man"]);
     if (!KNOWN.has(name) && name !== "") {
       play("error");
     } else {

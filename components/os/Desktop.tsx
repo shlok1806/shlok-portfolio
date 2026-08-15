@@ -7,6 +7,8 @@ import { APPS, DESKTOP_APPS, MENU_APPS, appById } from "@/lib/os/registry";
 import { PROFILE } from "@/lib/content";
 import { WALLPAPERS, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
 import { BootScreen } from "./BootScreen";
+import { DesktopIcon, type IconPos } from "./DesktopIcon";
+import { Screensaver } from "./Screensaver";
 import { Window } from "./Window";
 import { Panel } from "./Panel";
 
@@ -22,13 +24,29 @@ export function Desktop() {
   /** touch has no double-click and no right-click, so the desktop adapts */
   const [touch, setTouch] = useState(false);
   const [wallpaperId, setWallpaperId] = useState<string | null>(null);
+  const [iconPos, setIconPos] = useState<Record<string, IconPos>>({});
+  const [idle, setIdle] = useState(false);
 
   useEffect(() => {
     try {
       setWallpaperId(localStorage.getItem("os-wallpaper"));
+      const saved = localStorage.getItem("os-icons");
+      if (saved) setIconPos(JSON.parse(saved));
     } catch {
-      /* storage blocked - the default is fine */
+      /* storage blocked or corrupt - defaults are fine */
     }
+  }, []);
+
+  const moveIcon = useCallback((id: string, pos: IconPos) => {
+    setIconPos((prev) => {
+      const next = { ...prev, [id]: pos };
+      try {
+        localStorage.setItem("os-icons", JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }, []);
 
   const chooseWallpaper = useCallback((id: string) => {
@@ -97,10 +115,44 @@ export function Desktop() {
    * leave the desktop showing instead.
    */
   useEffect(() => {
-    if (!booted || touch || window.innerWidth < 720) return;
-    const t = setTimeout(() => launch("xterm"), 260);
+    if (!booted) return;
+    let first = false;
+    try {
+      first = !localStorage.getItem("os-seen-readme");
+      if (first) localStorage.setItem("os-seen-readme", "1");
+    } catch {
+      /* storage blocked - treat as a return visit */
+    }
+
+    // A desktop is not self-explanatory to someone expecting a page, so a
+    // first-time visitor gets the README. Returning visitors get a shell.
+    const t = setTimeout(() => {
+      if (first) launch("readme");
+      else if (!touch && window.innerWidth >= 720) launch("xterm");
+    }, 260);
     return () => clearTimeout(t);
   }, [booted, touch, launch]);
+
+  /*
+   * Screensaver after a stretch of nothing. Listeners are passive and only
+   * reset a timer, so they cost nothing on a busy desktop.
+   */
+  useEffect(() => {
+    if (!booted) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const reset = () => {
+      setIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setIdle(true), 90_000);
+    };
+    reset();
+    const events: (keyof WindowEventMap)[] = ["pointermove", "pointerdown", "keydown", "wheel"];
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    return () => {
+      clearTimeout(timer);
+      events.forEach((e) => window.removeEventListener(e, reset));
+    };
+  }, [booted]);
 
   // Alt+Tab cycles, Escape dismisses the root menu
   useEffect(() => {
@@ -145,36 +197,24 @@ export function Desktop() {
           });
         }}
       >
-        {/* Desktop icons */}
-        <ul
-          className="absolute left-3 top-3 z-[1] grid w-[92px] gap-1"
-          style={{ gridAutoFlow: "column", gridTemplateRows: "repeat(6, auto)" }}
-        >
-          {DESKTOP_APPS.map((app) => (
-            <li key={app.id}>
-              <button
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => (touch ? launch(app.id) : setSelected(app.id))}
-                onDoubleClick={() => launch(app.id)}
-                onKeyDown={(e) => e.key === "Enter" && launch(app.id)}
-                className={`flex w-full flex-col items-center gap-1.5 px-1 py-1.5 text-center font-[family-name:var(--font-ui)] text-[12px] leading-tight focus:outline-none ${
-                  selected === app.id ? "bg-primary text-primary-foreground" : ""
-                }`}
-              >
-                <span
-                  aria-hidden
-                  className="bevel-out grid h-9 w-9 place-items-center bg-secondary text-[16px] text-secondary-foreground"
-                >
-                  {app.icon}
-                </span>
-                <span
-                  className="w-full break-words"
-                  style={selected === app.id ? undefined : labelStyle}
-                >
-                  {app.title}
-                </span>
-              </button>
-            </li>
+        {/* Desktop icons, draggable and remembered */}
+        <ul>
+          {DESKTOP_APPS.map((app, i) => (
+            <DesktopIcon
+              key={app.id}
+              id={app.id}
+              title={app.title}
+              icon={app.icon}
+              // default layout: a column down the left, wrapping after six
+              pos={iconPos[app.id] ?? { x: 12 + Math.floor(i / 6) * 100, y: 12 + (i % 6) * 78 }}
+              selected={selected === app.id}
+              touch={touch}
+              labelStyle={labelStyle}
+              panelHeight={PANEL_H}
+              onSelect={() => setSelected(app.id)}
+              onLaunch={() => launch(app.id)}
+              onMove={(pos) => moveIcon(app.id, pos)}
+            />
           ))}
         </ul>
 
@@ -275,6 +315,8 @@ export function Desktop() {
           onToggleSound={toggleSound}
         />
       </div>
+
+      {idle && <Screensaver label="ShlokOS" onWake={() => setIdle(false)} />}
     </div>
   );
 }

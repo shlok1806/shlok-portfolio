@@ -5,6 +5,7 @@ const COMMANDS = [
   { cmd: "skills",      desc: "Technical skills" },
   { cmd: "contact",     desc: "Email, GitHub, LinkedIn" },
   { cmd: "whoami",      desc: "About me" },
+  { cmd: "man <cmd>",   desc: "Manual page for a command" },
   { cmd: "open github", desc: "Open GitHub profile in new tab" },
   { cmd: "clear",       desc: "Clear the screen" },
   { cmd: "sound on",    desc: "Enable keyboard sounds" },

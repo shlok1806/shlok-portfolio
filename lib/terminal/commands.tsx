@@ -8,6 +8,7 @@ import { ContactOutput }    from "@/components/terminal/outputs/ContactOutput";
 import { ResumeOutput }     from "@/components/terminal/outputs/ResumeOutput";
 import { LsOutput }         from "@/components/terminal/outputs/LsOutput";
 import { ErrorOutput }      from "@/components/terminal/outputs/ErrorOutput";
+import { ManOutput, ManIndexOutput, MAN_PAGES } from "@/components/terminal/outputs/ManOutput";
 
 const OPEN_URLS: Record<string, string> = {
   github:   "https://github.com/shlok1806",
@@ -68,6 +69,20 @@ export function runCommand(
         };
       }
       return { output: <ResumeOutput /> };
+    }
+
+    case "man": {
+      const topic = args[0]?.toLowerCase().replace(/\(\d\)$/, "");
+      if (!topic) return { output: <ManIndexOutput /> };
+      const page = MAN_PAGES[topic];
+      if (page) return { output: <ManOutput page={page} /> };
+      return {
+        output: (
+          <p className="text-foreground/60 text-[13px]">
+            No manual entry for {topic}
+          </p>
+        ),
+      };
     }
 
     case "ls":
