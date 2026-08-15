@@ -6,7 +6,6 @@
 export const PROFILE = {
   name: "Shlok Thakkar",
   role: "Software Engineer",
-  tagline: "I build systems that move fast and change shape.",
   bio: "Currently building an agentic AI claims-automation platform at a stealth startup in NYC, and working on the Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
   location: "Champaign, IL",
   status: "Actively seeking SWE internships 2027",
@@ -265,7 +264,7 @@ export const EDUCATION = {
   period: "2024 – 2028",
   degree: "B.S. Computer Science + Economics",
   school: "University of Illinois Urbana-Champaign",
-  detail: "Integrated major · Minor in Statistics · GPA 3.91/4.00 · Expected May 2028",
+  detail: "Minor in Statistics · GPA 3.91/4.00 · Expected May 2028",
   coursework: [
     "Algorithms & Models of Computation (CS/ECE 374)",
     "Computer Architecture (CS 233)",

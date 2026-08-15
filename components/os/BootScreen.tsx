@@ -11,27 +11,14 @@ interface Line {
 }
 
 const SEQUENCE: Line[] = [
-  { text: "ShlokBIOS v2.0.26  (C) 1993-2026 Thakkar Microsystems", kind: "post" },
+  { text: "ShlokOS 2.0.26", kind: "info" },
   { text: "", kind: "blank" },
-  { text: "Main Processor  : Cortex-A78 @ 3.2GHz", kind: "post" },
-  { text: "Memory Test     : 65536K OK", kind: "post", pause: 120 },
-  { text: "Detecting IDE drives ...", kind: "post" },
-  { text: "  Primary Master : SHLOK-HDD-0  (resume, projects)", kind: "post" },
-  { text: "", kind: "blank", pause: 160 },
-  { text: "Booting from hd0 ...", kind: "info", pause: 200 },
-  { text: "", kind: "blank" },
-  { text: "Linux version 2.0.26 (shlok@portfolio) #1", kind: "info" },
   { text: "[ OK ] Mounted /dev/hd0 on /", kind: "ok" },
-  { text: "[ OK ] Started kernel logging daemon", kind: "ok" },
   { text: "[ OK ] Brought up loopback interface", kind: "ok" },
-  { text: "[ OK ] Loaded personality drivers", kind: "ok" },
-  { text: "[ OK ] Started portfolio daemon (portfoliod)", kind: "ok" },
-  { text: "[ OK ] Reached target Multi-User System", kind: "ok", pause: 220 },
+  { text: "[ OK ] Reached target Multi-User System", kind: "ok", pause: 200 },
   { text: "", kind: "blank" },
-  { text: "portfolio login: shlok", kind: "prompt", pause: 300 },
-  { text: "Last login: today on tty1", kind: "info" },
-  { text: "", kind: "blank" },
-  { text: "shlok@portfolio:~$ startx", kind: "prompt", pause: 420 },
+  { text: "portfolio login: shlok", kind: "prompt", pause: 260 },
+  { text: "shlok@portfolio:~$ startx", kind: "prompt", pause: 380 },
 ];
 
 interface Props {

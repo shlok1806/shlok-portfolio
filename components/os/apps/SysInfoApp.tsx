@@ -21,22 +21,18 @@ const ART = [
 
 export function SysInfoApp() {
   const rows: [string, string][] = [
-    ["user", "shlok@portfolio"],
-    ["os", "ShlokOS 2.0.26 aarch64"],
-    ["wm", "twm (portfolio session)"],
     ["role", PROFILE.role],
     ["school", "UIUC · CS + Economics"],
     ["gpa", "3.91 / 4.00"],
     ["grad", EDUCATION.period.split(" – ")[1]],
     ["location", PROFILE.location],
     ["status", PROFILE.status],
-    ["shell", "/bin/bash"],
-    ["uptime", "3 internships, 8 projects"],
     ["langs", SKILLS[0].values.slice(0, 5).join(", ")],
   ];
 
+
   return (
-    <DocShell status="sysinfo  ·  press ? in xterm for commands">
+    <DocShell status="sysinfo">
       <div className="flex flex-wrap gap-x-8 gap-y-4">
         <pre
           aria-hidden
@@ -58,7 +54,6 @@ export function SysInfoApp() {
               </div>
             ))}
           </dl>
-          <p className="mt-4 max-w-[46ch] text-foreground/70">{PROFILE.tagline}</p>
         </div>
       </div>
     </DocShell>

@@ -1,4 +1,5 @@
-import { PROFILE, LINKS, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
+import { PROFILE, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
+import { ContactLinks } from "@/components/ContactLinks";
 import { DocShell, Rule } from "./DocShell";
 
 function Head({ children }: { children: React.ReactNode }) {
@@ -15,7 +16,7 @@ export function ResumeApp() {
     <DocShell
       status={
         <>
-          resume.txt · END ·{" "}
+          resume.txt ·{" "}
           <a href="/resume.pdf" download className="text-primary underline underline-offset-2">
             download PDF
           </a>{" "}
@@ -29,8 +30,8 @@ export function ResumeApp() {
       <p className="font-[family-name:var(--font-ui)] text-[28px] leading-none text-primary glow">
         {PROFILE.name}
       </p>
-      <p className="mt-2 text-faint">
-        {LINKS.map((l) => l.value).join("  ·  ")}
+      <p className="mt-2">
+        <ContactLinks />
       </p>
 
       <Rule />

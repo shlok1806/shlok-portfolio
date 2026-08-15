@@ -2,6 +2,7 @@ import { EducationOutput } from "./EducationOutput";
 import { ExperienceOutput } from "./ExperienceOutput";
 import { ProjectsOutput } from "./ProjectsOutput";
 import { SkillsOutput } from "./SkillsOutput";
+import { ContactLinks } from "@/components/ContactLinks";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -17,7 +18,7 @@ export function ResumeOutput() {
     <div className="space-y-6">
       <div>
         <p className="text-primary font-bold text-xl">Shlok Thakkar</p>
-        <p className="text-foreground/40 text-[12px]">shlokthakkar1806@gmail.com · github.com/shlok1806 · linkedin/shlok-thakkar · shlokthakkar.com</p>
+        <ContactLinks className="text-[12px]" />
       </div>
       <Section title="EDUCATION"><EducationOutput /></Section>
       <Section title="EXPERIENCE"><ExperienceOutput /></Section>

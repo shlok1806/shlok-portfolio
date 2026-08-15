@@ -226,9 +226,6 @@ export function Desktop() {
         >
           <span className="block text-right">{PROFILE.name}</span>
           <span className="block text-right">
-            ShlokOS 2.0.26 · {mounted ? preset.name : "X11"}
-          </span>
-          <span className="block text-right">
             {touch ? "tap an icon to open" : "right-click for menu"}
           </span>
         </p>
