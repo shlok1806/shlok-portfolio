@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 
 const BOOT_LINES = [
-  "Shlok OS v2.0.26 — Personal Terminal",
+  "Shlok OS v2.0.26 - Personal Terminal",
   "──────────────────────────────────────",
   "[ OK ] Loading kernel modules",
   "[ OK ] Mounting filesystem",
@@ -24,12 +24,36 @@ export function BootSequence({ onComplete, skipAnimation }: Props) {
   const [lines, setLines] = useState<string[]>([]);
   const [currentLine, setCurrentLine] = useState(0);
   const [currentChar, setCurrentChar] = useState(0);
+  const [skipped, setSkipped] = useState(false);
   const doneRef = useRef(false);
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; });
 
+  // Skip the animation on any interaction, and when the tab is not visible.
+  // Background tabs throttle timers to ~1s, which would stretch the boot to
+  // minutes and leave a half-typed line waiting when the visitor comes back.
   useEffect(() => {
-    if (skipAnimation) {
+    if (document.visibilityState === "hidden") {
+      setSkipped(true);
+      return;
+    }
+    const skip = () => setSkipped(true);
+    const onVisibility = () => { if (document.visibilityState === "hidden") skip(); };
+
+    window.addEventListener("keydown", skip);
+    window.addEventListener("pointerdown", skip);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("keydown", skip);
+      window.removeEventListener("pointerdown", skip);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  const instant = skipAnimation || skipped;
+
+  useEffect(() => {
+    if (instant) {
       setLines(BOOT_LINES);
       const t = setTimeout(() => onCompleteRef.current(), 80);
       return () => clearTimeout(t);
@@ -74,10 +98,10 @@ export function BootSequence({ onComplete, skipAnimation }: Props) {
     return () => clearTimeout(t);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentLine, currentChar, skipAnimation]);
+  }, [currentLine, currentChar, instant]);
 
   const partialLine =
-    !skipAnimation &&
+    !instant &&
     currentLine < BOOT_LINES.length &&
     !BOOT_LINES[currentLine].startsWith("─")
       ? BOOT_LINES[currentLine].slice(0, currentChar)
@@ -90,23 +114,23 @@ export function BootSequence({ onComplete, skipAnimation }: Props) {
           key={i}
           className={`text-[13px] ${
             line.startsWith("─")
-              ? "text-white/12"
+              ? "text-foreground/12"
               : line.startsWith("[ OK ]")
-              ? "text-accent/80"
+              ? "text-primary/80"
               : line.startsWith("Welcome")
-              ? "text-white/60"
+              ? "text-foreground/60"
               : i === 0
-              ? "text-accent font-bold text-[14px]"
-              : "text-white/45"
+              ? "text-primary font-bold text-[14px]"
+              : "text-foreground/45"
           }`}
         >
           {line}
         </p>
       ))}
       {partialLine !== null && (
-        <p className="text-white/45 text-[13px]">
+        <p className="text-foreground/45 text-[13px]">
           {partialLine}
-          <span className="inline-block w-[8px] h-[14px] ml-[1px] align-middle bg-accent/80 animate-pulse" />
+          <span className="inline-block w-[8px] h-[14px] ml-[1px] align-middle bg-primary/80 animate-pulse" />
         </p>
       )}
     </div>

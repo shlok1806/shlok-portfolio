@@ -1,5 +1,5 @@
-import { TerminalPage } from "@/components/terminal/TerminalPage";
+import { Desktop } from "@/components/os/Desktop";
 
 export default function Home() {
-  return <TerminalPage />;
+  return <Desktop />;
 }

@@ -20,3 +20,6 @@ out/
 
 # serena (agent tooling)
 .serena/
+
+# typescript incremental build cache
+tsconfig.tsbuildinfo

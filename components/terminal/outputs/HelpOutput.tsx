@@ -14,26 +14,26 @@ export function HelpOutput() {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <p className="text-white/70 text-[13px]">
-          This is an interactive terminal. Type a command below and press <span className="text-accent font-bold">Enter</span>.
+        <p className="text-foreground/70 text-[13px]">
+          This is an interactive terminal. Type a command below and press <span className="text-primary font-bold">Enter</span>.
         </p>
-        <p className="text-white/35 text-[12px]">
-          Use <span className="text-accent/70">↑ ↓</span> arrow keys to cycle through history.
+        <p className="text-foreground/35 text-[12px]">
+          Use <span className="text-primary/70">↑ ↓</span> arrow keys to cycle through history.
         </p>
       </div>
 
-      <div className="border-t border-white/[0.06] pt-4 space-y-[5px]">
-        <p className="text-accent/50 text-[10px] tracking-[0.3em] mb-3">COMMANDS</p>
+      <div className="border-t border-border pt-4 space-y-[5px]">
+        <p className="text-primary/50 text-[10px] tracking-[0.3em] mb-3">COMMANDS</p>
         {COMMANDS.map(({ cmd, desc }) => (
           <div key={cmd} className="flex gap-4 text-[13px] items-baseline">
-            <span className="text-accent font-bold w-32 shrink-0">{cmd}</span>
-            <span className="text-white/40">{desc}</span>
+            <span className="text-primary font-bold w-32 shrink-0">{cmd}</span>
+            <span className="text-foreground/40">{desc}</span>
           </div>
         ))}
       </div>
 
-      <p className="text-white/20 text-[11px] pt-1">
-        Try typing <span className="text-accent/60">projects</span> and pressing Enter to get started →
+      <p className="text-foreground/20 text-[11px] pt-1">
+        Try typing <span className="text-primary/60">projects</span> and pressing Enter to get started →
       </p>
     </div>
   );
