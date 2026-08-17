@@ -130,7 +130,7 @@ export function Screensaver({ onWake, label }: Props) {
   return (
     <div className="fixed inset-0 z-[200] bg-black" role="presentation">
       <canvas ref={canvasRef} className="h-full w-full" />
-      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 font-[family-name:var(--font-mono-src)] text-[12px] text-white/40">
+      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 font-[family-name:var(--font-mono-src)] text-[12px] text-white/60">
         move the mouse or press a key
       </p>
     </div>
