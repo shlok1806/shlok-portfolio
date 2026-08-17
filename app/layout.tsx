@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Space_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/site/ThemeProvider";
 import { RotatePresetScript } from "@/components/site/RotatePresetScript";
+import { PixelCursor } from "@/components/site/PixelCursor";
 import { Analytics } from "@vercel/analytics/react";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -62,7 +63,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </noscript>
         {/* Must precede ThemeProvider - it decides which tube next-themes reads */}
         <RotatePresetScript />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <PixelCursor />
+          {children}
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

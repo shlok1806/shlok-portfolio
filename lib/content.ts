@@ -3,6 +3,17 @@
  * Both the terminal and the main site render from here, so the two can't drift.
  */
 
+/**
+ * What the machine calls itself. The boot log, the terminal banner and `uname`
+ * each used to spell this out by hand, and they had already drifted apart -
+ * one of them said "Shlok OS v2.0.26".
+ */
+export const OS = {
+  name: "ShlokOS",
+  version: "2.0.26",
+  arch: "portfolio-aarch64",
+};
+
 export const PROFILE = {
   name: "Shlok Thakkar",
   role: "Software Engineer",

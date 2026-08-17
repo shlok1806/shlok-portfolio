@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { PRESETS, DEFAULT_PRESET, presetById, type Preset } from "@/lib/theme/presets";
+import { setSoundOn, soundOn, subscribeSound } from "@/lib/sfx";
 
-const SOUND_KEY = "remix-sound";
 const CHOSEN_KEY = "remix-chosen";
 
 /**
@@ -18,16 +18,13 @@ const CHOSEN_KEY = "remix-chosen";
 export function useRemix() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    try {
-      if (localStorage.getItem(SOUND_KEY) === "on") setSoundOn(true);
-    } catch {
-      // storage blocked - defaults are fine
-    }
+    setSoundEnabled(soundOn());
+    return subscribeSound(setSoundEnabled);
   }, []);
 
   /** Marks the preset as deliberately chosen so RotatePresetScript stops rotating it. */
@@ -76,10 +73,10 @@ export function useRemix() {
       const next = presetById(id);
       setTheme(next.id);
       claim();
-      if (soundOn) playChord(next);
+      if (soundEnabled) playChord(next);
       return next;
     },
-    [setTheme, claim, soundOn, playChord],
+    [setTheme, claim, soundEnabled, playChord],
   );
 
   const remix = useCallback(() => {
@@ -87,17 +84,10 @@ export function useRemix() {
     return select(PRESETS[(i + 1) % PRESETS.length].id);
   }, [preset.id, select]);
 
+  // One preference for the whole machine; lib/sfx owns it and notifies the rest
   const toggleSound = useCallback(() => {
-    setSoundOn((on) => {
-      const next = !on;
-      try {
-        localStorage.setItem(SOUND_KEY, next ? "on" : "off");
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+    setSoundOn(!soundOn());
   }, []);
 
-  return { preset, mounted, remix, select, soundOn, toggleSound };
+  return { preset, mounted, remix, select, soundOn: soundEnabled, toggleSound };
 }

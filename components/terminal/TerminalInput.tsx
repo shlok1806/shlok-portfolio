@@ -44,7 +44,7 @@ export function TerminalInput({
       className="flex items-center font-mono text-[13px] cursor-text"
       onClick={() => inputRef.current?.focus()}
     >
-      <span className="text-primary/60 select-none shrink-0">shlok@portfolio:~$ </span>
+      <span className="text-accent-ink select-none shrink-0">shlok@portfolio:~$ </span>
 
       {/* Hidden real input */}
       <input
@@ -65,7 +65,7 @@ export function TerminalInput({
 
       {/* Visible fake input with blinking cursor */}
       <div className="flex items-center">
-        <span className="text-foreground/90 font-bold">{value}</span>
+        <span className="text-foreground font-bold">{value}</span>
         <span
           className={`inline-block w-[9px] h-[16px] ml-px align-middle bg-primary transition-opacity ${
             focused ? "animate-pulse" : "opacity-30"

@@ -19,6 +19,10 @@ const config: Config = {
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
         faint: "hsl(var(--faint) / <alpha-value>)",
+        // The accent as *text*. --primary is tuned to be a fill behind
+        // --primary-foreground; at that lightness it is not legible as ink on
+        // the document and chrome surfaces, so text uses this instead.
+        "accent-ink": "hsl(var(--accent-ink) / <alpha-value>)",
         card: {
           DEFAULT: "hsl(var(--card) / <alpha-value>)",
           foreground: "hsl(var(--card-foreground) / <alpha-value>)",

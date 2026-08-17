@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { OS } from "@/lib/content";
 
 const BOOT_LINES = [
-  "Shlok OS v2.0.26 - Personal Terminal",
+  `${OS.name} ${OS.version} - Personal Terminal`,
   "──────────────────────────────────────",
   "[ OK ] Loading kernel modules",
   "[ OK ] Mounting filesystem",
@@ -114,21 +115,21 @@ export function BootSequence({ onComplete, skipAnimation }: Props) {
           key={i}
           className={`text-[13px] ${
             line.startsWith("─")
-              ? "text-foreground/12"
+              ? "text-faint"
               : line.startsWith("[ OK ]")
-              ? "text-primary/80"
+              ? "text-accent-ink"
               : line.startsWith("Welcome")
-              ? "text-foreground/60"
+              ? "text-muted-foreground"
               : i === 0
-              ? "text-primary font-bold text-[14px]"
-              : "text-foreground/45"
+              ? "text-accent-ink font-bold text-[14px]"
+              : "text-faint"
           }`}
         >
           {line}
         </p>
       ))}
       {partialLine !== null && (
-        <p className="text-foreground/45 text-[13px]">
+        <p className="text-faint text-[13px]">
           {partialLine}
           <span className="inline-block w-[8px] h-[14px] ml-[1px] align-middle bg-primary/80 animate-pulse" />
         </p>

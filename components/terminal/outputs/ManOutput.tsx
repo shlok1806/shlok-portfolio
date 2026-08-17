@@ -95,6 +95,29 @@ export const MAN_PAGES: Record<string, Page> = {
     description: ["Opens the given destination in a new tab."],
     seeAlso: ["contact"],
   },
+  games: {
+    name: "games",
+    section: 6,
+    synopsis: "games",
+    summary: "list the installed games",
+    description: [
+      "Lists everything in /usr/games with a one-line description.",
+      "`arcade` is an alias.",
+    ],
+    seeAlso: ["play"],
+  },
+  play: {
+    name: "play",
+    section: 6,
+    synopsis: "play <game>",
+    summary: "start a game",
+    description: [
+      "Opens the named game in its own window. Try snake, tetris, flappy,",
+      "breakout, or pong.",
+      "High scores are kept in this browser and survive a reload.",
+    ],
+    seeAlso: ["games"],
+  },
   ls: {
     name: "ls",
     section: 1,
@@ -146,32 +169,62 @@ export const MAN_PAGES: Record<string, Page> = {
     summary: "execute a command as another user",
     description: ["You are not in the sudoers file. This incident will be reported."],
   },
+  pwd: {
+    name: "pwd",
+    section: 1,
+    synopsis: "pwd",
+    summary: "print the working directory",
+    description: ["Prints the full path of the current directory."],
+    seeAlso: ["ls"],
+  },
+  date: {
+    name: "date",
+    section: 1,
+    synopsis: "date",
+    summary: "print the current time",
+    description: ["Prints the machine's clock in UTC."],
+  },
+  echo: {
+    name: "echo",
+    section: 1,
+    synopsis: "echo <text>",
+    summary: "write arguments to standard output",
+    description: ["Prints its arguments back, separated by single spaces."],
+  },
+  dir: {
+    name: "dir",
+    section: 1,
+    synopsis: "dir",
+    summary: "list directory contents",
+    description: ["An alias for ls, kept for the muscle memory."],
+    seeAlso: ["ls"],
+  },
 };
 
 const Head = ({ children }: { children: React.ReactNode }) => (
-  <p className="mt-3 font-bold text-primary first:mt-0">{children}</p>
+  <p className="mt-3 font-bold text-accent-ink first:mt-0">{children}</p>
 );
 
 export function ManOutput({ page }: { page: Page }) {
   return (
     <div className="text-[13px] leading-relaxed">
-      <p className="text-foreground/50">
+      <p className="text-muted-foreground">
         {page.name.toUpperCase()}({page.section}){" ".repeat(8)}General Commands Manual
         {" ".repeat(8)}
         {page.name.toUpperCase()}({page.section})
       </p>
 
       <Head>NAME</Head>
-      <p className="pl-6 text-foreground/80">
+      <p className="pl-6 text-foreground">
         {page.name} - {page.summary}
       </p>
 
       <Head>SYNOPSIS</Head>
-      <p className="pl-6 text-foreground/80">{page.synopsis}</p>
+      <p className="pl-6 text-foreground">{page.synopsis}</p>
 
       <Head>DESCRIPTION</Head>
       {page.description.map((d, i) => (
-        <p key={i} className="pl-6 text-foreground/80">
+        <p key={i} className="pl-6 text-foreground">
           {d}
         </p>
       ))}
@@ -179,7 +232,7 @@ export function ManOutput({ page }: { page: Page }) {
       {page.seeAlso && (
         <>
           <Head>SEE ALSO</Head>
-          <p className="pl-6 text-foreground/80">
+          <p className="pl-6 text-foreground">
             {page.seeAlso.map((s) => `${s}(1)`).join(", ")}
           </p>
         </>
@@ -192,9 +245,9 @@ export function ManIndexOutput() {
   const names = Object.keys(MAN_PAGES).sort();
   return (
     <div className="text-[13px]">
-      <p className="text-foreground/60">What manual page do you want?</p>
-      <p className="mt-2 text-foreground/80">{names.join("  ")}</p>
-      <p className="mt-2 text-foreground/30 text-[11px]">Try: man resume</p>
+      <p className="text-muted-foreground">What manual page do you want?</p>
+      <p className="mt-2 text-foreground">{names.join("  ")}</p>
+      <p className="mt-2 text-faint text-[11px]">Try: man resume</p>
     </div>
   );
 }

@@ -1,0 +1,107 @@
+"use client";
+
+import { useLayoutEffect, useRef, useState } from "react";
+import { MENU_APPS } from "@/lib/os/registry";
+import { WALLPAPERS } from "@/lib/os/wallpapers";
+
+interface Props {
+  /** where the pointer was when the menu was summoned */
+  x: number;
+  y: number;
+  panelHeight: number;
+  currentWallpaper: string;
+  onLaunch: (appId: string) => void;
+  onChooseWallpaper: (id: string) => void;
+  onDismiss: () => void;
+}
+
+const GAP = 4;
+
+/**
+ * The twm root menu.
+ *
+ * It measures itself before paint and then places itself, rather than assuming
+ * a height. The previous version subtracted a hardcoded 260px from the viewport
+ * to decide how far down it could open; the menu is closer to 450px tall and
+ * grows every time an app is added, so a right-click anywhere below the middle
+ * of the screen pushed the Background section under the panel - and the desktop
+ * does not scroll, so those entries could not be reached at all.
+ */
+export function RootMenu({
+  x,
+  y,
+  panelHeight,
+  currentWallpaper,
+  onLaunch,
+  onChooseWallpaper,
+  onDismiss,
+}: Props) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  // Layout effect, so the corrected position is in place before the first paint
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { width, height } = el.getBoundingClientRect();
+    const room = window.innerHeight - panelHeight;
+    setPos({
+      left: Math.max(GAP, Math.min(x, window.innerWidth - width - GAP)),
+      top: Math.max(GAP, Math.min(y, room - height - GAP)),
+    });
+  }, [x, y, panelHeight]);
+
+  return (
+    <div
+      ref={ref}
+      onPointerDown={(e) => e.stopPropagation()}
+      className="bevel-out absolute z-[85] min-w-[190px] overflow-y-auto bg-secondary py-0.5 font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
+      style={{
+        left: pos?.left ?? x,
+        top: pos?.top ?? y,
+        // A menu taller than the screen scrolls rather than spilling off it
+        maxHeight: `calc(100vh - ${panelHeight + GAP * 2}px)`,
+        // Hidden for the one frame between mount and measurement
+        visibility: pos ? "visible" : "hidden",
+      }}
+    >
+      <p className="border-b border-border px-3 pb-1 pt-1 text-[11px] uppercase leading-none tracking-wider text-faint">
+        ShlokOS
+      </p>
+      {MENU_APPS.map((app) => (
+        <button
+          key={app.id}
+          onClick={() => {
+            onLaunch(app.id);
+            onDismiss();
+          }}
+          className="flex w-full items-center gap-3 px-3 py-[5px] text-left leading-none hover:bg-primary hover:text-primary-foreground"
+        >
+          <span aria-hidden className="w-5 shrink-0 text-center">
+            {app.icon}
+          </span>
+          {app.title}
+        </button>
+      ))}
+
+      <p className="mt-1 border-b border-t border-border px-3 py-1 text-[11px] uppercase leading-none tracking-wider text-faint">
+        Background
+      </p>
+      {WALLPAPERS.map((w) => (
+        <button
+          key={w.id}
+          onClick={() => {
+            onChooseWallpaper(w.id);
+            onDismiss();
+          }}
+          className="flex w-full items-center gap-3 px-3 py-[5px] text-left leading-none hover:bg-primary hover:text-primary-foreground"
+        >
+          <span aria-hidden className="w-5 shrink-0 text-center">
+            {w.id === currentWallpaper ? "•" : ""}
+          </span>
+          {w.name}
+        </button>
+      ))}
+    </div>
+  );
+}

@@ -22,8 +22,11 @@ interface Props {
 }
 
 const DRAG_THRESHOLD = 4;
-const ICON_W = 92;
-const ICON_H = 74;
+/* Wide enough that "experience.log" sets on one line at 12px */
+export const ICON_W = 104;
+export const ICON_H = 74;
+/** vertical pitch of the default grid */
+export const ICON_PITCH = 78;
 
 /**
  * A draggable desktop icon.

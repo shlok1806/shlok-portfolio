@@ -7,6 +7,7 @@ import { SkillsApp, EducationApp, ContactApp } from "@/components/os/apps/MiscAp
 import { XtermApp } from "@/components/os/apps/XtermApp";
 import { ReadmeApp } from "@/components/os/apps/ReadmeApp";
 import { TopApp } from "@/components/os/apps/TopApp";
+import { GamesApp, GameApp } from "@/components/os/apps/GamesApp";
 
 export interface AppDef {
   id: string;
@@ -92,7 +93,7 @@ export const APPS: AppDef[] = [
     title: "sysinfo",
     icon: "◈",
     w: 640,
-    h: 380,
+    h: 440,
     Component: SysInfoApp,
     onDesktop: true,
     inMenu: true,
@@ -104,6 +105,16 @@ export const APPS: AppDef[] = [
     w: 520,
     h: 320,
     Component: ContactApp,
+    onDesktop: true,
+    inMenu: true,
+  },
+  {
+    id: "games",
+    title: "games",
+    icon: "▶",
+    w: 600,
+    h: 340,
+    Component: GamesApp,
     onDesktop: true,
     inMenu: true,
   },
@@ -134,7 +145,7 @@ export const APPS: AppDef[] = [
     Component: EducationApp,
     inMenu: true,
   },
-  // Opened by the file manager, never directly
+  // Opened by a file manager, never directly
   {
     id: "project",
     title: "project",
@@ -142,6 +153,14 @@ export const APPS: AppDef[] = [
     w: 620,
     h: 440,
     Component: ProjectApp,
+  },
+  {
+    id: "game",
+    title: "game",
+    icon: "▶",
+    w: 520,
+    h: 460,
+    Component: GameApp,
   },
 ];
 

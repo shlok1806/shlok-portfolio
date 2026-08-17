@@ -10,16 +10,16 @@ const FILES = [
 export function LsOutput() {
   return (
     <div className="space-y-[2px]">
-      <p className="text-foreground/20 text-[11px] mb-1">total 28K</p>
+      <p className="text-faint text-[11px] mb-1">total 28K</p>
       {FILES.map((f) => (
         <div key={f.name} className="flex gap-4 text-[13px]">
-          <span className="text-foreground/20 shrink-0">-rw-r--r--  shlok  staff</span>
-          <span className="text-foreground/30 w-12 shrink-0">{f.size}</span>
-          <span className={`font-bold shrink-0 ${f.name.endsWith("/") ? "text-primary" : "text-foreground/70"}`}>{f.name}</span>
-          <span className="text-foreground/25"># {f.desc}</span>
+          <span className="text-faint shrink-0">-rw-r--r--  shlok  staff</span>
+          <span className="text-faint w-12 shrink-0">{f.size}</span>
+          <span className={`font-bold shrink-0 ${f.name.endsWith("/") ? "text-accent-ink" : "text-foreground"}`}>{f.name}</span>
+          <span className="text-faint"># {f.desc}</span>
         </div>
       ))}
-      <p className="text-foreground/20 text-[11px] mt-2">Use <span className="text-primary/60">cat &lt;filename&gt;</span> to read a file</p>
+      <p className="text-faint text-[11px] mt-2">Use <span className="text-accent-ink">cat &lt;filename&gt;</span> to read a file</p>
     </div>
   );
 }

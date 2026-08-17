@@ -67,7 +67,7 @@ export function Panel({
           the twm look is all ours. */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex h-full items-center gap-2 border-r-2 border-border px-3 leading-none text-primary hover:bg-secondary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground">
+          <button className="flex h-full items-center gap-2 border-r-2 border-border px-3 leading-none text-accent-ink hover:bg-secondary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground">
             <span aria-hidden>≡</span> Applications
           </button>
         </DropdownMenuTrigger>

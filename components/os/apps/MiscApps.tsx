@@ -1,4 +1,5 @@
 import { SKILLS, EDUCATION, LINKS, PROFILE } from "@/lib/content";
+import { IlliniBanner } from "../IlliniBanner";
 import { DocShell, DocTitle, Rule } from "./DocShell";
 
 export function SkillsApp() {
@@ -7,11 +8,11 @@ export function SkillsApp() {
       <p className="text-faint">{"{"}</p>
       {SKILLS.map((row, i) => (
         <p key={row.key} className="pl-4">
-          <span className="text-primary">&quot;{row.key}&quot;</span>
+          <span className="text-accent-ink">&quot;{row.key}&quot;</span>
           <span className="text-faint">: [</span>
           {row.values.map((v, vi) => (
             <span key={v}>
-              <span className="text-foreground/85">&quot;{v}&quot;</span>
+              <span className="text-foreground">&quot;{v}&quot;</span>
               {vi < row.values.length - 1 && <span className="text-faint">, </span>}
             </span>
           ))}
@@ -26,19 +27,20 @@ export function SkillsApp() {
 export function EducationApp() {
   return (
     <DocShell status="education.md">
+      <IlliniBanner className="bevel-in mb-4 block h-[52px] w-auto" />
       <DocTitle>{EDUCATION.degree}</DocTitle>
       <p className="text-muted-foreground">{EDUCATION.school}</p>
       <p className="text-faint">{EDUCATION.period}</p>
       <Rule />
-      <p className="text-foreground/85">{EDUCATION.detail}</p>
-      <p className="mt-4 text-primary">coursework</p>
+      <p className="text-foreground">{EDUCATION.detail}</p>
+      <p className="mt-4 text-accent-ink">coursework</p>
       <ul className="mt-1 space-y-1">
         {EDUCATION.coursework.map((c) => (
           <li key={c} className="flex gap-2">
             <span aria-hidden className="text-faint">
               -
             </span>
-            <span className="text-foreground/80">{c}</span>
+            <span className="text-foreground">{c}</span>
           </li>
         ))}
       </ul>
@@ -50,7 +52,7 @@ export function ContactApp() {
   return (
     <DocShell status="contact.txt  ·  links open in a new tab">
       <DocTitle>{PROFILE.name}</DocTitle>
-      <p className="max-w-[52ch] text-foreground/80">
+      <p className="max-w-[52ch] text-foreground">
         {PROFILE.status}. Interested in {PROFILE.interests.join(", ")}. Email is the fastest way to
         reach me.
       </p>
@@ -63,7 +65,7 @@ export function ContactApp() {
               href={l.href}
               target={l.href.startsWith("http") ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="text-primary underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
+              className="text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
             >
               {l.value}
             </a>

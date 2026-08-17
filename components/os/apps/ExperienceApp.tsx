@@ -16,13 +16,13 @@ export function ExperienceApp() {
           </p>
           <p className="text-faint">
             {role.period}
-            {role.current && <span className="text-primary"> · ACTIVE</span>}
+            {role.current && <span className="text-accent-ink"> · ACTIVE</span>}
           </p>
 
           <div className="my-3 flex flex-wrap gap-x-8 gap-y-2">
             {role.metrics.map((m) => (
               <span key={m.label} className="whitespace-nowrap">
-                <span className="font-[family-name:var(--font-ui)] text-[22px] text-primary glow">
+                <span className="font-[family-name:var(--font-ui)] text-[22px] text-accent-ink glow">
                   {m.value}
                 </span>
                 <span className="ml-2 text-faint">{m.label}</span>
@@ -36,7 +36,7 @@ export function ExperienceApp() {
                 <span aria-hidden className="shrink-0 text-faint">
                   *
                 </span>
-                <span className="text-foreground/80">{b}</span>
+                <span className="text-foreground">{b}</span>
               </li>
             ))}
           </ul>

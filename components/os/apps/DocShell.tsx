@@ -24,7 +24,7 @@ export function DocShell({
 
 export function DocTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="mb-1 font-[family-name:var(--font-ui)] text-[24px] leading-none text-primary glow">
+    <h2 className="mb-1 font-[family-name:var(--font-ui)] text-[24px] leading-none text-accent-ink glow">
       {children}
     </h2>
   );

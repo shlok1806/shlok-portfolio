@@ -58,8 +58,13 @@ function reducer(state: State, action: Action): State {
       };
     }
 
+    /*
+     * -1 is the floor: it means "the draft line", not "one before the newest
+     * entry". Letting the index run negative made every extra Down press cost
+     * an extra Up press to undo, so the history appeared to stop responding.
+     */
     case "ARROW_DOWN": {
-      const next = state.historyIndex - 1;
+      const next = Math.max(-1, state.historyIndex - 1);
       return {
         ...state,
         historyIndex: next,

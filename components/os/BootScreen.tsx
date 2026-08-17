@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PROFILE } from "@/lib/content";
+import { OS, PROFILE } from "@/lib/content";
 
 interface Line {
   text: string;
@@ -11,7 +11,7 @@ interface Line {
 }
 
 const SEQUENCE: Line[] = [
-  { text: "ShlokOS 2.0.26", kind: "info" },
+  { text: `${OS.name} ${OS.version}`, kind: "info" },
   { text: "", kind: "blank" },
   { text: "[ OK ] Mounted /dev/hd0 on /", kind: "ok" },
   { text: "[ OK ] Brought up loopback interface", kind: "ok" },

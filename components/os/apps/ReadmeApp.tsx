@@ -11,6 +11,7 @@ const ROWS: [string, string][] = [
   ["experience.log", "roles, with the numbers they moved"],
   ["sysinfo", "the short version"],
   ["xterm", "a shell, type help"],
+  ["games", "snake, tetris, flappy, breakout, pong"],
 ];
 
 /**
@@ -21,14 +22,14 @@ export function ReadmeApp({ open }: AppProps) {
   return (
     <DocShell status="README  ·  close this window to start">
       <DocTitle>Welcome to ShlokOS</DocTitle>
-      <p className="max-w-[58ch] text-foreground/85">
+      <p className="max-w-[58ch] text-foreground">
         This is {PROFILE.name}&apos;s portfolio, built as a small UNIX desktop. Everything on the
         resume is an application.
       </p>
 
       <Rule />
 
-      <p className="mb-2 text-primary">Getting around</p>
+      <p className="mb-2 text-accent-ink">Getting around</p>
       <ul className="space-y-1.5">
         <li className="flex gap-2">
           <span aria-hidden className="text-faint">
@@ -75,7 +76,7 @@ export function ReadmeApp({ open }: AppProps) {
 
       <Rule />
 
-      <p className="mb-2 text-primary">What is where</p>
+      <p className="mb-2 text-accent-ink">What is where</p>
       <dl className="space-y-1">
         {ROWS.map(([name, what]) => (
           <div key={name} className="flex gap-3">
@@ -89,11 +90,11 @@ export function ReadmeApp({ open }: AppProps) {
 
       <p className="text-muted-foreground">
         In a hurry? There is a{" "}
-        <a href="/resume" className="text-primary underline underline-offset-2">
+        <a href="/resume" className="text-accent-ink underline underline-offset-2">
           plain text version
         </a>{" "}
         and a{" "}
-        <a href="/resume.pdf" download className="text-primary underline underline-offset-2">
+        <a href="/resume.pdf" download className="text-accent-ink underline underline-offset-2">
           PDF
         </a>
         .

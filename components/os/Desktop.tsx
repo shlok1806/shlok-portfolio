@@ -1,37 +1,50 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRemix } from "@/hooks/useRemix";
 import { useWindowManager } from "@/hooks/useWindowManager";
-import { APPS, DESKTOP_APPS, MENU_APPS, appById } from "@/lib/os/registry";
+import { APPS, DESKTOP_APPS, appById } from "@/lib/os/registry";
 import { PROFILE } from "@/lib/content";
-import { WALLPAPERS, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
+import { wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
 import { BootScreen } from "./BootScreen";
-import { DesktopIcon, type IconPos } from "./DesktopIcon";
+import { DesktopIcon, ICON_H, ICON_PITCH, ICON_W, type IconPos } from "./DesktopIcon";
+import { RootMenu } from "./RootMenu";
 import { Screensaver } from "./Screensaver";
 import { Window } from "./Window";
 import { Panel } from "./Panel";
 
-interface RootMenu {
+interface RootMenuPos {
   x: number;
   y: number;
 }
 
 export function Desktop() {
   const [booted, setBooted] = useState(false);
-  const [rootMenu, setRootMenu] = useState<RootMenu | null>(null);
+  const [rootMenu, setRootMenu] = useState<RootMenuPos | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   /** touch has no double-click and no right-click, so the desktop adapts */
   const [touch, setTouch] = useState(false);
   const [wallpaperId, setWallpaperId] = useState<string | null>(null);
   const [iconPos, setIconPos] = useState<Record<string, IconPos>>({});
   const [idle, setIdle] = useState(false);
+  const [viewport, setViewport] = useState<{ w: number; h: number } | null>(null);
 
   useEffect(() => {
     try {
       setWallpaperId(localStorage.getItem("os-wallpaper"));
       const saved = localStorage.getItem("os-icons");
-      if (saved) setIconPos(JSON.parse(saved));
+      if (!saved) return;
+      // Anything can be in storage; only keep entries that are actually points
+      const parsed: unknown = JSON.parse(saved);
+      if (!parsed || typeof parsed !== "object") return;
+      const clean: Record<string, IconPos> = {};
+      for (const [id, v] of Object.entries(parsed as Record<string, unknown>)) {
+        const p = v as Partial<IconPos>;
+        if (Number.isFinite(p?.x) && Number.isFinite(p?.y)) {
+          clean[id] = { x: p.x as number, y: p.y as number };
+        }
+      }
+      setIconPos(clean);
     } catch {
       /* storage blocked or corrupt - defaults are fine */
     }
@@ -63,6 +76,18 @@ export function Desktop() {
   }, []);
 
   /*
+   * Icon placement has to know the viewport, and has to be recomputed when it
+   * changes: a position saved on a wide monitor is off the side of a phone, and
+   * the desktop does not scroll, so a stranded icon can never be reached again.
+   */
+  useEffect(() => {
+    const sync = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    sync();
+    window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
+  }, []);
+
+  /*
    * The desktop owns the viewport, so lock page scrolling while it is mounted
    * rather than on <body> globally - /resume is a normal scrolling document.
    */
@@ -78,6 +103,22 @@ export function Desktop() {
   const wallpaper = wallpaperById(wallpaperId);
 
   /*
+   * The generated backdrops are built by string-concatenating an SVG - the
+   * starfield alone is 267 circles run through encodeURIComponent - so this is
+   * memoised. It used to be rebuilt inline on every render of the desktop,
+   * which is every window focus, every drag commit and every clock tick.
+   */
+  const backdrop = useMemo(
+    () =>
+      wallpaperStyle(wallpaper, {
+        bg: preset.swatch.bg,
+        ink: preset.swatch.primary,
+        light: preset.desktopLight,
+      }),
+    [wallpaper, preset.swatch.bg, preset.swatch.primary, preset.desktopLight],
+  );
+
+  /*
    * Generated backdrops know their own contrast, so labels can follow the theme.
    * A photo does not, so over one we fall back to white with a hard shadow -
    * legible over both the sun and the buildings.
@@ -90,6 +131,34 @@ export function Desktop() {
       };
   const wm = useWindowManager();
   const { open, windows, focusedId, PANEL_H } = wm;
+
+  /*
+   * Where an icon actually goes.
+   *
+   * The saved position is the visitor's intent and is left alone; what gets
+   * clamped is where it is drawn, so a layout arranged on a large monitor
+   * survives a visit on a phone instead of being flattened - or, worse, left
+   * hanging off the edge of a desktop that cannot scroll.
+   */
+  const placeIcon = useCallback(
+    (id: string, i: number): IconPos => {
+      // Default layout: a column down the left, wrapping when it runs out of room
+      const perColumn = viewport
+        ? Math.max(1, Math.floor((viewport.h - PANEL_H - 12) / ICON_PITCH))
+        : 6;
+      const fallback = {
+        x: 12 + Math.floor(i / perColumn) * (ICON_W + 8),
+        y: 12 + (i % perColumn) * ICON_PITCH,
+      };
+      const pos = iconPos[id] ?? fallback;
+      if (!viewport) return pos;
+      return {
+        x: Math.max(0, Math.min(pos.x, Math.max(0, viewport.w - ICON_W))),
+        y: Math.max(0, Math.min(pos.y, Math.max(0, viewport.h - PANEL_H - ICON_H))),
+      };
+    },
+    [iconPos, viewport, PANEL_H],
+  );
 
   const launch = useCallback(
     (appId: string) => {
@@ -178,23 +247,23 @@ export function Desktop() {
 
   return (
     <div className="scanlines vignette">
+      {/*
+        overflow-clip, not overflow-hidden: `hidden` still makes this a
+        scrollport, so anything inside a window - a focused input, an element
+        scrolled into view - could scroll the entire desktop out from under the
+        panel. `clip` refuses to scroll at all.
+      */}
       <div
-        className="relative h-screen w-screen overflow-hidden"
-        style={wallpaperStyle(wallpaper, {
-          bg: preset.swatch.bg,
-          ink: preset.swatch.primary,
-          light: preset.desktopLight,
-        })}
+        className="relative h-screen w-screen overflow-clip"
+        style={backdrop}
         onPointerDown={() => {
           setRootMenu(null);
           setSelected(null);
         }}
         onContextMenu={(e) => {
           e.preventDefault();
-          setRootMenu({
-            x: Math.min(e.clientX, window.innerWidth - 200),
-            y: Math.min(e.clientY, window.innerHeight - PANEL_H - 260),
-          });
+          // Raw pointer position; the menu measures itself and clamps from there
+          setRootMenu({ x: e.clientX, y: e.clientY });
         }}
       >
         {/* Desktop icons, draggable and remembered */}
@@ -205,8 +274,7 @@ export function Desktop() {
               id={app.id}
               title={app.title}
               icon={app.icon}
-              // default layout: a column down the left, wrapping after six
-              pos={iconPos[app.id] ?? { x: 12 + Math.floor(i / 6) * 100, y: 12 + (i % 6) * 78 }}
+              pos={placeIcon(app.id, i)}
               selected={selected === app.id}
               touch={touch}
               labelStyle={labelStyle}
@@ -232,49 +300,15 @@ export function Desktop() {
 
         {/* Root menu, the twm way */}
         {rootMenu && (
-          <div
-            onPointerDown={(e) => e.stopPropagation()}
-            className="bevel-out absolute z-[85] min-w-[190px] bg-secondary py-0.5 font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
-            style={{ left: rootMenu.x, top: rootMenu.y }}
-          >
-            <p className="border-b border-border px-3 pb-1 pt-1 text-[11px] uppercase leading-none tracking-wider text-faint">
-              ShlokOS
-            </p>
-            {MENU_APPS.map((app) => (
-              <button
-                key={app.id}
-                onClick={() => {
-                  launch(app.id);
-                  setRootMenu(null);
-                }}
-                className="flex w-full items-center gap-3 px-3 py-[5px] text-left leading-none hover:bg-primary hover:text-primary-foreground"
-              >
-                <span aria-hidden className="w-5 shrink-0 text-center">
-                  {app.icon}
-                </span>
-                {app.title}
-              </button>
-            ))}
-
-            <p className="mt-1 border-b border-t border-border px-3 py-1 text-[11px] uppercase leading-none tracking-wider text-faint">
-              Background
-            </p>
-            {WALLPAPERS.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => {
-                  chooseWallpaper(w.id);
-                  setRootMenu(null);
-                }}
-                className="flex w-full items-center gap-3 px-3 py-[5px] text-left leading-none hover:bg-primary hover:text-primary-foreground"
-              >
-                <span aria-hidden className="w-5 shrink-0 text-center">
-                  {w.id === wallpaper.id ? "•" : ""}
-                </span>
-                {w.name}
-              </button>
-            ))}
-          </div>
+          <RootMenu
+            x={rootMenu.x}
+            y={rootMenu.y}
+            panelHeight={PANEL_H}
+            currentWallpaper={wallpaper.id}
+            onLaunch={launch}
+            onChooseWallpaper={chooseWallpaper}
+            onDismiss={() => setRootMenu(null)}
+          />
         )}
 
         {/* Windows */}
@@ -294,7 +328,7 @@ export function Desktop() {
               onToggleMaximize={() => wm.toggleMaximize(win.id)}
               onCommit={(geo) => wm.setGeometry(win.id, geo)}
             >
-              <Component arg={win.arg} open={open} />
+              <Component arg={win.arg} open={open} close={() => wm.close(win.id)} />
             </Window>
           );
         })}

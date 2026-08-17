@@ -12,8 +12,8 @@ export function TerminalHistory({ history }: Props) {
           {/* The command that was typed */}
           {entry.command && (
             <div className="flex items-baseline font-mono text-[13px] mb-2">
-              <span className="text-primary/60 select-none shrink-0">shlok@portfolio:~$ </span>
-              <span className="text-foreground/85 font-bold">{entry.command}</span>
+              <span className="text-accent-ink select-none shrink-0">shlok@portfolio:~$ </span>
+              <span className="text-foreground font-bold">{entry.command}</span>
             </div>
           )}
           {/* The output */}

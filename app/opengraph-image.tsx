@@ -53,9 +53,26 @@ export default function OpengraphImage() {
             }}
           >
             <span>resume.txt</span>
+            {/*
+              The maximize button is drawn, not typed. U+25A1 (□) is not in the
+              font this renderer bundles, so it went looking for a dynamic one,
+              failed with a 400 during `next build`, and shipped a tofu box in
+              the card every social platform caches.
+            */}
             <span style={{ display: "flex", gap: 8 }}>
               <span style={{ background: "#d6d3ce", color: "#000", padding: "0 8px" }}>_</span>
-              <span style={{ background: "#d6d3ce", color: "#000", padding: "0 8px" }}>□</span>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#d6d3ce",
+                  padding: "0 8px",
+                  width: 30,
+                }}
+              >
+                <span style={{ width: 13, height: 13, border: "2px solid #000" }} />
+              </span>
               <span style={{ background: "#d6d3ce", color: "#000", padding: "0 8px" }}>×</span>
             </span>
           </div>

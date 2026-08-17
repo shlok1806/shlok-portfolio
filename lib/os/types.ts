@@ -6,4 +6,6 @@ export interface AppProps {
   arg?: string;
   /** lets an app spawn another window, e.g. the file manager opening a project */
   open: (opts: OpenOptions) => string | null;
+  /** closes the window this app is running in, e.g. the shell's `exit` */
+  close: () => void;
 }

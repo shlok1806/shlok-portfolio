@@ -17,7 +17,7 @@ export function ContactLinks({ className = "" }: { className?: string }) {
             href={l.href}
             target={l.href.startsWith("http") ? "_blank" : undefined}
             rel="noopener noreferrer"
-            className="text-primary underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
+            className="text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
           >
             {l.value}
           </a>

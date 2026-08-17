@@ -76,8 +76,13 @@ export function Window({
         el.style.left = `${Math.min(Math.max(g.originX + e.clientX - g.startX, -el.offsetWidth + 90), maxX)}px`;
         el.style.top = `${Math.min(Math.max(g.originY + e.clientY - g.startY, 0), maxY)}px`;
       } else {
-        el.style.width = `${Math.max(MIN_W, g.originW + e.clientX - g.startX)}px`;
-        el.style.height = `${Math.max(MIN_H, g.originH + e.clientY - g.startY)}px`;
+        // Bounded by the screen as well as by MIN_*: the resize corner is the
+        // bottom-right one, so growing past the edge puts the corner - and the
+        // only handle that could shrink it again - somewhere unreachable.
+        const maxW = window.innerWidth - el.offsetLeft;
+        const maxH = window.innerHeight - panelHeight - el.offsetTop;
+        el.style.width = `${Math.min(Math.max(MIN_W, g.originW + e.clientX - g.startX), Math.max(MIN_W, maxW))}px`;
+        el.style.height = `${Math.min(Math.max(MIN_H, g.originH + e.clientY - g.startY), Math.max(MIN_H, maxH))}px`;
       }
     };
 
@@ -120,16 +125,21 @@ export function Window({
     };
   };
 
-  if (win.minimized) return null;
-
+  /*
+   * Minimizing hides the window rather than unmounting it. Iconifying a window
+   * in a real WM does not restart the program, and unmounting threw away
+   * whatever the app was holding - a terminal's scrollback, a game in progress.
+   */
   return (
     <div
       ref={ref}
       role="dialog"
       aria-label={win.title}
+      aria-hidden={win.minimized || undefined}
       onPointerDown={onFocus}
-      className="bevel-out absolute flex flex-col bg-secondary"
+      className="bevel-out absolute flex-col bg-secondary"
       style={{
+        display: win.minimized ? "none" : "flex",
         left: win.x,
         top: win.y,
         width: win.w,

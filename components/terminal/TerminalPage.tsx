@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTerminal } from "@/hooks/useTerminal";
 import { useTerminalSound } from "@/hooks/useTerminalSound";
 import { parseCommand } from "@/lib/terminal/parser";
-import { runCommand } from "@/lib/terminal/commands";
+import { COMMAND_NAMES, runCommand } from "@/lib/terminal/commands";
 import { BootSequence } from "./BootSequence";
 import { TerminalHistory } from "./TerminalHistory";
 import { TerminalInput } from "./TerminalInput";
@@ -20,6 +20,8 @@ interface TerminalPageProps {
   skipBoot?: boolean;
   /** called by the close button and the `exit` command */
   onExit?: () => void;
+  /** called by `play <game>`; absent when there is no desktop to open into */
+  onPlay?: (gameId: string) => void;
 }
 
 export function TerminalPage({
@@ -27,10 +29,11 @@ export function TerminalPage({
   chromeless = false,
   skipBoot = false,
   onExit,
+  onPlay,
 }: TerminalPageProps = {}) {
   const [phase, setPhase] = useState<"boot" | "active">(skipBoot ? "active" : "boot");
   const [reducedMotion, setReducedMotion] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
 
   const { state, setInput, submit, silentSubmit, clear, arrowUp, arrowDown } = useTerminal();
@@ -42,9 +45,19 @@ export function TerminalPage({
     setReducedMotion(mq.matches);
   }, []);
 
-  // Auto-scroll to bottom whenever history changes
+  /*
+   * Follow the newest output.
+   *
+   * This drives the terminal's own scrollport directly instead of asking the
+   * browser to scroll an element into view. scrollIntoView walks up and scrolls
+   * *every* scrollable ancestor, and the shell runs inside a window inside the
+   * desktop, so it dragged the whole desktop up with it - and with
+   * behavior:"smooth" across nested scrollports Chrome abandons the animation
+   * part-way, which left long output (`experience`) sitting below the fold.
+   */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = bodyRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [state.history, phase]);
 
   // Focus input on click anywhere in the terminal
@@ -67,7 +80,11 @@ export function TerminalPage({
 
   const handleSubmit = useCallback(() => {
     const raw = state.input.trim();
-    if (!raw) return;
+    // Enter on a blank or all-whitespace line eats the line, the way a shell does
+    if (!raw) {
+      if (state.input) setInput("");
+      return;
+    }
 
     const { name, args } = parseCommand(raw);
     const result = runCommand(name, args, raw);
@@ -80,26 +97,13 @@ export function TerminalPage({
     if (result.action === "sound-on")  { play("enter"); toggleSound(true); }
     if (result.action === "sound-off") { play("enter"); toggleSound(false); }
     if (result.action === "exit" && onExit) { play("enter"); onExit(); return; }
+    if (result.action === "play" && result.target) onPlay?.(result.target);
 
-    // Play error sound for unknown commands
-    const isError = !result.action &&
-      name !== "" &&
-      result.output !== null &&
-      typeof result.output === "object" &&
-      "type" in (result.output as React.ReactElement) &&
-      (result.output as React.ReactElement).type?.toString().includes("ErrorOutput");
-
-    // Simpler heuristic: check if name is in known commands
-    const KNOWN = new Set(["help","?","whoami","about","projects","experience","resume","skills",
-      "education","contact","open","ls","cat","clear","sound","pwd","date","uname","echo","exit","quit","sudo","dir","man"]);
-    if (!KNOWN.has(name) && name !== "") {
-      play("error");
-    } else {
-      play("enter");
-    }
+    // The beep is for typos, so ask the dispatcher what it actually knows
+    play(COMMAND_NAMES.has(name) ? "enter" : "error");
 
     submit(result.output);
-  }, [state.input, play, clear, submit, toggleSound, onExit]);
+  }, [state.input, setInput, play, clear, submit, toggleSound, onExit, onPlay]);
 
   const handleKey = useCallback(() => {
     play("key");
@@ -134,12 +138,12 @@ export function TerminalPage({
           <span className="w-3 h-3 rounded-full bg-[#ed6a5e]" />
           <span className="w-3 h-3 rounded-full bg-[#f4bf4f]" />
           <span className="w-3 h-3 rounded-full bg-[#61c554]" />
-          <span className="mx-auto text-foreground/20 text-[11px] tracking-[0.1em]">
+          <span className="mx-auto text-faint text-[11px] tracking-[0.1em]">
             shlokthakkar.com - bash - interactive
           </span>
           <button
             onClick={e => { e.stopPropagation(); toggleSound(!soundEnabled); }}
-            className="text-foreground/20 hover:text-primary/60 transition-colors text-[10px] tracking-widest select-none"
+            className="text-faint hover:text-accent-ink transition-colors text-[10px] tracking-widest select-none"
             title={soundEnabled ? "Mute sounds" : "Enable sounds"}
           >
             {soundEnabled ? "♪ ON" : "♪ OFF"}
@@ -148,6 +152,7 @@ export function TerminalPage({
 
         {/* Terminal body */}
         <div
+          ref={bodyRef}
           className={`bg-card flex flex-col ${
             chromeless
               ? "flex-1 min-h-0 overflow-y-auto px-4 py-3"
@@ -192,20 +197,18 @@ export function TerminalPage({
                 onArrowDown={arrowDown}
                 onKey={handleKey}
               />
-
-              <div ref={bottomRef} />
             </motion.div>
           )}
         </div>
 
         {phase === "active" && !chromeless && (
-          <p className="shrink-0 text-foreground/25 text-[11px] font-mono mt-3 text-center">
-            type a command and press <span className="text-primary/50">Enter</span>
+          <p className="shrink-0 text-faint text-[11px] font-mono mt-3 text-center">
+            type a command and press <span className="text-accent-ink">Enter</span>
             {embedded ? (
               <>
                 {" · "}
-                <span className="text-primary/50">esc</span> or{" "}
-                <span className="text-primary/50">exit</span> to go back
+                <span className="text-accent-ink">esc</span> or{" "}
+                <span className="text-accent-ink">exit</span> to go back
               </>
             ) : (
               " · click anywhere to focus"

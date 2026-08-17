@@ -1,16 +1,23 @@
 "use client";
 
 import { useCallback, useRef, useState, useEffect } from "react";
+import { setSoundOn, soundOn, subscribeSound } from "@/lib/sfx";
 
 type SoundType = "key" | "enter" | "error";
 
+/**
+ * The terminal's own voice. It keeps its hand-tuned key click and error beep,
+ * but the on/off state lives in lib/sfx with everything else - the terminal used
+ * to store a second preference of its own, so muting from the panel left the
+ * keyboard clicking away.
+ */
 export function useTerminalSound() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const ctxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("terminal-sound");
-    if (saved === "on") setSoundEnabled(true);
+    setSoundEnabled(soundOn());
+    return subscribeSound(setSoundEnabled);
   }, []);
 
   const getCtx = useCallback((): AudioContext => {
@@ -91,8 +98,7 @@ export function useTerminalSound() {
   }, [soundEnabled, getCtx, playKey, playEnter, playError]);
 
   const toggleSound = useCallback((on: boolean) => {
-    setSoundEnabled(on);
-    localStorage.setItem("terminal-sound", on ? "on" : "off");
+    setSoundOn(on);
   }, []);
 
   return { soundEnabled, play, toggleSound };

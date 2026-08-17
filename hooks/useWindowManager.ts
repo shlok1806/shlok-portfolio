@@ -15,6 +15,12 @@ export interface WindowState {
   z: number;
   minimized: boolean;
   maximized: boolean;
+  /**
+   * True when the *window manager* maximized this, because the screen is too
+   * small for floating chrome - as opposed to the visitor asking for it. Only
+   * these get un-maximized again when the screen grows back.
+   */
+  forcedFullScreen?: boolean;
   /** geometry to restore when un-maximizing */
   restore?: { x: number; y: number; w: number; h: number };
 }
@@ -97,6 +103,7 @@ export function useWindowManager() {
             w: vw,
             h: vh - PANEL_H,
             maximized: true,
+            forcedFullScreen: true,
             restore: {
               x: 12,
               y: 12,
@@ -116,6 +123,7 @@ export function useWindowManager() {
               w: width,
               h: height,
               maximized: false,
+              forcedFullScreen: false,
               restore: undefined,
             };
           })();
@@ -142,11 +150,13 @@ export function useWindowManager() {
       ws.map((w) => {
         if (w.id !== id) return w;
         if (w.maximized) {
-          return { ...w, maximized: false, ...(w.restore ?? {}) };
+          return { ...w, maximized: false, forcedFullScreen: false, ...(w.restore ?? {}) };
         }
         return {
           ...w,
           maximized: true,
+          // Asked for by hand, so a later resize must not undo it
+          forcedFullScreen: false,
           restore: { x: w.x, y: w.y, w: w.w, h: w.h },
           x: 0,
           y: 0,
@@ -193,8 +203,13 @@ export function useWindowManager() {
   );
 
   /*
-   * Rotating a phone or resizing a window must not strand a window offscreen,
+   * Rotating a phone or resizing the browser must not strand a window offscreen,
    * so refit maximized ones and pull floating ones back into view.
+   *
+   * Going full-screen because the screen is small has to be reversible. This
+   * used to be a one-way door: any dip below the small-screen width maximized
+   * every window and set maximized:true, so widening the browser again left the
+   * whole desktop stuck full-screen with no way back.
    */
   useEffect(() => {
     const onResize = () => {
@@ -204,10 +219,39 @@ export function useWindowManager() {
 
       setWindows((ws) =>
         ws.map((win) => {
-          // Crossing into phone territory turns everything full-screen
-          if (win.maximized || small) {
-            return { ...win, maximized: true, x: 0, y: 0, w: vw, h: vh };
+          if (small) {
+            return {
+              ...win,
+              maximized: true,
+              // Remember it was our doing, unless the visitor had already maximized it
+              forcedFullScreen: win.forcedFullScreen || !win.maximized,
+              restore: win.restore ?? { x: win.x, y: win.y, w: win.w, h: win.h },
+              x: 0,
+              y: 0,
+              w: vw,
+              h: vh,
+            };
           }
+
+          // Back on a real screen: hand back the windows we took full-screen
+          if (win.forcedFullScreen) {
+            const r = win.restore;
+            const width = Math.min(r?.w ?? win.w, vw);
+            const height = Math.min(r?.h ?? win.h, vh);
+            return {
+              ...win,
+              maximized: false,
+              forcedFullScreen: false,
+              restore: undefined,
+              w: width,
+              h: height,
+              x: Math.max(0, Math.min(r?.x ?? win.x, vw - width)),
+              y: Math.max(0, Math.min(r?.y ?? win.y, vh - height)),
+            };
+          }
+
+          if (win.maximized) return { ...win, x: 0, y: 0, w: vw, h: vh };
+
           // Shrink to fit, then pull fully inside - clamping the corner alone
           // leaves the far edge hanging off the screen with content unreachable
           const width = Math.min(win.w, vw);
@@ -226,17 +270,19 @@ export function useWindowManager() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  /** Alt+Tab: raise the window furthest down the stack. */
+  /**
+   * Alt+Tab: raise the window furthest down the stack.
+   *
+   * Decided from windowsRef rather than inside a setWindows updater. Updaters
+   * must be pure - React runs them twice in StrictMode - and this one both bumped
+   * a ref and called setFocusedId, so every press advanced the z counter twice.
+   */
   const cycle = useCallback(() => {
-    setWindows((ws) => {
-      const live = ws.filter((w) => !w.minimized);
-      if (live.length < 2) return ws;
-      const lowest = live.reduce((a, b) => (a.z < b.z ? a : b));
-      zRef.current += 1;
-      setFocusedId(lowest.id);
-      return ws.map((w) => (w.id === lowest.id ? { ...w, z: zRef.current } : w));
-    });
-  }, []);
+    const live = windowsRef.current.filter((w) => !w.minimized);
+    if (live.length < 2) return;
+    const lowest = live.reduce((a, b) => (a.z < b.z ? a : b));
+    focus(lowest.id);
+  }, [focus]);
 
   return {
     windows,
