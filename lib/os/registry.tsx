@@ -8,6 +8,7 @@ import { XtermApp } from "@/components/os/apps/XtermApp";
 import { ReadmeApp } from "@/components/os/apps/ReadmeApp";
 import { TopApp } from "@/components/os/apps/TopApp";
 import { GamesApp, GameApp } from "@/components/os/apps/GamesApp";
+import { MusicApp } from "@/components/os/apps/MusicApp";
 
 export interface AppDef {
   id: string;
@@ -116,6 +117,15 @@ export const APPS: AppDef[] = [
     h: 340,
     Component: GamesApp,
     onDesktop: true,
+    inMenu: true,
+  },
+  {
+    id: "audio",
+    title: "audio",
+    icon: "♪",
+    w: 560,
+    h: 460,
+    Component: MusicApp,
     inMenu: true,
   },
   {

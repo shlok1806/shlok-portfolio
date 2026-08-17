@@ -11,6 +11,7 @@ import {
 import { MENU_APPS } from "@/lib/os/registry";
 import { PRESETS, type Preset } from "@/lib/theme/presets";
 import type { WindowState } from "@/hooks/useWindowManager";
+import { MusicWidget } from "./MusicWidget";
 
 interface Props {
   windows: WindowState[];
@@ -153,6 +154,8 @@ export function Panel({
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <MusicWidget onOpen={() => onLaunch("audio")} />
 
       <button
         onClick={onToggleSound}

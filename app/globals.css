@@ -285,6 +285,26 @@
   }
 }
 
+/*
+ * The record on the audio player's deck. 33 1/3 rpm is exactly 1.8 seconds a
+ * revolution.
+ *
+ * The spin is a class rather than an inline style so the reduced-motion block at
+ * the bottom of this file can stop it - inline animations cannot be overridden
+ * by a media query. Only animation-play-state is set from React, so pausing
+ * leaves the record where it stopped instead of snapping it back to the top.
+ */
+@keyframes vinyl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.vinyl {
+  transform-origin: 50px 50px;
+  animation: vinyl-spin 1.8s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
