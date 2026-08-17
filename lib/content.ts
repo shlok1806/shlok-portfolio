@@ -268,19 +268,6 @@ export const PROJECTS: Project[] = [
     ],
     href: "https://github.com/shlok1806/whoop-local",
   },
-  {
-    slug: "agentblame",
-    name: "agentblame/",
-    date: "2026",
-    stack: "Go",
-    stackFull: ["Go", "Claude Code hooks", "NDJSON"],
-    tagline: "git blame for AI-authored code",
-    note: "in progress",
-    bullets: [
-      "Maps file lines back to the prompts that produced them, via a Go daemon with an append-only NDJSON event log fed by Claude Code hooks",
-      "First milestone is a working agentblame <file> CLI",
-    ],
-  },
 ];
 
 export const SKILLS = [
