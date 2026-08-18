@@ -10,7 +10,16 @@
  * mask is enough to produce a cursor that reads on every tube.
  */
 
-/** left_ptr: the arrow every X session has come up with since 1985. */
+/**
+ * left_ptr: the arrow every X session has come up with since 1985.
+ *
+ * Fourteen rows, not the sixteen the original had, and that ceiling is not
+ * cosmetic. Chromium throws away any custom cursor larger than 32x32 DIP the
+ * moment it intersects native UI or the edge of the viewport, and falls back to
+ * the system arrow with no warning. With a one pixel keyline all round at 2x
+ * that puts the mask limit at 14x14 - and the panel is pinned to the bottom
+ * edge, so every pointer over the taskbar was reverting to the macOS cursor.
+ */
 const ARROW = [
   "X...........",
   "XX..........",
@@ -25,12 +34,10 @@ const ARROW = [
   "XXXXXX......",
   "XXX.XXX.....",
   "XX..XXX.....",
-  "X....XXX....",
   ".....XXX....",
-  "......XX....",
 ];
 
-/** hand2, for anything that answers a click. */
+/** hand2, for anything that answers a click. Same 14 row ceiling as ARROW. */
 const HAND = [
   "..XX........",
   "..XX........",
@@ -39,7 +46,6 @@ const HAND = [
   "..XXXXX.....",
   "..XXXXXXX...",
   "..XXXXXXXXX.",
-  "XXXXXXXXXXX.",
   "XXXXXXXXXXX.",
   "XXXXXXXXXXX.",
   "XXXXXXXXXXX.",
@@ -140,8 +146,14 @@ export interface CursorSet {
 }
 
 /**
- * Builds both cursors at 2x. Browsers refuse cursors past 128px and quietly
- * fall back to the system one, so this stays well inside that.
+ * Builds both cursors at 2x.
+ *
+ * The output must stay inside 32x32 CSS pixels. Chromium drops any custom
+ * cursor bigger than that as soon as it touches native UI or a viewport edge -
+ * a spoofing mitigation - and silently reinstates the system cursor, which is
+ * what made the pointer flip to the macOS arrow over the panel. A 12x14 mask
+ * plus a one pixel keyline is 14x16, and 14x16 at 2x is 28x32: the largest
+ * these can be. Growing a mask means dropping the scale, not widening this.
  */
 export function buildCursors(ink: string, keyline: string, scale = 2): CursorSet {
   return {
