@@ -4,7 +4,13 @@ const ROW = "group flex items-baseline gap-x-3 rounded-sm px-1 -mx-1";
 
 export function ProjectsOutput() {
   return (
-    <div className="space-y-[3px]">
+    /*
+      px-1 to pay for the -mx-1 on the rows below. That negative margin is what
+      lets a row's hover highlight sit slightly proud of the text, and with
+      nothing to eat into it hung 4px off the right of a phone-width terminal
+      and turned the whole scrollport sideways.
+    */
+    <div className="space-y-[3px] px-1">
       <p className="text-faint text-[11px] mb-2">
         total {PROJECTS.length}   drwxr-xr-x  shlok  staff
       </p>

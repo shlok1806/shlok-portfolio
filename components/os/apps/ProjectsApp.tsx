@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { tapToOpen } from "@/lib/os/tapToOpen";
 import { PROJECTS } from "@/lib/content";
 import { DocShell, DocTitle } from "./DocShell";
 import type { AppProps } from "@/lib/os/types";
@@ -13,11 +15,9 @@ import type { AppProps } from "@/lib/os/types";
  * unreachable on touch and the list was a dead end.
  */
 export function ProjectsApp({ open }: AppProps) {
-  const [touch, setTouch] = useState(false);
-
-  useEffect(() => {
-    setTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
+  const touch = useCoarsePointer();
+  // A 26px row is a comfortable ls line and a poor target; a thumb gets 44
+  const rowPad = touch ? "py-3" : "py-[3px]";
 
   const launch = useCallback(
     (slug: string, name: string) => {
@@ -37,13 +37,11 @@ export function ProjectsApp({ open }: AppProps) {
         {PROJECTS.map((p) => (
           <li key={p.slug}>
             <button
-              onClick={() => touch && launch(p.slug, p.name)}
-              onDoubleClick={() => launch(p.slug, p.name)}
-              onKeyDown={(e) => e.key === "Enter" && launch(p.slug, p.name)}
+              {...tapToOpen(() => launch(p.slug, p.name), touch)}
               aria-label={`Open ${p.name}`}
-              className="group flex w-full items-baseline gap-3 px-1 py-[3px] text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none"
+              className={`group flex w-full items-baseline gap-3 px-1 text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${rowPad}`}
             >
-              <span className="shrink-0 text-faint">drwxr-xr-x</span>
+              <span className="hidden shrink-0 text-faint sm:inline">drwxr-xr-x</span>
               <span className="w-[68px] shrink-0 text-faint">{p.date}</span>
               <span className="w-[128px] shrink-0 text-accent-ink group-hover:text-inherit group-focus:text-inherit">
                 {p.name}

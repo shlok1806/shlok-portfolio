@@ -1,3 +1,7 @@
+"use client";
+
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+
 const COMMANDS = [
   { cmd: "projects",    desc: "Browse all my projects" },
   { cmd: "resume",      desc: "Full resume in one command" },
@@ -18,14 +22,33 @@ const COMMANDS = [
 ];
 
 export function HelpOutput() {
+  /*
+   * The two lines under the heading described a keyboard. Told to press Enter
+   * and to cycle history with the arrow keys, a phone visitor is being pointed
+   * at three keys their device does not have - so on touch they are pointed at
+   * the row of buttons under the prompt, which is where those three now live.
+   */
+  const touch = useCoarsePointer();
+
   return (
     <div className="space-y-4">
       <div className="space-y-1">
         <p className="text-foreground text-[13px]">
-          This is an interactive terminal. Type a command below and press <span className="text-accent-ink font-bold">Enter</span>.
+          This is an interactive terminal. Type a command below and press{" "}
+          <span className="text-accent-ink font-bold">{touch ? "run" : "Enter"}</span>.
         </p>
         <p className="text-faint text-[12px]">
-          Use <span className="text-accent-ink">↑ ↓</span> arrow keys to cycle through history.
+          {touch ? (
+            <>
+              The <span className="text-accent-ink">↑ ↓</span> keys under the prompt cycle
+              through what you have already typed.
+            </>
+          ) : (
+            <>
+              Use <span className="text-accent-ink">↑ ↓</span> arrow keys to cycle through
+              history.
+            </>
+          )}
         </p>
       </div>
 
@@ -40,7 +63,8 @@ export function HelpOutput() {
       </div>
 
       <p className="text-faint text-[11px] pt-1">
-        Try typing <span className="text-accent-ink">projects</span> and pressing Enter to get started →
+        Try typing <span className="text-accent-ink">projects</span> and pressing{" "}
+        {touch ? "run" : "Enter"} to get started →
       </p>
     </div>
   );

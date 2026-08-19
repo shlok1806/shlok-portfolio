@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useRemix } from "@/hooks/useRemix";
 import { useWindowManager } from "@/hooks/useWindowManager";
 import { APPS, DESKTOP_APPS, appById } from "@/lib/os/registry";
@@ -11,7 +12,7 @@ import { DesktopIcon, ICON_H, ICON_PITCH, ICON_W, type IconPos } from "./Desktop
 import { RootMenu } from "./RootMenu";
 import { Screensaver } from "./Screensaver";
 import { Window } from "./Window";
-import { Panel } from "./Panel";
+import { Panel, PANEL_CHROME_H, PANEL_CHROME_H_TOUCH } from "./Panel";
 
 interface RootMenuPos {
   x: number;
@@ -23,7 +24,7 @@ export function Desktop() {
   const [rootMenu, setRootMenu] = useState<RootMenuPos | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   /** touch has no double-click and no right-click, so the desktop adapts */
-  const [touch, setTouch] = useState(false);
+  const touch = useCoarsePointer();
   const [wallpaperId, setWallpaperId] = useState<string | null>(null);
   const [iconPos, setIconPos] = useState<Record<string, IconPos>>({});
   const [idle, setIdle] = useState(false);
@@ -71,10 +72,6 @@ export function Desktop() {
     }
   }, []);
 
-  useEffect(() => {
-    setTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
-
   /*
    * Icon placement has to know the viewport, and has to be recomputed when it
    * changes: a position saved on a wide monitor is off the side of a phone, and
@@ -92,12 +89,86 @@ export function Desktop() {
    * rather than on <body> globally - /resume is a normal scrolling document.
    */
   useEffect(() => {
-    const prev = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
+    const prevBounce = document.documentElement.style.overscrollBehavior;
     document.body.style.overflow = "hidden";
+    /*
+     * overflow:hidden stops the page scrolling but not iOS rubber-banding, which
+     * drags the whole desktop down off the top of the screen and lets go of it -
+     * the taskbar visibly detaches from the bottom edge for the length of the
+     * gesture. This is what actually refuses the overscroll.
+     */
+    document.documentElement.style.overscrollBehavior = "none";
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevOverflow;
+      document.documentElement.style.overscrollBehavior = prevBounce;
     };
   }, []);
+
+  /*
+   * Put the document back where it belongs after the soft keyboard leaves.
+   *
+   * overflow:hidden does not stop iOS scrolling the page itself to bring a
+   * focused input into view, and it does not undo it either: typing a command in
+   * the terminal left the whole desktop shifted up by the height of the status
+   * bar, so the title bar of the front window was drawn underneath the clock and
+   * the Dynamic Island, and stayed there.
+   */
+  useEffect(() => {
+    if (!booted) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const settle = () => {
+      // Only once the keyboard is fully gone; mid-animation this fights it
+      if (Math.round(window.innerHeight - vv.height - vv.offsetTop) > 0) return;
+      if (window.scrollY !== 0 || vv.offsetTop !== 0) window.scrollTo(0, 0);
+    };
+    vv.addEventListener("resize", settle);
+    vv.addEventListener("scroll", settle);
+    return () => {
+      vv.removeEventListener("resize", settle);
+      vv.removeEventListener("scroll", settle);
+    };
+  }, [booted]);
+
+  /*
+   * How tall the taskbar actually came out. It is one number on a mouse, a
+   * taller one for a finger, and taller again on a phone that reserves a strip
+   * for its home indicator - and only the browser knows that last part, since
+   * env(safe-area-inset-bottom) is not readable from script. So the bar sizes
+   * itself in CSS and the desktop measures the result, rather than the two
+   * trying to compute the same number twice and disagreeing.
+   */
+  /*
+   * Long-press opens the root menu.
+   *
+   * iOS Safari never fires `contextmenu`, and that event was the only way into
+   * this menu - so on an iPhone the wallpaper picker and the full application
+   * list simply did not exist. Android does synthesize it on long-press, but
+   * doing the timer ourselves means one behaviour on both rather than two.
+   */
+  const pressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(
+    null,
+  );
+  const cancelPress = useCallback(() => {
+    if (!pressRef.current) return;
+    clearTimeout(pressRef.current.timer);
+    pressRef.current = null;
+  }, []);
+  useEffect(() => cancelPress, [cancelPress]);
+
+  const barRef = useRef<HTMLDivElement>(null);
+  const [panelH, setPanelH] = useState(touch ? PANEL_CHROME_H_TOUCH : PANEL_CHROME_H);
+
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const measure = () => setPanelH(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [booted, touch]);
 
   const { preset, mounted, select, soundOn, toggleSound } = useRemix();
   const wallpaper = wallpaperById(wallpaperId);
@@ -129,7 +200,7 @@ export function Desktop() {
         color: "hsl(var(--on-desktop))",
         textShadow: "1px 1px 0 hsl(var(--on-desktop-shadow) / 0.55)",
       };
-  const wm = useWindowManager();
+  const wm = useWindowManager(panelH);
   const { open, windows, focusedId, PANEL_H } = wm;
 
   /*
@@ -215,7 +286,23 @@ export function Desktop() {
       timer = setTimeout(() => setIdle(true), 90_000);
     };
     reset();
-    const events: (keyof WindowEventMap)[] = ["pointermove", "pointerdown", "keydown", "wheel"];
+    /*
+     * Reading counts as using the machine, and on a phone none of the first four
+     * events say so: pointermove only fires while a finger is down, wheel never
+     * fires for touch scrolling at all, and a visitor holding still to read the
+     * README got the starfield thrown over it after ninety seconds. touchstart,
+     * touchmove and scroll are what that person actually generates.
+     */
+    const events: (keyof WindowEventMap)[] = [
+      "pointermove",
+      "pointerdown",
+      "pointerup",
+      "keydown",
+      "wheel",
+      "touchstart",
+      "touchmove",
+      "scroll",
+    ];
     events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
     return () => {
       clearTimeout(timer);
@@ -254,17 +341,44 @@ export function Desktop() {
         panel. `clip` refuses to scroll at all.
       */}
       <div
-        className="relative h-screen w-screen overflow-clip"
-        style={backdrop}
-        onPointerDown={() => {
+        /*
+         * select-none on the root window, select-text back on inside a window.
+         *
+         * -webkit-touch-callout only suppresses the callout iOS puts on links
+         * and images; the long press that opens this menu still ran the
+         * selection engine over whatever was under the finger, so the menu came
+         * up wearing a Copy / Look Up bar and a pair of drag handles. None of
+         * the chrome is text anyone means to select. A document is.
+         */
+        className="relative h-dvh w-screen select-none overflow-clip"
+        onPointerDown={(e) => {
           setRootMenu(null);
           setSelected(null);
+          if (e.pointerType === "mouse") return;
+          // Only the root window itself. Icons and windows bubble through here
+          if (e.target !== e.currentTarget) return;
+          const { clientX: x, clientY: y } = e;
+          const timer = setTimeout(() => {
+            pressRef.current = null;
+            setRootMenu({ x, y });
+          }, 500);
+          pressRef.current = { timer, x, y };
         }}
+        // A press that travels is a drag or a scroll, and neither wants a menu
+        onPointerMove={(e) => {
+          const p = pressRef.current;
+          if (!p) return;
+          if (Math.abs(e.clientX - p.x) > 8 || Math.abs(e.clientY - p.y) > 8) cancelPress();
+        }}
+        onPointerUp={cancelPress}
+        onPointerCancel={cancelPress}
         onContextMenu={(e) => {
           e.preventDefault();
           // Raw pointer position; the menu measures itself and clamps from there
           setRootMenu({ x: e.clientX, y: e.clientY });
         }}
+        // Otherwise iOS answers the long press with its own selection callout
+        style={{ ...backdrop, WebkitTouchCallout: "none" }}
       >
         {/* Desktop icons, draggable and remembered */}
         <ul>
@@ -294,7 +408,7 @@ export function Desktop() {
         >
           <span className="block text-right">{PROFILE.name}</span>
           <span className="block text-right">
-            {touch ? "tap an icon to open" : "right-click for menu"}
+            {touch ? "tap to open, hold for menu" : "right-click for menu"}
           </span>
         </p>
 
@@ -304,6 +418,7 @@ export function Desktop() {
             x={rootMenu.x}
             y={rootMenu.y}
             panelHeight={PANEL_H}
+            touch={touch}
             currentWallpaper={wallpaper.id}
             onLaunch={launch}
             onChooseWallpaper={chooseWallpaper}
@@ -322,6 +437,7 @@ export function Desktop() {
               win={win}
               focused={win.id === focusedId}
               panelHeight={PANEL_H}
+              touch={touch}
               onFocus={() => wm.focus(win.id)}
               onClose={() => wm.close(win.id)}
               onMinimize={() => wm.minimize(win.id)}
@@ -336,18 +452,22 @@ export function Desktop() {
         <Panel
           windows={windows}
           focusedId={focusedId}
-          height={PANEL_H}
+          barRef={barRef}
+          chromeHeight={touch ? PANEL_CHROME_H_TOUCH : PANEL_CHROME_H}
+          touch={touch}
           preset={preset}
           mounted={mounted}
           soundOn={soundOn}
+          currentWallpaper={wallpaper.id}
           onLaunch={launch}
           onSelectWindow={(id) => wm.toggleMinimize(id)}
           onSelectPreset={select}
+          onChooseWallpaper={chooseWallpaper}
           onToggleSound={toggleSound}
         />
       </div>
 
-      {idle && <Screensaver label="ShlokOS" onWake={() => setIdle(false)} />}
+      {idle && <Screensaver label="ShlokOS" touch={touch} onWake={() => setIdle(false)} />}
     </div>
   );
 }

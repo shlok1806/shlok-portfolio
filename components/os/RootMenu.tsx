@@ -9,6 +9,7 @@ interface Props {
   x: number;
   y: number;
   panelHeight: number;
+  touch: boolean;
   currentWallpaper: string;
   onLaunch: (appId: string) => void;
   onChooseWallpaper: (id: string) => void;
@@ -31,6 +32,7 @@ export function RootMenu({
   x,
   y,
   panelHeight,
+  touch,
   currentWallpaper,
   onLaunch,
   onChooseWallpaper,
@@ -38,6 +40,16 @@ export function RootMenu({
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  /*
+   * hover: with no focus: pair was the only one left in the shell, and on touch
+   * it is worse than useless: a tap leaves the row lit up until something else
+   * is tapped, so the menu closes with a highlight painted on whatever the
+   * finger last touched.
+   */
+  const row = `flex w-full items-center gap-3 text-left leading-none hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${
+    touch ? "min-h-11 px-3 py-2" : "px-3 py-[5px]"
+  }`;
 
   // Layout effect, so the corrected position is in place before the first paint
   useLayoutEffect(() => {
@@ -55,12 +67,18 @@ export function RootMenu({
     <div
       ref={ref}
       onPointerDown={(e) => e.stopPropagation()}
-      className="bevel-out absolute z-[85] min-w-[190px] overflow-y-auto bg-secondary py-0.5 font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
+      className="bevel-out absolute z-[85] min-w-[190px] select-none overflow-y-auto bg-secondary py-0.5 font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
       style={{
         left: pos?.left ?? x,
         top: pos?.top ?? y,
-        // A menu taller than the screen scrolls rather than spilling off it
-        maxHeight: `calc(100vh - ${panelHeight + GAP * 2}px)`,
+        /*
+         * A menu taller than the screen scrolls rather than spilling off it.
+         * dvh, not vh: on a phone 100vh is the height the page would have with
+         * the browser's own chrome retracted, which is taller than what is on
+         * screen, so the last few entries sat below the fold on a surface that
+         * refuses to scroll.
+         */
+        maxHeight: `calc(100dvh - ${panelHeight + GAP * 2}px)`,
         // Hidden for the one frame between mount and measurement
         visibility: pos ? "visible" : "hidden",
       }}
@@ -75,7 +93,7 @@ export function RootMenu({
             onLaunch(app.id);
             onDismiss();
           }}
-          className="flex w-full items-center gap-3 px-3 py-[5px] text-left leading-none hover:bg-primary hover:text-primary-foreground"
+          className={row}
         >
           <span aria-hidden className="w-5 shrink-0 text-center">
             {app.icon}
@@ -94,7 +112,7 @@ export function RootMenu({
             onChooseWallpaper(w.id);
             onDismiss();
           }}
-          className="flex w-full items-center gap-3 px-3 py-[5px] text-left leading-none hover:bg-primary hover:text-primary-foreground"
+          className={row}
         >
           <span aria-hidden className="w-5 shrink-0 text-center">
             {w.id === currentWallpaper ? "•" : ""}

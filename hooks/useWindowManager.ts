@@ -35,11 +35,23 @@ export interface OpenOptions {
   singleton?: boolean;
 }
 
+/** only a starting guess; the desktop measures the real bar and passes it in */
 const PANEL_H = 30;
 const MIN_W = 260;
 const MIN_H = 140;
 /** below this, a floating window is worse than a full-screen one */
 const SMALL_W = 720;
+
+/*
+ * Windows stack between these two. The panel is z-80 and the root menu z-85, and
+ * z only ever went up: one per open and one per focus, from a base of 10. Around
+ * the seventieth window swap the raised window began drawing over the taskbar,
+ * and over the root menu five swaps later - which on a phone is not a curiosity,
+ * because tapping between windows in that taskbar is the whole navigation model.
+ * At the ceiling the stack is squashed back to the base, keeping its order.
+ */
+const Z_BASE = 10;
+const Z_CEILING = 60;
 
 const isSmallScreen = () => typeof window !== "undefined" && window.innerWidth < SMALL_W;
 
@@ -48,19 +60,68 @@ const isSmallScreen = () => typeof window !== "undefined" && window.innerWidth <
  * itself is done with pointer events against a ref so a move does not push a
  * render through the whole tree on every mouse sample.
  */
-export function useWindowManager() {
+export function useWindowManager(panelH: number = PANEL_H) {
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  const zRef = useRef(10);
+
+  /*
+   * Read through a ref rather than closed over directly. The panel is taller on
+   * a phone and taller again once the home-indicator strip is added, so this
+   * number changes after the first paint - and if `open` and `toggleMaximize`
+   * took it as a dependency they would get a new identity when it did, which
+   * re-runs the effect in Desktop that opens a window on login. Once was the
+   * intent; twice launched a second app over the first.
+   */
+  const panelRef = useRef(panelH);
+  useEffect(() => {
+    panelRef.current = panelH;
+  }, [panelH]);
+
+  /** last geometry refit already applied, so a no-op resize stays a no-op */
+  const fitRef = useRef<{ vw: number; vh: number } | null>(null);
+
+  const zRef = useRef(Z_BASE);
   const seqRef = useRef(0);
   const cascadeRef = useRef(0);
 
-  const focus = useCallback((id: string) => {
-    zRef.current += 1;
-    const z = zRef.current;
-    setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, z, minimized: false } : w)));
-    setFocusedId(id);
+  /**
+   * The next z to hand out, and the renumbering that goes with it when the
+   * counter has climbed far enough to threaten the panel.
+   *
+   * Both are worked out here rather than inside a setWindows updater, because
+   * updaters must be pure and React runs them twice in StrictMode - the same
+   * trap that made Alt+Tab advance this counter two at a time.
+   */
+  const nextZ = useCallback((keep?: string) => {
+    const z = zRef.current + 1;
+    if (z < Z_CEILING) {
+      zRef.current = z;
+      return { z, rank: null as Map<string, number> | null };
+    }
+    const order = windowsRef.current
+      .filter((w) => w.id !== keep)
+      .sort((a, b) => a.z - b.z);
+    const rank = new Map(order.map((w, i) => [w.id, Z_BASE + i]));
+    zRef.current = Z_BASE + order.length;
+    return { z: zRef.current, rank };
   }, []);
+
+  const focus = useCallback(
+    (id: string) => {
+      const { z, rank } = nextZ(id);
+      setWindows((ws) =>
+        ws.map((w) =>
+          w.id === id
+            ? { ...w, z, minimized: false }
+            : rank
+              ? { ...w, z: rank.get(w.id) ?? w.z }
+              : w,
+        ),
+      );
+      setFocusedId(id);
+    },
+    [nextZ],
+  );
 
   /*
    * windowsRef mirrors state so open() can look up an existing window without
@@ -75,16 +136,21 @@ export function useWindowManager() {
 
   const open = useCallback(
     ({ appId, title, arg, w, h, singleton = true }: OpenOptions) => {
-      zRef.current += 1;
-      const z = zRef.current;
-
       const existing = singleton
         ? windowsRef.current.find((win) => win.appId === appId && win.arg === arg)
         : undefined;
 
+      const { z, rank } = nextZ(existing?.id);
+
       if (existing) {
         setWindows((ws) =>
-          ws.map((win) => (win.id === existing.id ? { ...win, z, minimized: false } : win)),
+          ws.map((win) =>
+            win.id === existing.id
+              ? { ...win, z, minimized: false }
+              : rank
+                ? { ...win, z: rank.get(win.id) ?? win.z }
+                : win,
+          ),
         );
         setFocusedId(existing.id);
         return existing.id;
@@ -101,25 +167,25 @@ export function useWindowManager() {
             x: 0,
             y: 0,
             w: vw,
-            h: vh - PANEL_H,
+            h: vh - panelRef.current,
             maximized: true,
             forcedFullScreen: true,
             restore: {
               x: 12,
               y: 12,
               w: Math.min(w, vw - 24),
-              h: Math.min(h, vh - PANEL_H - 24),
+              h: Math.min(h, vh - panelRef.current - 24),
             },
           }
         : (() => {
             const width = Math.min(w, vw - 40);
-            const height = Math.min(h, vh - PANEL_H - 60);
+            const height = Math.min(h, vh - panelRef.current - 60);
             // Cascade like a real WM instead of stacking everything at one point
             const step = (cascadeRef.current % 6) * 26;
             cascadeRef.current += 1;
             return {
               x: Math.max(8, Math.round((vw - width) / 2) - 60 + step),
-              y: Math.max(8, Math.round((vh - PANEL_H - height) / 2) - 40 + step),
+              y: Math.max(8, Math.round((vh - panelRef.current - height) / 2) - 40 + step),
               w: width,
               h: height,
               maximized: false,
@@ -128,11 +194,14 @@ export function useWindowManager() {
             };
           })();
 
-      setWindows((ws) => [...ws, { id, appId, title, arg, z, minimized: false, ...base }]);
+      setWindows((ws) => [
+        ...(rank ? ws.map((win) => ({ ...win, z: rank.get(win.id) ?? win.z })) : ws),
+        { id, appId, title, arg, z, minimized: false, ...base },
+      ]);
       setFocusedId(id);
       return id;
     },
-    [],
+    [nextZ],
   );
 
   const close = useCallback((id: string) => {
@@ -161,7 +230,7 @@ export function useWindowManager() {
           x: 0,
           y: 0,
           w: window.innerWidth,
-          h: window.innerHeight - PANEL_H,
+          h: window.innerHeight - panelRef.current,
         };
       }),
     );
@@ -210,12 +279,20 @@ export function useWindowManager() {
    * used to be a one-way door: any dip below the small-screen width maximized
    * every window and set maximized:true, so widening the browser again left the
    * whole desktop stuck full-screen with no way back.
+   *
+   * Also runs when the panel changes height, which on a phone it does after the
+   * first paint: the bar is taller for a finger and taller again once the
+   * home-indicator strip is measured, and a maximized window sized against the
+   * old number hides its own bottom edge behind the taskbar.
    */
-  useEffect(() => {
-    const onResize = () => {
+  const refit = useCallback(() => {
       const vw = window.innerWidth;
-      const vh = window.innerHeight - PANEL_H;
+      const vh = window.innerHeight - panelRef.current;
       const small = isSmallScreen();
+
+      // Nothing moved, so do not push a render through every window
+      if (fitRef.current && fitRef.current.vw === vw && fitRef.current.vh === vh) return;
+      fitRef.current = { vw, vh };
 
       setWindows((ws) =>
         ws.map((win) => {
@@ -265,10 +342,18 @@ export function useWindowManager() {
           };
         }),
       );
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  useEffect(() => {
+    window.addEventListener("resize", refit);
+    return () => window.removeEventListener("resize", refit);
+  }, [refit]);
+
+  useEffect(() => {
+    // The height genuinely changed, so the short-circuit in refit must not eat it
+    fitRef.current = null;
+    refit();
+  }, [panelH, refit]);
 
   /**
    * Alt+Tab: raise the window furthest down the stack.
@@ -295,6 +380,6 @@ export function useWindowManager() {
     toggleMaximize,
     setGeometry,
     cycle,
-    PANEL_H,
+    PANEL_H: panelH,
   };
 }

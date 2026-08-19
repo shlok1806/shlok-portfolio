@@ -7,6 +7,7 @@ interface Props {
   win: WindowState;
   focused: boolean;
   panelHeight: number;
+  touch: boolean;
   onFocus: () => void;
   onClose: () => void;
   onMinimize: () => void;
@@ -23,6 +24,43 @@ const MIN_W = 260;
 const MIN_H = 140;
 
 /**
+ * A title-bar button.
+ *
+ * The bevel stays the size twm drew it and the button around it grows instead,
+ * because the thing Apple asks for 44pt of is the tappable area, not the
+ * artwork. Drawn at 44 square these would be three grey slabs filling half the
+ * title bar; drawn at 17 they are a coin toss to hit with a thumb.
+ */
+function TitleButton({
+  touch,
+  label,
+  onClick,
+  children,
+}: {
+  touch: boolean;
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={onClick}
+      aria-label={label}
+      className={`group grid place-items-center ${touch ? "h-11 w-11" : "h-[17px] w-[17px]"}`}
+    >
+      <span
+        className={`bevel-thin grid h-[17px] w-[17px] place-items-center bg-secondary leading-none text-secondary-foreground group-active:bevel-in ${
+          touch ? "h-[22px] w-[22px]" : ""
+        }`}
+      >
+        {children}
+      </span>
+    </button>
+  );
+}
+
+/**
  * One window. Dragging writes straight to the element's style and only commits
  * to React state on pointerup - running a 60Hz drag through setState would
  * re-render every window and every app inside them.
@@ -31,6 +69,7 @@ export function Window({
   win,
   focused,
   panelHeight,
+  touch,
   onFocus,
   onClose,
   onMinimize,
@@ -151,44 +190,52 @@ export function Window({
       <div
         onPointerDown={startMove}
         onDoubleClick={onToggleMaximize}
-        className={`flex h-[26px] shrink-0 select-none items-center gap-2 px-1.5 ${
-          focused ? "titlebar-active" : "titlebar-idle"
-        } ${win.maximized ? "cursor-default" : "cursor-move"}`}
+        /*
+         * touch-action:none because the drag is done in a pointermove handler on
+         * window, and preventDefault there is too late to stop a pan the browser
+         * has already claimed - it takes the gesture and the window stays put.
+         */
+        style={{ touchAction: "none" }}
+        className={`flex shrink-0 select-none items-center gap-2 px-1.5 ${
+          touch ? "h-11" : "h-[26px]"
+        } ${focused ? "titlebar-active" : "titlebar-idle"} ${
+          win.maximized ? "cursor-default" : "cursor-move"
+        }`}
       >
         <span className="truncate text-[13px] font-bold leading-none tracking-tight">
           {win.title}
         </span>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className={`ml-auto flex items-center ${touch ? "-mr-1.5" : "gap-1"}`}>
           {/* Square bracket buttons, the way twm drew them */}
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onMinimize}
-            aria-label={`Minimize ${win.title}`}
-            className="bevel-thin grid h-[17px] w-[17px] place-items-center bg-secondary text-[11px] leading-none text-secondary-foreground active:bevel-in"
-          >
-            <span className="translate-y-[-3px]">_</span>
-          </button>
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
+          <TitleButton touch={touch} onClick={onMinimize} label={`Minimize ${win.title}`}>
+            <span className="translate-y-[-3px] text-[11px]">_</span>
+          </TitleButton>
+          <TitleButton
+            touch={touch}
             onClick={onToggleMaximize}
-            aria-label={`${win.maximized ? "Restore" : "Maximize"} ${win.title}`}
-            className="bevel-thin grid h-[17px] w-[17px] place-items-center bg-secondary text-[10px] leading-none text-secondary-foreground active:bevel-in"
+            label={`${win.maximized ? "Restore" : "Maximize"} ${win.title}`}
           >
-            {win.maximized ? "▣" : "□"}
-          </button>
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onClose}
-            aria-label={`Close ${win.title}`}
-            className="bevel-thin grid h-[17px] w-[17px] place-items-center bg-secondary text-[12px] leading-none text-secondary-foreground active:bevel-in"
-          >
-            ×
-          </button>
+            <span className="text-[10px]">{win.maximized ? "▣" : "□"}</span>
+          </TitleButton>
+          <TitleButton touch={touch} onClick={onClose} label={`Close ${win.title}`}>
+            <span className="text-[12px]">×</span>
+          </TitleButton>
         </div>
       </div>
 
-      <div className="bevel-in m-[3px] mt-0 min-h-0 flex-1 overflow-auto bg-card">{children}</div>
+      {/*
+        The desktop refuses both text selection and the iOS long-press callout,
+        so that a press on the wallpaper opens the root menu instead of a Copy
+        bar. Inside a window that same press is somebody trying to copy an email
+        address off the contact card, so both are handed back here.
+      */}
+      <div
+        className="bevel-in m-[3px] mt-0 min-h-0 flex-1 select-text overflow-auto bg-card"
+        style={{ WebkitTouchCallout: "default" }}
+      >
+        {children}
+      </div>
 
       {!win.maximized && (
         <div
@@ -196,6 +243,7 @@ export function Window({
           aria-hidden
           className="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize"
           style={{
+            touchAction: "none",
             background:
               "linear-gradient(135deg, transparent 0 40%, hsl(var(--bevel-dark)) 40% 52%, hsl(var(--bevel-light)) 52% 60%, transparent 60% 72%, hsl(var(--bevel-dark)) 72% 84%, hsl(var(--bevel-light)) 84% 92%, transparent 92%)",
           }}

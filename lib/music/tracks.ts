@@ -52,12 +52,33 @@ export interface Track {
  *     url: "https://example.com/lamplight",
  *   }
  */
+/*
+ * Served from Supabase Storage rather than /public, so an hour of synthwave is
+ * not in the git history and not in every Vercel deploy. Two things this depends
+ * on, both easy to break silently:
+ *
+ *   The bucket is public and answers with access-control-allow-origin: *, which
+ *   is what lets the panel's analyser read the samples. lib/music/player.ts sets
+ *   crossOrigin before src for the same reason - without either half the record
+ *   still plays and the meter sits flat.
+ *
+ *   The project is on the free plan, so it pauses after a week of no traffic and
+ *   takes Storage with it. The player already treats a failed load as an error
+ *   state rather than a crash, so a paused project costs the visitor the music
+ *   and nothing else.
+ *
+ * The %20s are the upload's own filename. Renaming the object means re-uploading
+ * it, which is not worth doing to tidy a string.
+ */
+const SUPABASE_MUSIC =
+  "https://yffkynlswlcgsoyomqtj.supabase.co/storage/v1/object/public/music";
+
 export const TRACKS: Track[] = [
   {
     id: "back-to-the-80s",
     title: "Back To The 80's",
     artist: "Marvel83' - synthwave mix",
-    src: "/music/back-to-the-80s.mp3",
+    src: `${SUPABASE_MUSIC}/Back%20To%20The%2080s%20Marvel83%20Edition%20Best%20of%20Synthwave%20And%20Retro%20Electro%20Music%20Mix.mp3`,
   },
 ];
 

@@ -126,10 +126,47 @@ function graph(): AudioContext | null {
       analyser.connect(ctx.destination);
     }
     if (ctx.state === "suspended") void ctx.resume();
+    hookResume();
     return ctx;
   } catch {
     return null;
   }
+}
+
+let resumeHooked = false;
+
+/**
+ * Bring the graph back after the phone takes it away.
+ *
+ * iOS suspends the AudioContext whenever the tab goes to the background, and on
+ * some interruptions - a call, another app claiming the audio session - it moves
+ * to "interrupted" instead. Neither state is handed back on return, and nothing
+ * else calls play() again, so the element goes on advancing its clock against a
+ * graph that is not running: the panel says the record is turning, the position
+ * counts up, and the speaker is silent. Coming back to the tab is the moment to
+ * ask for it back.
+ */
+function hookResume() {
+  if (resumeHooked || typeof document === "undefined") return;
+  resumeHooked = true;
+
+  const recover = () => {
+    if (document.visibilityState !== "visible" || !playing || !ctx) return;
+    if (ctx.state === "running") return;
+    void ctx
+      .resume()
+      .then(() => {
+        // The element is paused too if the interruption was a hard one
+        if (el && el.paused) void el.play().catch(() => {});
+        emit();
+      })
+      .catch(() => {
+        /* still no user activation - the next press of play will ask again */
+      });
+  };
+
+  document.addEventListener("visibilitychange", recover);
+  window.addEventListener("pageshow", recover);
 }
 
 /**
@@ -141,6 +178,16 @@ function graph(): AudioContext | null {
 function audioEl(c: AudioContext): HTMLAudioElement {
   if (!el) {
     el = new Audio();
+    /*
+     * Set before anything touches src, and before createMediaElementSource
+     * below, because it is what decides whether the graph is allowed to read
+     * the samples. A track served from another origin without it still plays,
+     * and the analyser downstream returns nothing but zeros - so the panel's
+     * equalizer sits flat through a record that is audibly running, which looks
+     * like a broken meter rather than a CORS problem and is the reason this
+     * line has a paragraph attached to it.
+     */
+    el.crossOrigin = "anonymous";
     el.preload = "none";
     // The element runs wide open and the graph owns the level, so the volume
     // control ramps rather than steps

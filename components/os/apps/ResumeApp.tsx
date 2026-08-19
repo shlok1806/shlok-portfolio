@@ -1,3 +1,6 @@
+"use client";
+
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { PROFILE, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
 import { ContactLinks } from "@/components/ContactLinks";
 import { DocShell, Rule } from "./DocShell";
@@ -12,16 +15,28 @@ function Head({ children }: { children: React.ReactNode }) {
 
 /** The whole resume in one scroll, the way `less resume.txt` would give it to you. */
 export function ResumeApp() {
+  const touch = useCoarsePointer();
+
+  /*
+   * These two read as a sentence, so the inline exception in WCAG's target-size
+   * rule covers them - but they are also the only way out of this window to the
+   * PDF, and 18px of link is a poor thing to ask a thumb to hit. The padding is
+   * cancelled by an equal negative margin so the status bar keeps its height.
+   */
+  const link = `text-accent-ink underline underline-offset-2 ${
+    touch ? "inline-block py-[13px] -my-[13px]" : ""
+  }`;
+
   return (
     <DocShell
       status={
         <>
           resume.txt ·{" "}
-          <a href="/resume.pdf" download className="text-accent-ink underline underline-offset-2">
+          <a href="/resume.pdf" download className={link}>
             download PDF
           </a>{" "}
           ·{" "}
-          <a href="/resume" className="text-accent-ink underline underline-offset-2">
+          <a href="/resume" className={link}>
             text version
           </a>
         </>
@@ -94,9 +109,9 @@ export function ResumeApp() {
       <Rule />
       <Head>TECHNICAL SKILLS</Head>
       {SKILLS.map((row) => (
-        <p key={row.key} className="flex gap-2">
-          <span className="w-[92px] shrink-0 text-accent-ink">{row.key}</span>
-          <span className="text-foreground">{row.values.join(", ")}</span>
+        <p key={row.key} className="sm:flex sm:gap-2">
+          <span className="text-accent-ink sm:w-[92px] sm:shrink-0">{row.key}</span>
+          <span className="block text-foreground sm:inline">{row.values.join(", ")}</span>
         </p>
       ))}
     </DocShell>

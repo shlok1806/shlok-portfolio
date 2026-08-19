@@ -101,8 +101,11 @@ export function DesktopIcon({
   return (
     <li
       ref={ref}
-      className="absolute z-[1]"
-      style={{ left: pos.x, top: pos.y, width: ICON_W }}
+      // select-none so a long press drags the icon rather than selecting its label
+      className="absolute z-[1] select-none"
+      // touch-action:none for the same reason the title bar sets it: a pan the
+      // browser has claimed cannot be handed back from a pointermove handler
+      style={{ left: pos.x, top: pos.y, width: ICON_W, touchAction: "none" }}
       onPointerDown={(e) => {
         e.stopPropagation();
         const el = ref.current;

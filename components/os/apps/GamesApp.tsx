@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
+import { tapToOpen } from "@/lib/os/tapToOpen";
 import { GAMES, gameById } from "@/lib/games/registry";
 import { readBest, subscribeScores } from "@/lib/games/scores";
 import type { AppProps } from "@/lib/os/types";
@@ -16,17 +18,15 @@ const digits = (n: number) => String(Math.max(0, Math.floor(n))).padStart(5, "0"
  */
 export function GamesApp({ open }: AppProps) {
   const [best, setBest] = useState<Record<string, number>>({});
-  const [touch, setTouch] = useState(false);
+  const touch = useCoarsePointer();
+  // A 26px row is a comfortable ls line and a poor target; a thumb gets 44
+  const rowPad = touch ? "py-3" : "py-[3px]";
 
   useEffect(() => {
     const sync = () =>
       setBest(Object.fromEntries(GAMES.map((g) => [g.id, readBest(g.id)])));
     sync();
     return subscribeScores(sync);
-  }, []);
-
-  useEffect(() => {
-    setTouch(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
   const launch = useCallback(
@@ -47,11 +47,9 @@ export function GamesApp({ open }: AppProps) {
         {GAMES.map((game) => (
           <li key={game.id}>
             <button
-              onClick={() => touch && launch(game.id)}
-              onDoubleClick={() => launch(game.id)}
-              onKeyDown={(e) => e.key === "Enter" && launch(game.id)}
+              {...tapToOpen(() => launch(game.id), touch)}
               aria-label={`Play ${game.title}`}
-              className="group flex w-full items-baseline gap-3 px-1 py-[3px] text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none"
+              className={`group flex w-full items-baseline gap-3 px-1 text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${rowPad}`}
             >
               <span className="shrink-0 text-faint">-rwxr-xr-x</span>
               <span className="w-[92px] shrink-0 text-accent-ink group-hover:text-inherit group-focus:text-inherit">
