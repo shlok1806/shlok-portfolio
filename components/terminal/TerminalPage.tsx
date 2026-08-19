@@ -46,6 +46,30 @@ export function TerminalPage({
   }, []);
 
   /*
+   * How much of the window the soft keyboard is sitting on top of.
+   *
+   * iOS raises the keyboard over the page without changing innerHeight, so
+   * nothing in the layout knows it is there: the prompt stays pinned to the
+   * bottom of the terminal, which is now underneath the keys, and typing goes
+   * somewhere the visitor cannot see. visualViewport is the only thing that
+   * reports it.
+   */
+  const [kbInset, setKbInset] = useState(0);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const sync = () =>
+      setKbInset(Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)));
+    sync();
+    vv.addEventListener("resize", sync);
+    vv.addEventListener("scroll", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+    };
+  }, []);
+
+  /*
    * Follow the newest output.
    *
    * This drives the terminal's own scrollport directly instead of asking the
@@ -58,10 +82,16 @@ export function TerminalPage({
   useEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [state.history, phase]);
+  }, [state.history, phase, kbInset]);
 
-  // Focus input on click anywhere in the terminal
-  const focusInput = useCallback(() => {
+  /*
+   * Click anywhere in the terminal to focus the prompt - except on something
+   * that was itself worth clicking. This used to fire on every tap including
+   * the links inside the output, so following one on a phone summoned the
+   * keyboard over the page it had just opened.
+   */
+  const focusInput = useCallback((e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("a, button, input, textarea, [role='button']")) return;
     shellRef.current?.querySelector<HTMLInputElement>(".sr-only")?.focus();
   }, []);
 
@@ -197,6 +227,13 @@ export function TerminalPage({
                 onArrowDown={arrowDown}
                 onKey={handleKey}
               />
+
+              {/*
+                Scrolled to the bottom, the last thing in the scrollport sits on
+                its bottom edge - which is behind the keyboard. This spacer is
+                what the prompt ends up resting on instead.
+              */}
+              {kbInset > 0 && <div aria-hidden style={{ height: kbInset + 12 }} />}
             </motion.div>
           )}
         </div>

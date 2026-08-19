@@ -6,7 +6,7 @@ export function GamesOutput() {
       <p className="text-faint text-[11px] mb-1">/usr/games</p>
       {GAMES.map((g) => (
         <div key={g.id} className="flex gap-4 text-[13px]">
-          <span className="text-faint shrink-0">-rwxr-xr-x</span>
+          <span className="hidden shrink-0 text-faint sm:inline">-rwxr-xr-x</span>
           <span className="text-accent-ink font-bold w-24 shrink-0">{g.id}</span>
           <span className="text-faint">{g.blurb}</span>
         </div>

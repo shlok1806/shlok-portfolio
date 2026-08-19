@@ -214,6 +214,7 @@ export const PONG: GameDef = {
   h: H,
   winW: 520,
   winH: 452,
-  pad: "dpad",
+  // Reads up and down only, so a four-way pad gave it two keys that did nothing
+  pad: "ud",
   create: () => new PongGame(),
 };

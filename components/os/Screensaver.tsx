@@ -5,6 +5,8 @@ import { useEffect, useRef } from "react";
 interface Props {
   onWake: () => void;
   label: string;
+  /** a phone has neither of the things the hint would otherwise tell you to use */
+  touch?: boolean;
 }
 
 const STAR_COUNT = 420;
@@ -17,7 +19,7 @@ const SPEED = 0.022;
  * would be a layout thrash. Any input wakes it, and the loop stops when the tab
  * is hidden so a backgrounded machine is not burning a core on stars.
  */
-export function Screensaver({ onWake, label }: Props) {
+export function Screensaver({ onWake, label, touch = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -130,8 +132,14 @@ export function Screensaver({ onWake, label }: Props) {
   return (
     <div className="fixed inset-0 z-[200] bg-black" role="presentation">
       <canvas ref={canvasRef} className="h-full w-full" />
-      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 font-[family-name:var(--font-mono-src)] text-[12px] text-white/60">
-        move the mouse or press a key
+      {/*
+        Stretched and centred rather than positioned at left-1/2: an absolute box
+        anchored to the middle can only be as wide as the half-screen left of the
+        edge, which on a phone is narrower than this sentence - so it wrapped, and
+        the wrapped line no longer sat under the middle of the first.
+      */}
+      <p className="absolute inset-x-0 bottom-6 px-4 text-center font-[family-name:var(--font-mono-src)] text-[12px] text-white/60">
+        {touch ? "tap the screen to wake" : "move the mouse or press a key"}
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { buildCursors } from "@/lib/theme/cursors";
 
 /**
@@ -12,11 +13,14 @@ import { buildCursors } from "@/lib/theme/cursors";
  * added later. Reading the same custom properties everything else reads means a
  * new theme gets a matching cursor for free.
  *
- * A coarse pointer has no cursor to replace, so on a phone this does nothing.
+ * A coarse pointer has no cursor to replace, so on a phone this does nothing -
+ * and because the check is reactive, a tablet that gains a trackpad gets one.
  */
 export function PixelCursor() {
+  const coarse = useCoarsePointer();
+
   useEffect(() => {
-    if (window.matchMedia("(pointer: coarse)").matches) return;
+    if (coarse) return;
 
     const style = document.createElement("style");
     style.id = "pixel-cursor";
@@ -62,7 +66,7 @@ export function PixelCursor() {
       observer.disconnect();
       style.remove();
     };
-  }, []);
+  }, [coarse]);
 
   return null;
 }

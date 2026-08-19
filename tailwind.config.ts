@@ -1,6 +1,15 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  future: {
+    /*
+     * Compiles every hover: utility as @media (hover: hover). Without it a tap
+     * on a phone leaves the :hover style painted on whatever was tapped until
+     * something else is touched - so the app lists and the root menu kept a row
+     * highlighted after the window it opened had already covered them.
+     */
+    hoverOnlyWhenSupported: true,
+  },
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,6 +18,15 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        /*
+         * The width at which a window stops floating and goes full-screen - the
+         * same number as SMALL_W in hooks/useWindowManager.ts. Tailwind's own
+         * sm and md are 640 and 768 and neither is that, so chrome that has to
+         * change with the window mode keys off this instead of guessing.
+         */
+        desk: "720px",
+      },
       fontFamily: {
         // Swapped wholesale by the active remix preset
         display: ["var(--font-display)", "system-ui", "sans-serif"],

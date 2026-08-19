@@ -1,8 +1,68 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useGameRunner } from "@/hooks/useGameRunner";
 import type { Btn, GameDef } from "@/lib/games/types";
+
+/*
+ * Both of these live at module scope on purpose. Declared inside GameFrame they
+ * were a new component type on every render, so React threw the old ones away
+ * and built fresh DOM each time - which for a control you are holding down mid
+ * game means the pointer it was tracking belongs to an element that no longer
+ * exists.
+ *
+ * onPointerDown with the default swallowed: a click would pull focus out of the
+ * play area, and the runner pauses on blur, so Resume would have paused the game
+ * again on the way back.
+ */
+function PadKey({
+  btn,
+  label,
+  wide,
+  press,
+  release,
+}: {
+  btn: Btn;
+  label: string;
+  wide?: boolean;
+  press: (b: Btn) => void;
+  release: (b: Btn) => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      onContextMenu={(e) => e.preventDefault()}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        press(btn);
+      }}
+      onPointerUp={() => release(btn)}
+      onPointerLeave={() => release(btn)}
+      onPointerCancel={() => release(btn)}
+      style={{ touchAction: "none" }}
+      className={`bevel-out grid h-11 select-none place-items-center bg-secondary text-[15px] leading-none text-secondary-foreground active:bevel-in ${
+        wide ? "flex-1" : "w-12"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Chip({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <button
+      onPointerDown={(e) => {
+        e.preventDefault();
+        onPress();
+      }}
+      className="bevel-out grid h-8 select-none place-items-center bg-secondary px-3 text-[12px] leading-none text-secondary-foreground active:bevel-in"
+    >
+      {label}
+    </button>
+  );
+}
 
 const digits = (n: number) => String(Math.max(0, Math.floor(n))).padStart(5, "0");
 
@@ -22,6 +82,8 @@ export function GameFrame({ def }: { def: GameDef }) {
     hostRef,
     canvasRef,
     advance,
+    start,
+    togglePause,
     press,
     release,
     onKeyDown,
@@ -29,36 +91,17 @@ export function GameFrame({ def }: { def: GameDef }) {
     onBlur,
   } = useGameRunner(def);
 
-  const [touch, setTouch] = useState(false);
-
-  useEffect(() => {
-    setTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
+  const touch = useCoarsePointer();
 
   // The window opens focused, so the game should be ready for the first key
   useEffect(() => {
     hostRef.current?.focus();
   }, [hostRef]);
 
-  const Key = ({ btn, label, wide }: { btn: Btn; label: string; wide?: boolean }) => (
-    <button
-      aria-label={label}
-      onContextMenu={(e) => e.preventDefault()}
-      onPointerDown={(e) => {
-        e.preventDefault();
-        press(btn);
-      }}
-      onPointerUp={() => release(btn)}
-      onPointerLeave={() => release(btn)}
-      onPointerCancel={() => release(btn)}
-      style={{ touchAction: "none" }}
-      className={`bevel-out grid h-11 select-none place-items-center bg-secondary text-[15px] leading-none text-secondary-foreground active:bevel-in ${
-        wide ? "flex-1" : "w-12"
-      }`}
-    >
-      {label}
-    </button>
+  const Key = (p: { btn: Btn; label: string; wide?: boolean }) => (
+    <PadKey {...p} press={press} release={release} />
   );
+
 
   return (
     <div className="flex h-full flex-col bg-card">
@@ -141,9 +184,21 @@ export function GameFrame({ def }: { def: GameDef }) {
                 </div>
                 <Key btn="right" label="→" />
               </div>
-              <div className="ml-auto flex gap-1">
+              <div className={`ml-auto flex gap-1 ${def.id === "tetris" ? "w-[160px]" : "w-[104px]"}`}>
                 {def.id === "tetris" && <Key btn="b" label="↺" />}
                 <Key btn="a" label={def.id === "tetris" ? "DROP" : "GO"} wide />
+              </div>
+            </>
+          )}
+
+          {def.pad === "ud" && (
+            <>
+              <div className="flex flex-col gap-1">
+                <Key btn="up" label="↑" />
+                <Key btn="down" label="↓" />
+              </div>
+              <div className="ml-auto flex w-[104px]">
+                <Key btn="a" label="SERVE" wide />
               </div>
             </>
           )}
@@ -166,11 +221,24 @@ export function GameFrame({ def }: { def: GameDef }) {
         <span className="shrink-0 text-secondary-foreground">
           SCORE <b className="tabular-nums">{digits(score)}</b>
         </span>
-        <span className="shrink-0">
-          HI <span className="tabular-nums">{digits(best)}</span>
-        </span>
-        <span className="truncate">{hud}</span>
         {!touch && (
+          <span className="shrink-0">
+            HI <span className="tabular-nums">{digits(best)}</span>
+          </span>
+        )}
+        <span className="truncate">{hud}</span>
+        {touch ? (
+          /*
+            Pause and restart were P and R and nothing else, and the line that
+            says so is hidden below 640px - so on a phone a game in progress
+            could only be stopped by closing the window, and a finished one
+            could only be replayed the same way.
+          */
+          <div className="ml-auto flex shrink-0 gap-1">
+            <Chip label={state === "paused" ? "Resume" : "Pause"} onPress={togglePause} />
+            <Chip label="Restart" onPress={start} />
+          </div>
+        ) : (
           <span className="ml-auto hidden shrink-0 text-faint sm:inline">P pause · R restart</span>
         )}
       </div>

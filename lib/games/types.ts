@@ -77,6 +77,6 @@ export interface GameDef {
   winW: number;
   winH: number;
   /** which on-screen controls a touch device gets */
-  pad: "dpad" | "lr" | "tap";
+  pad: "dpad" | "ud" | "lr" | "tap";
   create(): Game;
 }

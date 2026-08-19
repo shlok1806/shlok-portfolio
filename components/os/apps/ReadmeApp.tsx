@@ -1,5 +1,6 @@
 "use client";
 
+import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { PROFILE } from "@/lib/content";
 import { DocShell, DocTitle, Rule } from "./DocShell";
 import type { AppProps } from "@/lib/os/types";
@@ -19,6 +20,46 @@ const ROWS: [string, string][] = [
  * someone expecting a scrolling page, and an unexplained one costs the visit.
  */
 export function ReadmeApp({ open }: AppProps) {
+  const touch = useCoarsePointer();
+
+  /*
+   * Every line under "Getting around" used to describe a mouse. Right-click,
+   * drag by the title bar, resize from the corner and Alt+Tab are four things a
+   * phone cannot do, printed on the one window a first-time visitor is
+   * guaranteed to read - so on touch the list says what a thumb can do instead.
+   */
+  const moves = touch
+    ? [
+        <>
+          <b>Tap</b> an icon to open it. Apps fill the screen here, one at a time.
+        </>,
+        <>
+          <b>Press and hold</b> the background for the root menu, including wallpapers.
+        </>,
+        <>
+          The taskbar along the bottom lists every open window. Tap one to come back to it.
+        </>,
+        <>Drag the desktop icons anywhere. Where you leave them is where they stay.</>,
+        <>
+          <b>Applications</b> opens everything else, and switches the theme between Motif,
+          CDE, Console and twm.
+        </>,
+      ]
+    : [
+        <>
+          <b>Double-click</b> an icon to open it.
+        </>,
+        <>
+          <b>Right-click</b> the desktop for the root menu, including backgrounds.
+        </>,
+        <>
+          Drag windows by the title bar, resize from the bottom-right corner, <b>Alt+Tab</b>{" "}
+          to cycle.
+        </>,
+        <>Drag the desktop icons anywhere. Where you leave them is where they stay.</>,
+        <>The panel switches the theme between Motif, CDE, Console, and twm.</>,
+      ];
+
   return (
     <DocShell status="README  ·  close this window to start">
       <DocTitle>Welcome to ShlokOS</DocTitle>
@@ -31,47 +72,14 @@ export function ReadmeApp({ open }: AppProps) {
 
       <p className="mb-2 text-accent-ink">Getting around</p>
       <ul className="space-y-1.5">
-        <li className="flex gap-2">
-          <span aria-hidden className="text-faint">
-            *
-          </span>
-          <span>
-            <b>Double-click</b> an icon to open it. On a phone, a single tap.
-          </span>
-        </li>
-        <li className="flex gap-2">
-          <span aria-hidden className="text-faint">
-            *
-          </span>
-          <span>
-            <b>Right-click</b> the desktop for the root menu, including backgrounds.
-          </span>
-        </li>
-        <li className="flex gap-2">
-          <span aria-hidden className="text-faint">
-            *
-          </span>
-          <span>
-            Drag windows by the title bar, resize from the bottom-right corner,{" "}
-            <b>Alt+Tab</b> to cycle.
-          </span>
-        </li>
-        <li className="flex gap-2">
-          <span aria-hidden className="text-faint">
-            *
-          </span>
-          <span>
-            Drag the desktop icons anywhere. Where you leave them is where they stay.
-          </span>
-        </li>
-        <li className="flex gap-2">
-          <span aria-hidden className="text-faint">
-            *
-          </span>
-          <span>
-            The panel switches the theme between Motif, CDE, Console, and twm.
-          </span>
-        </li>
+        {moves.map((move, i) => (
+          <li key={i} className="flex gap-2">
+            <span aria-hidden className="text-faint">
+              *
+            </span>
+            <span>{move}</span>
+          </li>
+        ))}
       </ul>
 
       <Rule />
@@ -80,7 +88,7 @@ export function ReadmeApp({ open }: AppProps) {
       <dl className="space-y-1">
         {ROWS.map(([name, what]) => (
           <div key={name} className="flex gap-3">
-            <dt className="w-[104px] shrink-0 text-foreground">{name}</dt>
+            <dt className="w-[116px] shrink-0 text-foreground">{name}</dt>
             <dd className="text-muted-foreground">{what}</dd>
           </div>
         ))}
@@ -103,7 +111,9 @@ export function ReadmeApp({ open }: AppProps) {
       <p className="mt-4">
         <button
           onClick={() => open({ appId: "resume", title: "resume.txt", w: 700, h: 520 })}
-          className="bevel-out bg-secondary px-3 py-1 text-secondary-foreground active:bevel-in"
+          className={`bevel-out bg-secondary px-3 text-secondary-foreground active:bevel-in ${
+            touch ? "min-h-11 py-2" : "py-1"
+          }`}
         >
           Open resume.txt
         </button>
