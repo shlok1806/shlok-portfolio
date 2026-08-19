@@ -52,9 +52,9 @@ export const EXPERIENCE: Role[] = [
     location: "New York, NY",
     current: true,
     metrics: [
+      { value: "0→1", label: "claims platform, built and shipped" },
       { value: "75%", label: "research latency cut" },
       { value: "112/113", label: "prompt injections caught" },
-      { value: "8", label: "stage durable pipeline" },
     ],
     bullets: [
       "Cut claim-research latency from 2–3 min to 30–40 s (~75%) by parallelizing a two-phase LLM research pipeline across 6 concurrent web-search calls",
