@@ -13,6 +13,7 @@ import { RootMenu } from "./RootMenu";
 import { Screensaver } from "./Screensaver";
 import { Window } from "./Window";
 import { Panel, PANEL_CHROME_H, PANEL_CHROME_H_TOUCH } from "./Panel";
+import { ContributionsWidget } from "./ContributionsWidget";
 
 interface RootMenuPos {
   x: number;
@@ -411,6 +412,9 @@ export function Desktop() {
             {touch ? "tap to open, hold for menu" : "right-click for menu"}
           </span>
         </p>
+
+        {/* The contribution board, as a corner dock-app */}
+        {booted && <ContributionsWidget onOpen={() => launch("contributions")} />}
 
         {/* Root menu, the twm way */}
         {rootMenu && (

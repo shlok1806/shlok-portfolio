@@ -2,6 +2,7 @@
 
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { PROFILE } from "@/lib/content";
+import { ContactLinks } from "@/components/ContactLinks";
 import { DocShell, DocTitle, Rule } from "./DocShell";
 import type { AppProps } from "@/lib/os/types";
 
@@ -11,6 +12,7 @@ const ROWS: [string, string][] = [
   ["projects", "a file manager, open one for detail"],
   ["experience.log", "roles, with the numbers they moved"],
   ["sysinfo", "the short version"],
+  ["contact.txt", "email, GitHub, LinkedIn"],
   ["xterm", "a shell, type help"],
   ["games", "snake, tetris, flappy, breakout, pong"],
 ];
@@ -68,6 +70,41 @@ export function ReadmeApp({ open }: AppProps) {
         resume is an application.
       </p>
 
+      {/*
+       * The recruiter block. Who this is, how to reach him and the fastest way
+       * to a resume all sit above the fold - the one visitor who will not
+       * explore a desktop is the one deciding whether to keep reading.
+       */}
+      <p className="mt-3 max-w-[58ch] text-muted-foreground">
+        {PROFILE.role} &middot; CS + Economics @ UIUC &middot;{" "}
+        <span className="text-accent-ink">{PROFILE.status}</span>
+      </p>
+      <p className="mt-1">
+        <ContactLinks />
+      </p>
+
+      <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <button
+          onClick={() => open({ appId: "resume", title: "resume.txt", w: 700, h: 520 })}
+          className={`bevel-out bg-secondary px-3 text-secondary-foreground active:bevel-in ${
+            touch ? "min-h-11 py-2" : "py-1"
+          }`}
+        >
+          Open resume.txt
+        </button>
+        <span className="text-muted-foreground">
+          or the{" "}
+          <a href="/resume" className="text-accent-ink underline underline-offset-2">
+            plain text
+          </a>{" "}
+          /{" "}
+          <a href="/resume.pdf" download className="text-accent-ink underline underline-offset-2">
+            PDF
+          </a>{" "}
+          version
+        </span>
+      </p>
+
       <Rule />
 
       <p className="mb-2 text-accent-ink">Getting around</p>
@@ -94,30 +131,6 @@ export function ReadmeApp({ open }: AppProps) {
         ))}
       </dl>
 
-      <Rule />
-
-      <p className="text-muted-foreground">
-        In a hurry? There is a{" "}
-        <a href="/resume" className="text-accent-ink underline underline-offset-2">
-          plain text version
-        </a>{" "}
-        and a{" "}
-        <a href="/resume.pdf" download className="text-accent-ink underline underline-offset-2">
-          PDF
-        </a>
-        .
-      </p>
-
-      <p className="mt-4">
-        <button
-          onClick={() => open({ appId: "resume", title: "resume.txt", w: 700, h: 520 })}
-          className={`bevel-out bg-secondary px-3 text-secondary-foreground active:bevel-in ${
-            touch ? "min-h-11 py-2" : "py-1"
-          }`}
-        >
-          Open resume.txt
-        </button>
-      </p>
     </DocShell>
   );
 }

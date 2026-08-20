@@ -305,41 +305,6 @@
   animation: vinyl-spin 1.8s linear infinite;
 }
 
-/*
- * The contribution board's tetris drop. A piece travels --drop pixels, and the
- * steps() timing on the element is what makes it descend one row per tick
- * instead of gliding; the lock flash fires as it comes to rest.
- *
- * Keyframes rather than a class because each piece carries its own distance,
- * duration and step count - the reduced-motion block at the bottom of this file
- * disables SVG animation wholesale, so the inline styles are still overridable.
- */
-@keyframes tetris-fall {
-  from {
-    transform: translateY(calc(-1 * var(--drop)));
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes tetris-lock {
-  from {
-    filter: brightness(2.2);
-  }
-  to {
-    filter: brightness(1);
-  }
-}
-
-@keyframes tetris-hud {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   html {
