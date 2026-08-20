@@ -62,7 +62,6 @@ export const EXPERIENCE: Role[] = [
       "Designed a 12-table PostgreSQL schema with pgvector (1,024-dim embeddings) and full-text search, serving hybrid retrieval through RRF fusion of cosine and BM25 in a single SQL query with no separate vector store",
       "Shipped a durable 8-stage claim-lifecycle state machine on Inngest with typed events, per-case concurrency isolation, automatic retries, and 57 unit tests",
       "Hardened the LLM tool layer against prompt injection, catching 112 of 113 adversarial payloads",
-      "Built a contract/invoice extraction pipeline doing parallel per-line extraction of 13 attributes, verification against source text, ledger reconciliation, and error-typed retries",
     ],
   },
   {
