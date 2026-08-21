@@ -13,6 +13,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start", "--", "-p", "3001"],
       "port": 3001
+    },
+    {
+      "name": "feelens",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/shlokthakkar/Project/feelens && npm run dev -- -p 3002"],
+      "port": 3002
     }
   ]
 }

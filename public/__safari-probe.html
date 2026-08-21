@@ -1,0 +1,155 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>WebKit probe</title>
+<style>
+  body{background:#111;color:#eee;font:16px/1.5 ui-monospace,Menlo,monospace;padding:18px;margin:0}
+  h2{font-size:18px;margin:18px 0 6px;color:#6cf}
+  .row{white-space:pre-wrap}
+  .ok{color:#7d7}.bad{color:#f77}.warn{color:#fd7}
+  button{font:700 20px ui-monospace,monospace;padding:14px 22px;margin:8px 0;background:#245;color:#fff;border:2px solid #6cf;cursor:pointer}
+  #out{font-size:17px}
+  img,canvas{background:#333;image-rendering:pixelated;vertical-align:middle;border:1px solid #555}
+</style>
+<h2>ENV</h2><div id="env" class="row"></div>
+<button id="runC">1. TEST C — EXACT APP SEQUENCE</button>
+<button id="runA">2. TEST A — await resume, source before src</button>
+<button id="runB">3. TEST B — await resume, src before source</button>
+<h2>AUDIO</h2><div id="out" class="row">not run yet</div>
+<h2>CURSOR RASTER (svg vs canvas-png, both drawn at 28x32 css px)</h2>
+<div id="cur"></div>
+<script>
+const $=(i)=>document.getElementById(i);
+const log=(el,s,cls)=>{el.innerHTML+=(cls?`<span class="${cls}">${s}</span>`:s)+"\n";};
+
+// ---------- env ----------
+const AC = window.AudioContext || window.webkitAudioContext;
+log($('env'), "UA          : "+navigator.userAgent);
+log($('env'), "devicePixelRatio: "+devicePixelRatio);
+log($('env'), "AudioContext: "+(window.AudioContext?"unprefixed":(window.webkitAudioContext?"webkit ONLY":"NONE")));
+const svgCur='url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2228%22 height=%2232%22%3E%3C/svg%3E") 2 2, default';
+log($('env'), "CSS.supports svg cursor : "+CSS.supports('cursor', svgCur));
+log($('env'), "CSS.supports image-set  : "+CSS.supports('background-image','image-set(url(a.png) 1x)'));
+log($('env'), "CSS.supports -webkit-image-set : "+CSS.supports('background-image','-webkit-image-set(url(a.png) 1x)'));
+log($('env'), "transform-box supported : "+CSS.supports('transform-box','view-box'));
+log($('env'), "overflow clip supported : "+CSS.supports('overflow','clip'));
+log($('env'), "100dvh supported        : "+CSS.supports('height','100dvh'));
+
+// ---------- cursor raster comparison ----------
+(function(){
+  const MASK=["X...........","XX..........","XXX.........","XXXX........","XXXXX.......","XXXXXX......","XXXXXXX.....","XXXXXXXX....","XXXXXXXXX...","XXXXXXXXXX..","XXXXXX......","XXX.XXX.....","XX..XXX.....",".....XXX...."];
+  let rects="";
+  MASK.forEach((r,y)=>r.split("").forEach((c,x)=>{if(c==="X")rects+=`<rect x="${(x+1)*2}" y="${(y+1)*2}" width="2" height="2" fill="#fff"/>`;}));
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="32">${rects}</svg>`;
+  const img=new Image(); img.src="data:image/svg+xml,"+encodeURIComponent(svg);
+  img.width=28*4; img.height=32*4; // blown up 4x so rasterisation quality is visible
+  const cv=document.createElement("canvas");
+  cv.width=28*devicePixelRatio; cv.height=32*devicePixelRatio;
+  const g=cv.getContext("2d"); g.fillStyle="#fff";
+  MASK.forEach((r,y)=>r.split("").forEach((c,x)=>{if(c==="X")g.fillRect((x+1)*2*devicePixelRatio,(y+1)*2*devicePixelRatio,2*devicePixelRatio,2*devicePixelRatio);}));
+  cv.style.width=(28*4)+"px"; cv.style.height=(32*4)+"px";
+  $('cur').append("SVG: ",img," CANVAS-PNG: ",cv);
+})();
+
+// ---------- audio ----------
+async function testPath(name, srcFirst){
+  const out=$('out');
+  log(out,"\n── "+name,"warn");
+  const ctx=new AC();
+  const master=ctx.createGain(); master.gain.value=0.0001;
+  const an=ctx.createAnalyser(); an.fftSize=2048;
+  master.connect(an); an.connect(ctx.destination);
+  const a=new Audio(); a.preload="none"; a.volume=1; a.crossOrigin=null;
+
+  let src=null;
+  if(srcFirst){ a.src="/music/back-to-the-80s.mp3"; a.load(); src=ctx.createMediaElementSource(a); src.connect(master); }
+  else { src=ctx.createMediaElementSource(a); src.connect(master); a.src="/music/back-to-the-80s.mp3"; }
+
+  log(out,"  ctx.state after create      : "+ctx.state);
+  try{ await ctx.resume(); }catch(e){ log(out,"  resume threw: "+e,"bad"); }
+  log(out,"  ctx.state after resume()    : "+ctx.state);
+  log(out,"  ctx.currentTime after resume: "+ctx.currentTime.toFixed(4));
+
+  // the exact ramp the app does
+  const t=ctx.currentTime;
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(0.0001,t);
+  master.gain.linearRampToValueAtTime(0.35,t+0.9);
+
+  try{ await a.play(); log(out,"  play() resolved","ok"); }
+  catch(e){ log(out,"  play() REJECTED: "+e.name+" "+e.message,"bad"); }
+
+  await new Promise(r=>setTimeout(r,900));
+  try{ if(a.duration>90) a.currentTime=60; }catch(e){ log(out,"  seek threw: "+e.name,"bad"); }
+
+  const buf=new Float32Array(an.fftSize);
+  let maxRms=0, samples=0;
+  await new Promise(done=>{
+    const iv=setInterval(()=>{
+      an.getFloatTimeDomainData(buf);
+      let s=0; for(let i=0;i<buf.length;i++) s+=buf[i]*buf[i];
+      maxRms=Math.max(maxRms,Math.sqrt(s/buf.length)); samples++;
+      if(samples>28){clearInterval(iv);done();}
+    },100);
+  });
+
+  log(out,"  media currentTime advanced  : "+a.currentTime.toFixed(2)+"s  (paused="+a.paused+")");
+  log(out,"  master.gain.value now       : "+master.gain.value.toFixed(4));
+  log(out,"  MAX RMS AT DESTINATION      : "+maxRms.toFixed(5)+"  => "+(maxRms>0.001?"AUDIBLE":"SILENT"), maxRms>0.001?"ok":"bad");
+  a.pause(); await ctx.close();
+  return maxRms;
+}
+
+
+// Test C reproduces lib/music/player.ts exactly: fire-and-forget resume, then
+// schedule the fade against ctx.currentTime while the context may still be
+// suspended, then call play().
+async function testAppSequence(){
+  const out=$('out');
+  log(out,"\n== C: EXACT APP SEQUENCE (void ctx.resume(), ramp scheduled immediately)","warn");
+  const ctx=new AC();
+  const master=ctx.createGain(); master.gain.value=0.0001;
+  const an=ctx.createAnalyser(); an.fftSize=2048;
+  master.connect(an); an.connect(ctx.destination);
+  log(out,"  ctx.state on create         : "+ctx.state);
+
+  if(ctx.state==="suspended") void ctx.resume();          // <-- app does NOT await
+  log(out,"  ctx.state immediately after : "+ctx.state);
+  log(out,"  ctx.currentTime at schedule : "+ctx.currentTime.toFixed(4));
+
+  const a=new Audio(); a.preload="none"; a.volume=1;
+  const src=ctx.createMediaElementSource(a); src.connect(master);
+  a.src="/music/back-to-the-80s.mp3";
+
+  const t=ctx.currentTime;                                 // 0 while suspended
+  master.gain.cancelScheduledValues(t);
+  master.gain.setValueAtTime(Math.max(0.0001,master.gain.value),t);
+  master.gain.linearRampToValueAtTime(0.35,t+0.9);
+  log(out,"  ramp scheduled "+t.toFixed(4)+" -> "+(t+0.9).toFixed(4));
+
+  try{ await a.play(); log(out,"  play() resolved","ok"); }
+  catch(e){ log(out,"  play() REJECTED: "+e.name,"bad"); }
+
+  await new Promise(r=>setTimeout(r,1200));
+  log(out,"  ctx.state after 1.2s        : "+ctx.state);
+  log(out,"  ctx.currentTime after 1.2s  : "+ctx.currentTime.toFixed(4));
+  try{ if(a.duration>90) a.currentTime=60; }catch(e){}
+
+  const buf=new Float32Array(an.fftSize);
+  let maxRms=0,n=0;
+  await new Promise(done=>{const iv=setInterval(()=>{
+    an.getFloatTimeDomainData(buf);
+    let s=0; for(let i=0;i<buf.length;i++) s+=buf[i]*buf[i];
+    maxRms=Math.max(maxRms,Math.sqrt(s/buf.length));
+    if(++n>28){clearInterval(iv);done();}
+  },100);});
+
+  log(out,"  media currentTime           : "+a.currentTime.toFixed(2)+"s (paused="+a.paused+")");
+  log(out,"  master.gain.value at end    : "+master.gain.value.toFixed(4));
+  log(out,"  MAX RMS AT DESTINATION      : "+maxRms.toFixed(5)+"  => "+(maxRms>0.001?"AUDIBLE":"SILENT"), maxRms>0.001?"ok":"bad");
+  a.pause(); await ctx.close();
+}
+
+$('runC').onclick=async()=>{ $('runC').disabled=true; await testAppSequence(); $('runC').disabled=false; };
+$('runA').onclick=async()=>{ $('runA').disabled=true; await testPath("A: source before src (await resume)",false); $('runA').disabled=false; };
+$('runB').onclick=async()=>{ $('runB').disabled=true; await testPath("B: src before source (await resume)",true); $('runB').disabled=false; };
+</script>
