@@ -205,6 +205,14 @@ export function Desktop() {
   const { open, windows, focusedId, PANEL_H } = wm;
 
   /*
+   * The dock-app and the contributions window play the same loop, so only one
+   * of them runs: opening the window unmounts the corner tile, and minimising
+   * the window brings it back. Two copies of a forty-second animation on one
+   * screen is duplicated work and a duplicated picture.
+   */
+  const cabinetOnScreen = windows.some((w) => w.appId === "contributions" && !w.minimized);
+
+  /*
    * Where an icon actually goes.
    *
    * The saved position is the visitor's intent and is left alone; what gets
@@ -414,7 +422,9 @@ export function Desktop() {
         </p>
 
         {/* The contribution board, as a corner dock-app */}
-        {booted && <ContributionsWidget onOpen={() => launch("contributions")} />}
+        {booted && !cabinetOnScreen && (
+          <ContributionsWidget onOpen={() => launch("contributions")} />
+        )}
 
         {/* Root menu, the twm way */}
         {rootMenu && (

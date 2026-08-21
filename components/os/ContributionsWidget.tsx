@@ -1,18 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { CABINET_URL } from "./apps/ContributionsApp";
+import { useRemix } from "@/hooks/useRemix";
+import { CABINET_ALT, cabinetFor } from "./apps/ContributionsApp";
 
 /**
- * The contribution cabinet as a corner dock-app: the published image, playing
- * its drop-then-snake loop small in the corner of the root window, the way a
- * wmaker corner carried a clock. It draws its own Motif window chrome, so on
- * the desktop it reads as a miniature window that is always running.
+ * The contribution cabinet as a corner dock-app: the published animation
+ * playing small in the corner of the root window, the way a wmaker corner
+ * carried a clock or a load meter.
  *
- * If the image cannot load there is no widget - a broken-image tile on the
- * wallpaper would be worse than nothing.
+ * The tile draws the desktop's own bevels rather than baking a frame into the
+ * image, so it wears whichever preset is current along with the board inside
+ * it. Desktop only - a phone has no corner to spare, and the panel already
+ * owns the bottom of the screen.
+ *
+ * If the image cannot load there is no widget: a broken tile on the wallpaper
+ * would be worse than none.
  */
 export function ContributionsWidget({ onOpen }: { onOpen: () => void }) {
+  const { preset } = useRemix();
   const [failed, setFailed] = useState(false);
 
   if (failed) return null;
@@ -23,17 +29,20 @@ export function ContributionsWidget({ onOpen }: { onOpen: () => void }) {
       onClick={onOpen}
       aria-label="A year of GitHub contributions - open the contributions window"
       title="contributions"
-      className="absolute right-4 top-3 hidden w-[300px] cursor-pointer desk:block"
+      className="bevel-out absolute right-4 top-3 hidden w-[320px] cursor-pointer bg-secondary p-[3px] desk:block"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- animated SVG */}
-      <img
-        src={CABINET_URL}
-        alt=""
-        width={880}
-        height={286}
-        onError={() => setFailed(true)}
-        className="w-full"
-      />
+      <span className="bevel-in block bg-card p-[2px]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- animated SVG */}
+        <img
+          key={preset.id}
+          src={cabinetFor(preset.id)}
+          alt={CABINET_ALT}
+          width={934}
+          height={276}
+          onError={() => setFailed(true)}
+          className="block h-auto w-full"
+        />
+      </span>
     </button>
   );
 }
