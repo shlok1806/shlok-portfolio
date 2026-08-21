@@ -9,7 +9,7 @@ import { COMMAND_NAMES, runCommand } from "@/lib/terminal/commands";
 import { BootSequence } from "./BootSequence";
 import { TerminalHistory } from "./TerminalHistory";
 import { TerminalInput } from "./TerminalInput";
-import { HelpOutput } from "./outputs/HelpOutput";
+import { WhoamiOutput } from "./outputs/WhoamiOutput";
 
 interface TerminalPageProps {
   /** rendered inside a host container rather than owning the whole viewport */
@@ -95,17 +95,33 @@ export function TerminalPage({
     shellRef.current?.querySelector<HTMLInputElement>(".sr-only")?.focus();
   }, []);
 
-  // On boot complete: transition to active and auto-run help
+  // On boot complete: transition to active and auto-run whoami
   const handleBootComplete = useCallback(() => {
     setPhase("active");
   }, []);
 
-  // Run help automatically once the active phase starts
-  const helpRanRef = useRef(false);
+  /*
+   * Auto-run whoami, not help. The help table is taller than the window, so
+   * opening with it scrolled the one thing a first glance needs - who this is -
+   * out of view, and left the games list sitting next to the prompt instead.
+   * Identity first; the hint line hands over to help for everything else.
+   */
+  const introRanRef = useRef(false);
   useEffect(() => {
-    if (phase !== "active" || helpRanRef.current) return;
-    helpRanRef.current = true;
-    silentSubmit("help", <HelpOutput />);
+    if (phase !== "active" || introRanRef.current) return;
+    introRanRef.current = true;
+    silentSubmit(
+      "whoami",
+      <div>
+        <WhoamiOutput />
+        <p className="mt-3 text-faint text-[12px]">
+          Type <span className="text-accent-ink">projects</span>,{" "}
+          <span className="text-accent-ink">resume</span> or{" "}
+          <span className="text-accent-ink">contact</span> &mdash; or{" "}
+          <span className="text-accent-ink">help</span> for everything else.
+        </p>
+      </div>,
+    );
   }, [phase, silentSubmit]);
 
   const handleSubmit = useCallback(() => {
