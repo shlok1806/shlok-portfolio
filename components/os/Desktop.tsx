@@ -13,7 +13,6 @@ import { RootMenu } from "./RootMenu";
 import { Screensaver } from "./Screensaver";
 import { Window } from "./Window";
 import { Panel, PANEL_CHROME_H, PANEL_CHROME_H_TOUCH } from "./Panel";
-import { ContributionsWidget } from "./ContributionsWidget";
 
 interface RootMenuPos {
   x: number;
@@ -204,13 +203,6 @@ export function Desktop() {
   const wm = useWindowManager(panelH);
   const { open, windows, focusedId, PANEL_H } = wm;
 
-  /*
-   * The dock-app and the contributions window play the same loop, so only one
-   * of them runs: opening the window unmounts the corner tile, and minimising
-   * the window brings it back. Two copies of a forty-second animation on one
-   * screen is duplicated work and a duplicated picture.
-   */
-  const cabinetOnScreen = windows.some((w) => w.appId === "contributions" && !w.minimized);
 
   /*
    * Where an icon actually goes.
@@ -273,14 +265,36 @@ export function Desktop() {
       /* storage blocked - treat as a return visit */
     }
 
-    // A desktop is not self-explanatory to someone expecting a page, so a
-    // first-time visitor gets the README. Returning visitors get a shell.
     const t = setTimeout(() => {
+      /*
+       * The contribution board comes up with the machine, parked in the top
+       * right where nothing else opens. It is an ordinary window from there -
+       * draggable, resizable, in the window list - it just did not wait to be
+       * asked. Desktop only: on a phone every app is full-screen, so opening
+       * a second one would bury whatever greets the visitor.
+       */
+      const roomForIt = !touch && window.innerWidth >= 720;
+      if (roomForIt) {
+        const cabinet = appById("contributions");
+        if (cabinet) {
+          open({
+            appId: cabinet.id,
+            title: cabinet.title,
+            w: cabinet.w,
+            h: cabinet.h,
+            at: { x: window.innerWidth - Math.min(cabinet.w, window.innerWidth - 40) - 16, y: 16 },
+          });
+        }
+      }
+
+      // A desktop is not self-explanatory to someone expecting a page, so a
+      // first-time visitor gets the README. Returning visitors get a shell.
+      // Either way it opens last, so it lands in front and takes focus.
       if (first) launch("readme");
-      else if (!touch && window.innerWidth >= 720) launch("xterm");
+      else if (roomForIt) launch("xterm");
     }, 260);
     return () => clearTimeout(t);
-  }, [booted, touch, launch]);
+  }, [booted, touch, launch, open]);
 
   /*
    * Screensaver after a stretch of nothing. Listeners are passive and only
@@ -420,11 +434,6 @@ export function Desktop() {
             {touch ? "tap to open, hold for menu" : "right-click for menu"}
           </span>
         </p>
-
-        {/* The contribution board, as a corner dock-app */}
-        {booted && !cabinetOnScreen && (
-          <ContributionsWidget onOpen={() => launch("contributions")} />
-        )}
 
         {/* Root menu, the twm way */}
         {rootMenu && (

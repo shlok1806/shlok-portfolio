@@ -136,6 +136,7 @@ export const APPS: AppDef[] = [
     w: 980,
     h: 330,
     Component: ContributionsApp,
+    onDesktop: true,
     inMenu: true,
   },
   {

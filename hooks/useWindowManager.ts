@@ -33,6 +33,13 @@ export interface OpenOptions {
   h: number;
   /** one window per app unless the app opens documents */
   singleton?: boolean;
+  /**
+   * Where to put it, instead of the next cascade slot. A window manager places
+   * a window it opened itself; the visitor is free to drag it anywhere after.
+   * Clamped to the desktop, and ignored on a phone, where every app is
+   * full-screen.
+   */
+  at?: { x: number; y: number };
 }
 
 /** only a starting guess; the desktop measures the real bar and passes it in */
@@ -135,7 +142,7 @@ export function useWindowManager(panelH: number = PANEL_H) {
   }, [windows]);
 
   const open = useCallback(
-    ({ appId, title, arg, w, h, singleton = true }: OpenOptions) => {
+    ({ appId, title, arg, w, h, singleton = true, at }: OpenOptions) => {
       const existing = singleton
         ? windowsRef.current.find((win) => win.appId === appId && win.arg === arg)
         : undefined;
@@ -182,10 +189,19 @@ export function useWindowManager(panelH: number = PANEL_H) {
             const height = Math.min(h, vh - panelRef.current - 60);
             // Cascade like a real WM instead of stacking everything at one point
             const step = (cascadeRef.current % 6) * 26;
-            cascadeRef.current += 1;
+            if (!at) cascadeRef.current += 1;
+            const placed = at
+              ? {
+                  x: Math.min(Math.max(8, at.x), Math.max(8, vw - width - 8)),
+                  y: Math.min(Math.max(8, at.y), Math.max(8, vh - panelRef.current - height - 8)),
+                }
+              : {
+                  x: Math.max(8, Math.round((vw - width) / 2) - 60 + step),
+                  y: Math.max(8, Math.round((vh - panelRef.current - height) / 2) - 40 + step),
+                };
             return {
-              x: Math.max(8, Math.round((vw - width) / 2) - 60 + step),
-              y: Math.max(8, Math.round((vh - panelRef.current - height) / 2) - 40 + step),
+              x: placed.x,
+              y: placed.y,
               w: width,
               h: height,
               maximized: false,
