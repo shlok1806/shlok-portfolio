@@ -195,7 +195,27 @@ export function Desktop() {
    * legible over both the sun and the buildings.
    */
   const labelStyle: React.CSSProperties = wallpaper.src
-    ? { color: "#ffffff", textShadow: "0 1px 2px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.7)" }
+    ? {
+        /*
+         * Over a photograph the label gets a plate, not just a shadow.
+         *
+         * Manhattanhenge is bright orange pixel art, and white-with-a-drop-
+         * shadow on top of it was legible over the buildings and marginal over
+         * the sun - the two icons that happened to land on the bright band were
+         * the two nobody could read. A shadow can only darken the pixel it sits
+         * on; a plate darkens the whole run of text regardless of what is
+         * underneath. It hugs the text rather than filling the 104px cell, so
+         * the desktop still reads as icons on a photo rather than as a column
+         * of grey bars, and box-decoration-break gives a wrapped second line
+         * its own plate instead of one box behind both.
+         */
+        color: "#ffffff",
+        backgroundColor: "rgba(0, 0, 0, 0.6)",
+        boxDecorationBreak: "clone",
+        WebkitBoxDecorationBreak: "clone",
+        padding: "1px 4px",
+        textShadow: "0 1px 2px rgba(0,0,0,0.9)",
+      }
     : {
         color: "hsl(var(--on-desktop))",
         textShadow: "1px 1px 0 hsl(var(--on-desktop-shadow) / 0.55)",
@@ -214,10 +234,21 @@ export function Desktop() {
    */
   const placeIcon = useCallback(
     (id: string, i: number): IconPos => {
-      // Default layout: a column down the left, wrapping when it runs out of room
-      const perColumn = viewport
+      /*
+       * Default layout: columns down the left, filled top to bottom the way an
+       * X11 desktop fills them, but balanced rather than packed.
+       *
+       * Packing each column to the height of the screen and letting the rest
+       * spill left one icon stranded on its own in a second column on a phone,
+       * which reads as a wrapping bug rather than as a layout. Working out how
+       * many columns are needed first and then dividing the icons evenly
+       * between them gives 5 and 5 instead of 9 and 1.
+       */
+      const fit = viewport
         ? Math.max(1, Math.floor((viewport.h - PANEL_H - 12) / ICON_PITCH))
         : 6;
+      const columns = Math.max(1, Math.ceil(DESKTOP_APPS.length / fit));
+      const perColumn = Math.ceil(DESKTOP_APPS.length / columns);
       const fallback = {
         x: 12 + Math.floor(i / perColumn) * (ICON_W + 8),
         y: 12 + (i % perColumn) * ICON_PITCH,
@@ -251,9 +282,20 @@ export function Desktop() {
   );
 
   /*
-   * A session opens a terminal on login. On a phone that would be full-screen
-   * and would bury the desktop before the visitor has seen it, so there we
-   * leave the desktop showing instead.
+   * What the machine looks like when you log in.
+   *
+   * On a phone: nothing. Every app is full-screen there, so anything that came
+   * up on its own would bury the desktop before it had been seen.
+   *
+   * On a first visit: the README, alone. A desktop is not self-explanatory to
+   * someone expecting a page, and a second window opening alongside the one
+   * thing that explains the machine reads as clutter rather than as a session.
+   *
+   * On a return visit: the session you left. The contribution board parks top
+   * right where nothing else opens, and a shell opens underneath it. They used
+   * to be placed independently - the board top right, the shell centred - and
+   * at 1440 the shell landed straight across the middle of the board, which
+   * looked like two windows that had collided rather than a desk laid out.
    */
   useEffect(() => {
     if (!booted) return;
@@ -266,35 +308,46 @@ export function Desktop() {
     }
 
     const t = setTimeout(() => {
-      /*
-       * The contribution board comes up with the machine, parked in the top
-       * right where nothing else opens. It is an ordinary window from there -
-       * draggable, resizable, in the window list - it just did not wait to be
-       * asked. Desktop only: on a phone every app is full-screen, so opening
-       * a second one would bury whatever greets the visitor.
-       */
-      const roomForIt = !touch && window.innerWidth >= 720;
-      if (roomForIt) {
-        const cabinet = appById("contributions");
-        if (cabinet) {
-          open({
-            appId: cabinet.id,
-            title: cabinet.title,
-            w: cabinet.w,
-            h: cabinet.h,
-            at: { x: window.innerWidth - Math.min(cabinet.w, window.innerWidth - 40) - 16, y: 16 },
-          });
-        }
+      if (touch || window.innerWidth < 720) return;
+      if (first) {
+        launch("readme");
+        return;
       }
 
-      // A desktop is not self-explanatory to someone expecting a page, so a
-      // first-time visitor gets the README. Returning visitors get a shell.
-      // Either way it opens last, so it lands in front and takes focus.
-      if (first) launch("readme");
-      else if (roomForIt) launch("xterm");
+      const board = appById("contributions");
+      const term = appById("xterm");
+      if (!board || !term) return;
+
+      const boardW = Math.min(board.w, window.innerWidth - 32);
+      const gap = 14;
+      const termTop = 16 + board.h + gap;
+      // Only lay the two out together if the shell actually clears the board
+      const stacks =
+        boardW >= 640 && termTop + term.h <= window.innerHeight - PANEL_H - 16;
+
+      if (!stacks) {
+        launch("xterm");
+        return;
+      }
+
+      open({
+        appId: board.id,
+        title: board.title,
+        w: boardW,
+        h: board.h,
+        at: { x: window.innerWidth - boardW - 16, y: 16 },
+      });
+      // Opens last, so it lands in front and takes focus
+      open({
+        appId: term.id,
+        title: term.title,
+        w: term.w,
+        h: term.h,
+        at: { x: Math.round((window.innerWidth - term.w) / 2), y: termTop },
+      });
     }, 260);
     return () => clearTimeout(t);
-  }, [booted, touch, launch, open]);
+  }, [booted, touch, launch, open, PANEL_H]);
 
   /*
    * Screensaver after a stretch of nothing. Listeners are passive and only

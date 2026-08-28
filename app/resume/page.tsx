@@ -11,7 +11,7 @@ import { PROFILE, LINKS, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/c
  */
 
 export const metadata: Metadata = {
-  title: "Resume — Shlok Thakkar",
+  title: "Resume - Shlok Thakkar",
   description:
     "Shlok Thakkar - software engineer. CS + Economics @ UIUC. Agentic AI at a stealth startup in NYC, Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
   alternates: { canonical: "/resume" },
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-10">
+    <section className="mt-10 break-inside-avoid-page">
       <h2 className="border-b border-neutral-300 pb-1 text-[13px] font-bold uppercase tracking-[0.18em] text-neutral-900">
         {title}
       </h2>
@@ -31,7 +31,26 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function ResumePage() {
   return (
     <div className="min-h-screen bg-white">
-      <main className="mx-auto max-w-[46rem] px-6 py-12 font-sans text-[14px] leading-relaxed text-neutral-800 print:py-0">
+      {/*
+        Deliberately not themed off the desktop's tokens. This route exists for
+        crawlers, ATS parsers, screen readers and printers, and all four want a
+        dark-on-white document that does not depend on a theme class having been
+        applied by script. Under the console tube those tokens resolve to light
+        text on near-black, which is the wrong thing to hand a printer.
+
+        What it does borrow is the typography: the same mono the machine sets
+        its own chrome in, on the dates and the stack lists, so this reads as the
+        printout from that desktop rather than as a different site.
+      */}
+      <main className="mx-auto max-w-[46rem] px-6 py-12 font-sans text-[14px] leading-relaxed text-neutral-800 print:max-w-none print:px-0 print:py-0">
+      {/* The command that would produce this file. Decorative, so it is kept
+          out of the accessibility tree and off the printed page. */}
+      <p
+        aria-hidden
+        className="mb-8 font-mono text-[12px] text-neutral-400 print:hidden"
+      >
+        shlok@portfolio:~$ cat resume.txt
+      </p>
       <header>
         <h1 className="text-[30px] font-bold leading-none tracking-tight text-neutral-950">
           {PROFILE.name}
@@ -71,7 +90,7 @@ export default function ResumePage() {
       <Section title="Education">
         <div>
           <h3 className="font-semibold text-neutral-950">{EDUCATION.degree}</h3>
-          <p className="text-neutral-600">
+          <p className="font-mono text-[13px] tabular-nums text-neutral-600">
             {EDUCATION.school} · {EDUCATION.period}
           </p>
           <p className="text-neutral-700">{EDUCATION.detail}</p>
@@ -84,11 +103,11 @@ export default function ResumePage() {
 
       <Section title="Experience">
         {EXPERIENCE.map((role) => (
-          <article key={`${role.org}-${role.period}`}>
+          <article key={`${role.org}-${role.period}`} className="break-inside-avoid">
             <h3 className="font-semibold text-neutral-950">
-              {role.role} — {role.org}
+              {role.role} - {role.org}
             </h3>
-            <p className="text-[13px] text-neutral-600">
+            <p className="font-mono text-[13px] tabular-nums text-neutral-600">
               {role.period}
               {role.location && ` · ${role.location}`}
             </p>
@@ -103,7 +122,7 @@ export default function ResumePage() {
 
       <Section title="Projects">
         {PROJECTS.map((p) => (
-          <article key={p.slug}>
+          <article key={p.slug} className="break-inside-avoid">
             <h3 className="font-semibold text-neutral-950">
               {p.href ? (
                 <a
@@ -116,10 +135,10 @@ export default function ResumePage() {
               ) : (
                 p.name.replace("/", "")
               )}
-              <span className="font-normal text-neutral-600"> — {p.tagline}</span>
+              <span className="font-normal text-neutral-600"> - {p.tagline}</span>
               {p.note && <span className="font-normal text-neutral-500"> ({p.note})</span>}
             </h3>
-            <p className="text-[13px] text-neutral-600">
+            <p className="font-mono text-[13px] text-neutral-600">
               {p.stackFull.join(" · ")}
               {p.demo && (
                 <>

@@ -117,7 +117,7 @@ export function TerminalPage({
         <p className="mt-3 text-faint text-[12px]">
           Type <span className="text-accent-ink">projects</span>,{" "}
           <span className="text-accent-ink">resume</span> or{" "}
-          <span className="text-accent-ink">contact</span> &mdash; or{" "}
+          <span className="text-accent-ink">contact</span> - or{" "}
           <span className="text-accent-ink">help</span> for everything else.
         </p>
       </div>,
@@ -175,15 +175,20 @@ export function TerminalPage({
         ref={shellRef}
       >
 
-        {/* Window chrome - omitted when the host already draws a title bar */}
+        {/*
+          Window chrome - omitted when the host already draws a title bar, which
+          today is always, since the only caller is the xterm app inside the
+          desktop. Kept for a standalone terminal route, and drawn in the same
+          language as every other window here: a squared bevel, not the rounded
+          corners and three coloured pills of a Mac. This used to wear Aqua
+          chrome, which is the one window decoration a Motif desktop cannot have.
+        */}
         <div
-          className={`items-center gap-3 shrink-0 bg-secondary px-4 py-3 rounded-t-lg border border-border border-b-0 ${
+          className={`bevel-out items-center gap-2 shrink-0 bg-secondary px-2 py-1 border-b-0 ${
             chromeless ? "hidden" : "flex"
           }`}
         >
-          <span className="w-3 h-3 rounded-full bg-[#ed6a5e]" />
-          <span className="w-3 h-3 rounded-full bg-[#f4bf4f]" />
-          <span className="w-3 h-3 rounded-full bg-[#61c554]" />
+          <span className="bevel-thin h-[13px] w-[13px] bg-secondary" />
           <span className="mx-auto text-faint text-[11px] tracking-[0.1em]">
             shlokthakkar.com - bash - interactive
           </span>
@@ -202,7 +207,7 @@ export function TerminalPage({
           className={`bg-card flex flex-col ${
             chromeless
               ? "flex-1 min-h-0 overflow-y-auto px-4 py-3"
-              : `border border-border border-t-0 rounded-b-lg px-6 md:px-8 py-6 ${
+              : `bevel-in border-t-0 px-6 md:px-8 py-6 ${
                   embedded ? "flex-1 min-h-0 overflow-y-auto" : "min-h-[70vh]"
                 }`
           }`}

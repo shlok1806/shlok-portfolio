@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { MENU_APPS } from "@/lib/os/registry";
+import { PixelIcon } from "@/lib/os/icons";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
 
 interface Props {
@@ -95,8 +96,8 @@ export function RootMenu({
           }}
           className={row}
         >
-          <span aria-hidden className="w-5 shrink-0 text-center">
-            {app.icon}
+          <span aria-hidden className="grid w-5 shrink-0 place-items-center">
+            <PixelIcon name={app.icon} size={14} />
           </span>
           {app.title}
         </button>

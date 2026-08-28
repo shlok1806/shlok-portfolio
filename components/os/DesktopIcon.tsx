@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { PixelIcon, type IconName } from "@/lib/os/icons";
 
 export interface IconPos {
   x: number;
@@ -10,7 +11,7 @@ export interface IconPos {
 interface Props {
   id: string;
   title: string;
-  icon: string;
+  icon: IconName;
   pos: IconPos;
   selected: boolean;
   touch: boolean;
@@ -24,9 +25,9 @@ interface Props {
 const DRAG_THRESHOLD = 4;
 /* Wide enough that "experience.log" sets on one line at 12px */
 export const ICON_W = 104;
-export const ICON_H = 74;
+export const ICON_H = 82;
 /** vertical pitch of the default grid */
-export const ICON_PITCH = 78;
+export const ICON_PITCH = 86;
 
 /**
  * A draggable desktop icon.
@@ -135,11 +136,12 @@ export function DesktopIcon({
       >
         <span
           aria-hidden
-          className="bevel-out grid h-9 w-9 place-items-center bg-secondary text-[16px] text-secondary-foreground"
+          className="bevel-out grid h-11 w-11 place-items-center bg-secondary text-secondary-foreground"
         >
-          {icon}
+          {/* 32 is the 16x16 grid at exactly 2x, so the pixels stay square */}
+          <PixelIcon name={icon} size={32} />
         </span>
-        <span className="w-full break-words" style={selected ? undefined : labelStyle}>
+        <span className="max-w-full break-words" style={selected ? undefined : labelStyle}>
           {title}
         </span>
       </button>

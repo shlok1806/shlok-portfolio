@@ -45,7 +45,7 @@ export interface Role {
 
 export const EXPERIENCE: Role[] = [
   {
-    period: "Jun 2026 – Present",
+    period: "Jun 2026 - Present",
     years: "2026",
     role: "Software Engineering Intern",
     org: "Stealth Startup",
@@ -57,7 +57,7 @@ export const EXPERIENCE: Role[] = [
       { value: "112/113", label: "prompt injections caught" },
     ],
     bullets: [
-      "Cut claim-research latency from 2–3 min to 30–40 s (~75%) by parallelizing a two-phase LLM research pipeline across 6 concurrent web-search calls",
+      "Cut claim-research latency from 2-3 min to 30-40 s (~75%) by parallelizing a two-phase LLM research pipeline across 6 concurrent web-search calls",
       "Built a serverless backend across 4 AWS Lambda functions and Aurora PostgreSQL Serverless v2, holding sub-100ms query latency and removing 4 managed services via the RDS Data API",
       "Designed a 12-table PostgreSQL schema with pgvector (1,024-dim embeddings) and full-text search, serving hybrid retrieval through RRF fusion of cosine and BM25 in a single SQL query with no separate vector store",
       "Shipped a durable 8-stage claim-lifecycle state machine on Inngest with typed events, per-case concurrency isolation, automatic retries, and 57 unit tests",
@@ -65,7 +65,7 @@ export const EXPERIENCE: Role[] = [
     ],
   },
   {
-    period: "Apr 2026 – Present",
+    period: "Apr 2026 - Present",
     years: "2026",
     role: "Undergraduate Research Assistant",
     org: "Parallel Programming Lab @ UIUC",
@@ -80,7 +80,7 @@ export const EXPERIENCE: Role[] = [
     ],
   },
   {
-    period: "Aug 2025 – Present",
+    period: "Aug 2025 - Present",
     years: "2025",
     role: "Software Developer",
     org: "Disruption Lab @ UIUC",
@@ -97,7 +97,7 @@ export const EXPERIENCE: Role[] = [
     ],
   },
   {
-    period: "May 2025 – Apr 2026",
+    period: "May 2025 - Apr 2026",
     years: "2025",
     role: "Undergraduate Research Assistant",
     org: "Dept. of Finance @ UIUC",
@@ -114,7 +114,7 @@ export const EXPERIENCE: Role[] = [
     ],
   },
   {
-    period: "Jun – Aug 2025",
+    period: "Jun - Aug 2025",
     years: "2025",
     role: "Software Development Intern",
     org: "IQM Corporation",
@@ -154,7 +154,7 @@ export const PROJECTS: Project[] = [
     tagline: "Stripe fee intelligence dashboard",
     bullets: [
       "Zero to one full-stack: 24 React components, 8 App Router API routes, Supabase Postgres with row-level security, public demo mode requiring no credentials",
-      "Surfaces the 0.3–0.5% most startups pay above Stripe's nominal 2.9%: Amex premiums, international surcharges, retained refund fees, and won-dispute fees",
+      "Surfaces the 0.3-0.5% most startups pay above Stripe's nominal 2.9%: Amex premiums, international surcharges, retained refund fees, and won-dispute fees",
       "LLM fee optimizer that feeds a computed leakage breakdown into the Anthropic API for ranked recommendations with estimated monthly savings",
       "AES-256-GCM encryption of tenant Stripe keys at rest, with Stripe accessed read-only",
     ],
@@ -169,7 +169,7 @@ export const PROJECTS: Project[] = [
     stackFull: ["TypeScript", "GitHub Actions", "Express", "PostgreSQL", "Redis", "NVIDIA NIM"],
     tagline: "AI security review for pull requests",
     bullets: [
-      "GitHub Action that reviews PR diffs across 10 vulnerability categories and 3 severity tiers, posts a 0–100 score, and blocks merge on critical findings",
+      "GitHub Action that reviews PR diffs across 10 vulnerability categories and 3 severity tiers, posts a 0-100 score, and blocks merge on critical findings",
       "Runs Llama 3.3 70B on NVIDIA NIM through the OpenAI-compatible API in enforced-JSON mode, with a repair pass that drops findings the model got wrong",
       "3-package TypeScript monorepo: action, Express/PostgreSQL/Redis API, shared types, 27 unit tests",
       "YAML-configurable severity thresholds, ignore paths, skipped categories, and custom rules",
@@ -282,7 +282,7 @@ export const SKILLS = [
 ];
 
 export const EDUCATION = {
-  period: "2024 – 2028",
+  period: "2024 - 2028",
   degree: "B.S. Computer Science + Economics",
   school: "University of Illinois Urbana-Champaign",
   detail: "Minor in Statistics · GPA 3.91/4.00 · Expected May 2028",

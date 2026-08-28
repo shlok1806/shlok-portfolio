@@ -1,6 +1,6 @@
 import { PROJECTS } from "@/lib/content";
 
-const ROW = "group flex items-baseline gap-x-3 rounded-sm px-1 -mx-1";
+const ROW = "group flex items-baseline gap-x-3 px-1 -mx-1";
 
 export function ProjectsOutput() {
   return (

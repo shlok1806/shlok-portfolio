@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MENU_APPS } from "@/lib/os/registry";
+import { PixelIcon } from "@/lib/os/icons";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
 import { PRESETS, type Preset } from "@/lib/theme/presets";
 import { pause as pauseMusic } from "@/lib/music/player";
@@ -162,8 +163,8 @@ export function Panel({
         >
           {MENU_APPS.map((app) => (
             <DropdownMenuItem key={app.id} onSelect={() => onLaunch(app.id)} className={item}>
-              <span aria-hidden className="w-5 shrink-0 text-center">
-                {app.icon}
+              <span aria-hidden className="grid w-5 shrink-0 place-items-center">
+                <PixelIcon name={app.icon} size={14} />
               </span>
               {app.title}
             </DropdownMenuItem>

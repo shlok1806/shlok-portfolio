@@ -14,7 +14,8 @@ export function WhoamiOutput() {
         {PROFILE.bio} I like {PROFILE.interests.join(", ")}.
       </p>
       <div className="flex items-center gap-2 mt-1">
-        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+        {/* A real status flag, so it stays - but nothing on this desktop is round */}
+        <span className="w-2 h-2 bg-primary animate-pulse" />
         <span className="text-accent-ink text-[12px] font-bold tracking-widest uppercase">
           {PROFILE.status}
         </span>

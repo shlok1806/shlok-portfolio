@@ -1,4 +1,5 @@
 import type { AppProps } from "./types";
+import type { IconName } from "./icons";
 import { ResumeApp } from "@/components/os/apps/ResumeApp";
 import { ExperienceApp } from "@/components/os/apps/ExperienceApp";
 import { ProjectsApp, ProjectApp } from "@/components/os/apps/ProjectsApp";
@@ -15,8 +16,8 @@ export interface AppDef {
   id: string;
   /** window title and menu entry */
   title: string;
-  /** shown under the desktop icon; short */
-  icon: string;
+  /** the pixmap drawn on the desktop and in the menus */
+  icon: IconName;
   w: number;
   h: number;
   Component: (props: AppProps) => React.ReactNode;
@@ -32,7 +33,7 @@ export const APPS: AppDef[] = [
   {
     id: "readme",
     title: "README",
-    icon: "?",
+    icon: "question",
     w: 560,
     h: 520,
     Component: ReadmeApp,
@@ -42,7 +43,7 @@ export const APPS: AppDef[] = [
   {
     id: "xterm",
     title: "xterm",
-    icon: ">_",
+    icon: "terminal",
     w: 720,
     h: 460,
     Component: XtermApp,
@@ -52,7 +53,7 @@ export const APPS: AppDef[] = [
   {
     id: "resume",
     title: "resume.txt",
-    icon: "▤",
+    icon: "document",
     w: 700,
     h: 520,
     Component: ResumeApp,
@@ -62,7 +63,7 @@ export const APPS: AppDef[] = [
   {
     id: "resume-pdf",
     title: "resume.pdf",
-    icon: "⇩",
+    icon: "download",
     w: 0,
     h: 0,
     download: "/resume.pdf",
@@ -73,7 +74,7 @@ export const APPS: AppDef[] = [
   {
     id: "projects",
     title: "projects",
-    icon: "▣",
+    icon: "folder",
     w: 660,
     h: 400,
     Component: ProjectsApp,
@@ -83,7 +84,7 @@ export const APPS: AppDef[] = [
   {
     id: "experience",
     title: "experience.log",
-    icon: "▥",
+    icon: "log",
     w: 700,
     h: 500,
     Component: ExperienceApp,
@@ -93,7 +94,7 @@ export const APPS: AppDef[] = [
   {
     id: "sysinfo",
     title: "sysinfo",
-    icon: "◈",
+    icon: "monitor",
     w: 640,
     h: 440,
     Component: SysInfoApp,
@@ -103,7 +104,7 @@ export const APPS: AppDef[] = [
   {
     id: "contact",
     title: "contact.txt",
-    icon: "@",
+    icon: "envelope",
     w: 520,
     h: 320,
     Component: ContactApp,
@@ -113,7 +114,7 @@ export const APPS: AppDef[] = [
   {
     id: "games",
     title: "games",
-    icon: "▶",
+    icon: "invader",
     w: 600,
     h: 340,
     Component: GamesApp,
@@ -123,7 +124,7 @@ export const APPS: AppDef[] = [
   {
     id: "audio",
     title: "audio",
-    icon: "♪",
+    icon: "note",
     w: 560,
     h: 460,
     Component: MusicApp,
@@ -132,7 +133,7 @@ export const APPS: AppDef[] = [
   {
     id: "contributions",
     title: "contributions",
-    icon: "▚",
+    icon: "grid",
     w: 980,
     h: 330,
     Component: ContributionsApp,
@@ -142,7 +143,7 @@ export const APPS: AppDef[] = [
   {
     id: "top",
     title: "top",
-    icon: "▩",
+    icon: "bars",
     w: 640,
     h: 420,
     Component: TopApp,
@@ -151,7 +152,7 @@ export const APPS: AppDef[] = [
   {
     id: "skills",
     title: "skills.json",
-    icon: "{}",
+    icon: "braces",
     w: 620,
     h: 380,
     Component: SkillsApp,
@@ -160,7 +161,7 @@ export const APPS: AppDef[] = [
   {
     id: "education",
     title: "education.md",
-    icon: "▦",
+    icon: "book",
     w: 560,
     h: 380,
     Component: EducationApp,
@@ -170,7 +171,7 @@ export const APPS: AppDef[] = [
   {
     id: "project",
     title: "project",
-    icon: "▣",
+    icon: "folder",
     w: 620,
     h: 440,
     Component: ProjectApp,
@@ -178,7 +179,7 @@ export const APPS: AppDef[] = [
   {
     id: "game",
     title: "game",
-    icon: "▶",
+    icon: "invader",
     w: 520,
     h: 460,
     Component: GameApp,

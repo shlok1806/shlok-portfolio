@@ -64,7 +64,7 @@ export function ResumeApp() {
         <div key={`${r.org}-${r.period}`} className={i > 0 ? "mt-4" : ""}>
           <p className="text-foreground">
             {r.role}
-            <span className="text-muted-foreground"> — {r.org}</span>
+            <span className="text-muted-foreground"> - {r.org}</span>
           </p>
           <p className="text-faint">
             {r.period}
@@ -89,7 +89,7 @@ export function ResumeApp() {
         <div key={p.slug} className={i > 0 ? "mt-4" : ""}>
           <p className="text-foreground">
             {p.name.replace("/", "")}
-            <span className="text-muted-foreground"> — {p.tagline}</span>
+            <span className="text-muted-foreground"> - {p.tagline}</span>
             {p.note && <span className="text-accent-ink"> ({p.note})</span>}
           </p>
           <p className="text-faint">{p.stackFull.join(" · ")}</p>
