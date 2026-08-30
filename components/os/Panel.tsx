@@ -164,7 +164,8 @@ export function Panel({
           {MENU_APPS.map((app) => (
             <DropdownMenuItem key={app.id} onSelect={() => onLaunch(app.id)} className={item}>
               <span aria-hidden className="grid w-5 shrink-0 place-items-center">
-                <PixelIcon name={app.icon} size={14} />
+                {/* 16 is the grid 1:1; 14 lands between pixels and snaps unevenly */}
+                <PixelIcon name={app.icon} size={16} />
               </span>
               {app.title}
             </DropdownMenuItem>
