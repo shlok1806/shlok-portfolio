@@ -10,7 +10,6 @@ import { ReadmeApp } from "@/components/os/apps/ReadmeApp";
 import { TopApp } from "@/components/os/apps/TopApp";
 import { GamesApp, GameApp } from "@/components/os/apps/GamesApp";
 import { MusicApp } from "@/components/os/apps/MusicApp";
-import { ContributionsApp } from "@/components/os/apps/ContributionsApp";
 
 export interface AppDef {
   id: string;
@@ -128,16 +127,6 @@ export const APPS: AppDef[] = [
     w: 560,
     h: 460,
     Component: MusicApp,
-    inMenu: true,
-  },
-  {
-    id: "contributions",
-    title: "contributions",
-    icon: "grid",
-    w: 980,
-    h: 330,
-    Component: ContributionsApp,
-    onDesktop: true,
     inMenu: true,
   },
   {

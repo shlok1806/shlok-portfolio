@@ -2,10 +2,10 @@
  * Desktop icons, drawn as 16x16 one-bit pixmaps.
  *
  * These used to be single typographic glyphs - ▤ for the resume, ▣ for
- * projects, ▥ for the experience log, ◈ for sysinfo, ▚ for the contribution
- * board. Seven of the fifteen were some variation on "shaded square", and at
- * 16px inside a 36px bevel they were the same grey smudge: the desktop had
- * nine icons and no way to tell six of them apart without reading the label.
+ * projects, ▥ for the experience log, ◈ for sysinfo. Seven of the fifteen
+ * were some variation on "shaded square", and at 16px inside a 36px bevel they
+ * were the same grey smudge: the desktop had nine icons and no way to tell six
+ * of them apart without reading the label.
  *
  * So they are pixmaps now, which is what an X11 desktop actually shipped - XPM
  * files, one bit deep, drawn on a 16x16 grid. Each one gets a distinct
@@ -166,25 +166,6 @@ const PIXMAPS: Record<string, Pixmap> = {
     "................",
   ],
 
-  /* a contribution board: cells on a grid */
-  grid: [
-    "................",
-    "................",
-    "..##.##.##.##...",
-    "..##.##.##.##...",
-    "................",
-    "..##.##.##.##...",
-    "..##.##.##.##...",
-    "................",
-    "..##.##.##.##...",
-    "..##.##.##.##...",
-    "................",
-    "..##.##.##.##...",
-    "..##.##.##.##...",
-    "................",
-    "................",
-    "................",
-  ],
 
   /* a bar chart climbing to the right, on a baseline */
   bars: [

@@ -54,7 +54,7 @@ All in `localStorage`; set it, then `location.reload()`:
 
 | key | effect |
 |---|---|
-| `os-seen-readme` | unset = first visit (README alone); set = return visit (contribution board + xterm) |
+| `os-seen-readme` | unset = first visit (README alone); set = return visit (xterm) |
 | `theme` + `remix-chosen` | pins a tube; without `remix-chosen` the preset **rotates every visit** |
 | `os-wallpaper` | `nyc` (default photo), `stipple`, `horizon`, `contour`, `stars` |
 | `os-icons` | saved icon positions, JSON `{id:{x,y}}` |

@@ -291,11 +291,8 @@ export function Desktop() {
    * someone expecting a page, and a second window opening alongside the one
    * thing that explains the machine reads as clutter rather than as a session.
    *
-   * On a return visit: the session you left. The contribution board parks top
-   * right where nothing else opens, and a shell opens underneath it. They used
-   * to be placed independently - the board top right, the shell centred - and
-   * at 1440 the shell landed straight across the middle of the board, which
-   * looked like two windows that had collided rather than a desk laid out.
+   * On a return visit: a shell, centred. You have read the README already, so
+   * the machine opens on the one window you can actually type into.
    */
   useEffect(() => {
     if (!booted) return;
@@ -309,45 +306,10 @@ export function Desktop() {
 
     const t = setTimeout(() => {
       if (touch || window.innerWidth < 720) return;
-      if (first) {
-        launch("readme");
-        return;
-      }
-
-      const board = appById("contributions");
-      const term = appById("xterm");
-      if (!board || !term) return;
-
-      const boardW = Math.min(board.w, window.innerWidth - 32);
-      const gap = 14;
-      const termTop = 16 + board.h + gap;
-      // Only lay the two out together if the shell actually clears the board
-      const stacks =
-        boardW >= 640 && termTop + term.h <= window.innerHeight - PANEL_H - 16;
-
-      if (!stacks) {
-        launch("xterm");
-        return;
-      }
-
-      open({
-        appId: board.id,
-        title: board.title,
-        w: boardW,
-        h: board.h,
-        at: { x: window.innerWidth - boardW - 16, y: 16 },
-      });
-      // Opens last, so it lands in front and takes focus
-      open({
-        appId: term.id,
-        title: term.title,
-        w: term.w,
-        h: term.h,
-        at: { x: Math.round((window.innerWidth - term.w) / 2), y: termTop },
-      });
+      launch(first ? "readme" : "xterm");
     }, 260);
     return () => clearTimeout(t);
-  }, [booted, touch, launch, open, PANEL_H]);
+  }, [booted, touch, launch]);
 
   /*
    * Screensaver after a stretch of nothing. Listeners are passive and only
