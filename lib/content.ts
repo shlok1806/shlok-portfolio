@@ -17,7 +17,7 @@ export const OS = {
 export const PROFILE = {
   name: "Shlok Thakkar",
   role: "Software Engineer",
-  bio: "Currently building an agentic AI claims-automation platform at a stealth startup in NYC, and working on the Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
+  bio: "Currently at JCAIL, Johnson Controls' AI lab in the University of Illinois Research Park, and working on the Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
   location: "Champaign, IL",
   status: "Actively seeking SWE internships 2027",
   interests: ["low-latency systems", "compilers", "LLM inference"],
@@ -45,12 +45,25 @@ export interface Role {
 
 export const EXPERIENCE: Role[] = [
   {
-    period: "Jun 2026 - Present",
+    period: "Sep 2026 - Present",
+    years: "2026",
+    role: "Software Engineering Intern",
+    org: "Johnson Controls AI Lab (JCAIL)",
+    location: "Research Park @ UIUC",
+    current: true,
+    /* Started 1 Sep 2026. Numbers go here once there is work worth counting. */
+    metrics: [],
+    bullets: [
+      "Joined JCAIL, Johnson Controls' AI lab in the University of Illinois Research Park",
+    ],
+  },
+  {
+    period: "Jun - Aug 2026",
     years: "2026",
     role: "Software Engineering Intern",
     org: "Stealth Startup",
     location: "New York, NY",
-    current: true,
+    current: false,
     metrics: [
       { value: "0→1", label: "claims platform, built and shipped" },
       { value: "75%", label: "research latency cut" },

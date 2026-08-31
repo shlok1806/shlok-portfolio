@@ -19,16 +19,19 @@ export function ExperienceApp() {
             {role.current && <span className="text-accent-ink"> · ACTIVE</span>}
           </p>
 
-          <div className="my-3 flex flex-wrap gap-x-8 gap-y-2">
-            {role.metrics.map((m) => (
-              <span key={m.label} className="whitespace-nowrap">
-                <span className="font-[family-name:var(--font-ui)] text-[22px] text-accent-ink glow">
-                  {m.value}
+          {/* Skipped outright when empty - the margins would leave a hole */}
+          {role.metrics.length > 0 && (
+            <div className="my-3 flex flex-wrap gap-x-8 gap-y-2">
+              {role.metrics.map((m) => (
+                <span key={m.label} className="whitespace-nowrap">
+                  <span className="font-[family-name:var(--font-ui)] text-[22px] text-accent-ink glow">
+                    {m.value}
+                  </span>
+                  <span className="ml-2 text-faint">{m.label}</span>
                 </span>
-                <span className="ml-2 text-faint">{m.label}</span>
-              </span>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <ul className="space-y-2">
             {role.bullets.map((b, bi) => (

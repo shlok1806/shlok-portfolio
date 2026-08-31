@@ -13,7 +13,7 @@ import { PROFILE, LINKS, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/c
 export const metadata: Metadata = {
   title: "Resume - Shlok Thakkar",
   description:
-    "Shlok Thakkar - software engineer. CS + Economics @ UIUC. Agentic AI at a stealth startup in NYC, Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
+    "Shlok Thakkar - software engineer. CS + Economics @ UIUC. Johnson Controls AI Lab at Illinois Research Park, Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
   alternates: { canonical: "/resume" },
 };
 

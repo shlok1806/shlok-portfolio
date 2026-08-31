@@ -8,10 +8,12 @@ export const contentType = "image/png";
 /*
  * Drawn rather than shipped as a binary, so the card can never drift from the
  * content. It is the Motif desktop: steel-blue stipple, grey beveled window,
- * navy title bar, with the metrics from the current role.
+ * navy title bar, with the metrics from the most recent role that has any.
+ * A role that has only just started has nothing to count yet, and an empty
+ * strip is half the card.
  */
 export default function OpengraphImage() {
-  const metrics = EXPERIENCE[0].metrics.slice(0, 3);
+  const metrics = (EXPERIENCE.find((r) => r.metrics.length > 0)?.metrics ?? []).slice(0, 3);
 
   return new ImageResponse(
     (
