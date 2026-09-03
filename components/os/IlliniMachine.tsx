@@ -54,11 +54,29 @@ export function IlliniMachine({ className }: { className?: string }) {
     >
       {MACHINE.map((row, y) =>
         row.split("").map((c, x) =>
-          PAINT[c] ? (
+          PAINT[c] && c !== "S" && c !== "O" ? (
             <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={PAINT[c]} />
           ) : null,
         ),
       )}
+      {/* The glass and what is on it come up together, after the cabinet */}
+      <g style={{ animation: "illini-on 300ms steps(3) both" }}>
+        {MACHINE.map((row, y) =>
+          row.split("").map((c, x) =>
+            c === "S" || c === "O" ? (
+              <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={PAINT[c]} />
+            ) : null,
+          ),
+        )}
+        <rect
+          x="1"
+          y="1"
+          width="24"
+          height="2"
+          fill="#ffffff"
+          style={{ animation: "illini-sweep 420ms steps(7) 300ms both" }}
+        />
+      </g>
     </svg>
   );
 }

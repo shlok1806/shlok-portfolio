@@ -12,6 +12,7 @@ import { ManOutput, ManIndexOutput, MAN_PAGES } from "@/components/terminal/outp
 import { GamesOutput }       from "@/components/terminal/outputs/GamesOutput";
 import { GAMES, gameById }   from "@/lib/games/registry";
 import { OS }                from "@/lib/content";
+import { MENU_APPS }         from "@/lib/os/registry";
 
 const OPEN_URLS: Record<string, string> = {
   github:   "https://github.com/shlok1806",
@@ -31,9 +32,55 @@ const CAT_ALIASES: Record<string, string> = {
 
 export interface CommandResult {
   output: React.ReactNode;
-  action?: "clear" | "sound-on" | "sound-off" | "exit" | "play";
-  /** which game `play` asked for */
+  action?: "clear" | "sound-on" | "sound-off" | "exit" | "play" | "open";
+  /** which game `play` asked for, or which app `open` did */
   target?: string;
+}
+
+/*
+ * What `cat` prints for each file in the home directory. The bare commands
+ * (`projects`, `resume`) open the window instead, the way a desktop shell
+ * hands a document to its viewer; `cat` is for reading it in place.
+ */
+const PRINTERS: Record<string, () => React.ReactNode> = {
+  resume:     () => <ResumeOutput />,
+  projects:   () => <ProjectsOutput />,
+  experience: () => <ExperienceOutput />,
+  skills:     () => <SkillsOutput />,
+  education:  () => <EducationOutput />,
+  contact:    () => <ContactOutput />,
+};
+
+const openWindow = (appId: string): CommandResult => {
+  const app = MENU_APPS.find((a) => a.id === appId);
+  return {
+    output: <p className="text-muted-foreground text-[13px]">{app?.title ?? appId}: opened</p>,
+    action: "open",
+    target: appId,
+  };
+};
+
+/**
+ * Tab completion. Given the line so far, the words that could finish it: a
+ * command name at the start, a file after cat, a game after play, an app or a
+ * link after open.
+ */
+export function completions(line: string): string[] {
+  const parts = line.replace(/^\s+/, "").split(/\s+/);
+  const [head, ...rest] = parts;
+  if (parts.length <= 1) {
+    const prefix = (head ?? "").toLowerCase();
+    return Array.from(COMMAND_NAMES).filter((c) => c !== "?" && c.startsWith(prefix)).sort();
+  }
+  const word = (rest[rest.length - 1] ?? "").toLowerCase();
+  const pool =
+    head === "cat" ? Object.keys(CAT_ALIASES).filter((f) => !f.endsWith("/"))
+    : head === "play" ? GAMES.map((g) => g.id)
+    : head === "man" ? Object.keys(MAN_PAGES)
+    : head === "open" ? [...Object.keys(OPEN_URLS), ...MENU_APPS.map((a) => a.id)]
+    : head === "sound" ? ["on", "off"]
+    : [];
+  return pool.filter((w) => w.startsWith(word)).sort();
 }
 
 /*
@@ -47,6 +94,7 @@ export interface CommandResult {
 export const COMMAND_NAMES = new Set([
   "help", "?", "whoami", "about", "projects", "experience", "skills", "education",
   "contact", "resume", "man", "games", "arcade", "play", "ls", "dir", "cat", "open",
+  "top", "sysinfo", "audio",
   "clear", "sound", "pwd", "date", "uname", "echo", "exit", "quit", "sudo",
 ]);
 
@@ -65,19 +113,14 @@ export function runCommand(
       return { output: <WhoamiOutput /> };
 
     case "projects":
-      return { output: <ProjectsOutput /> };
-
     case "experience":
-      return { output: <ExperienceOutput /> };
-
     case "skills":
-      return { output: <SkillsOutput /> };
-
     case "education":
-      return { output: <EducationOutput /> };
-
     case "contact":
-      return { output: <ContactOutput /> };
+    case "top":
+    case "sysinfo":
+    case "audio":
+      return openWindow(name);
 
     case "resume": {
       // `resume --pdf` hands over the real document
@@ -87,7 +130,7 @@ export function runCommand(
           output: <p className="text-accent-ink text-[13px]">Opening resume.pdf ...</p>,
         };
       }
-      return { output: <ResumeOutput /> };
+      return openWindow("resume");
     }
 
     case "man": {
@@ -106,7 +149,8 @@ export function runCommand(
 
     case "games":
     case "arcade":
-      return { output: <GamesOutput /> };
+      // With an argument it lists; bare, it opens the arcade
+      return args.length ? { output: <GamesOutput /> } : openWindow("games");
 
     case "play": {
       const id = args[0]?.toLowerCase();
@@ -147,15 +191,12 @@ export function runCommand(
           output: (
             <p className="text-destructive text-[13px]">
               usage: cat &lt;file&gt;
-              <span className="text-muted-foreground ml-2 text-[11px]">
-                - run ls to see what is here
-              </span>
             </p>
           ),
         };
       }
       const mapped = CAT_ALIASES[file];
-      if (mapped) return runCommand(mapped, [], mapped);
+      if (mapped) return { output: PRINTERS[mapped]() };
       return {
         output: (
           <p className="text-destructive text-[13px]">
@@ -172,11 +213,15 @@ export function runCommand(
         if (typeof window !== "undefined") window.open(url, "_blank");
         return { output: <p className="text-accent-ink text-[13px]">Opening {dest}...</p> };
       }
+      // Any application by name, the way a desktop shell has `open`
+      if (dest && MENU_APPS.some((a) => a.id === dest)) return openWindow(dest);
       return {
         output: (
           <p className="text-destructive text-[13px]">
             open: unknown destination &quot;{dest ?? ""}&quot;
-            <span className="text-faint ml-2 text-[11px]">- try: open github | linkedin | email</span>
+            <span className="text-faint ml-2 text-[11px]">
+              - try: {[...Object.keys(OPEN_URLS), ...MENU_APPS.map((a) => a.id)].join(" | ")}
+            </span>
           </p>
         ),
       };
@@ -218,7 +263,7 @@ export function runCommand(
       };
 
     case "sudo":
-      return { output: <p className="text-destructive text-[13px]">Nice try. Permission denied.</p> };
+      return { output: <p className="text-destructive text-[13px]">shlok is not in the sudoers file. This incident will be reported.</p> };
 
     case "":
       return { output: null };

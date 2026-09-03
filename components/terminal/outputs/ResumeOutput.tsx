@@ -1,3 +1,4 @@
+import { PROFILE } from "@/lib/content";
 import { EducationOutput } from "./EducationOutput";
 import { ExperienceOutput } from "./ExperienceOutput";
 import { ProjectsOutput } from "./ProjectsOutput";
@@ -17,7 +18,7 @@ export function ResumeOutput() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-accent-ink font-bold text-xl">Shlok Thakkar</p>
+        <p className="text-accent-ink font-bold text-xl">{PROFILE.name}</p>
         <ContactLinks className="text-[12px]" />
       </div>
       <Section title="EDUCATION"><EducationOutput /></Section>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MENU_APPS } from "@/lib/os/registry";
 import { PixelIcon } from "@/lib/os/icons";
+import { playSfx } from "@/lib/sfx";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
 
 interface Props {
@@ -39,6 +40,7 @@ export function RootMenu({
   onChooseWallpaper,
   onDismiss,
 }: Props) {
+  useEffect(() => playSfx("tick"), []);
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
@@ -90,6 +92,7 @@ export function RootMenu({
       {MENU_APPS.map((app) => (
         <button
           key={app.id}
+          onPointerEnter={(e) => e.pointerType === "mouse" && playSfx("tick")}
           onClick={() => {
             onLaunch(app.id);
             onDismiss();
@@ -110,6 +113,7 @@ export function RootMenu({
       {WALLPAPERS.map((w) => (
         <button
           key={w.id}
+          onPointerEnter={(e) => e.pointerType === "mouse" && playSfx("tick")}
           onClick={() => {
             onChooseWallpaper(w.id);
             onDismiss();

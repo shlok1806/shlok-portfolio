@@ -43,6 +43,7 @@
   --on-desktop-shadow: 0 0% 0%;
   --glow-strength: 0;
   --scanline-opacity: 0;
+  --roll-opacity: 0;
   --vignette-strength: 0;
 }
 
@@ -77,6 +78,7 @@
   --on-desktop-shadow: 0 0% 0%;
   --glow-strength: 0;
   --scanline-opacity: 0;
+  --roll-opacity: 0;
   --vignette-strength: 0;
 }
 
@@ -110,8 +112,9 @@
   --stipple-alpha: 0.04;
   --on-desktop: 0 0% 100%;
   --on-desktop-shadow: 0 0% 0%;
-  --glow-strength: 0;
+  --glow-strength: 1;
   --scanline-opacity: 0.10;
+  --roll-opacity: 0.05;
   --vignette-strength: 0.25;
 }
 
@@ -147,6 +150,7 @@
   --on-desktop-shadow: 0 0% 100%;
   --glow-strength: 0;
   --scanline-opacity: 0;
+  --roll-opacity: 0;
   --vignette-strength: 0;
 }
 
@@ -160,8 +164,6 @@
   --display-case: none;
   --display-leading: 1.1;
   --section-gap: 2rem;
-  --speed: 1;
-  --grain: 0;
 }
 
 @layer base {
@@ -246,6 +248,29 @@
     );
   }
 
+  /*
+   * The bright band that crawls down a CRT when the refresh and the camera
+   * disagree. Here it is the slow drift of a slightly-off vertical hold - one
+   * pass every 8 seconds, only as strong as the tube's token allows.
+   */
+  .scanlines::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      hsl(0 0% 100% / var(--roll-opacity, 0)) 50%,
+      transparent 100%
+    );
+    background-size: 100% 160px;
+    background-repeat: no-repeat;
+    animation: crt-roll 8s linear infinite;
+    opacity: calc(var(--roll-opacity, 0) * 20);
+  }
+
   .vignette::after {
     content: "";
     position: fixed;
@@ -297,6 +322,99 @@
 @keyframes vinyl-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* A window lands in two frames, the way the server mapped it */
+@keyframes win-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The tube warming up over the desktop: two black halves pull apart */
+@keyframes crt-open {
+  from {
+    height: 50%;
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes crt-line {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* A terminal caret is on or off, never in between */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.caret-blink {
+  animation: caret-blink 1s steps(2, start) infinite;
+}
+
+@keyframes crt-roll {
+  from {
+    background-position: 0 -160px;
+  }
+  to {
+    background-position: 0 100vh;
+  }
+}
+
+/* A window has just been dropped; two frames from the grid it was on */
+@keyframes icon-settle {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The screensaver arrives the way a tube dims, in coarse steps */
+@keyframes saver-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * The Illini workstation powering on: the glass comes up in three steps and a
+ * single bright line sweeps down it once, then it is just a screen.
+ */
+@keyframes illini-on {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes illini-sweep {
+  from {
+    transform: translateY(-3px);
+    opacity: 0.45;
+  }
+  to {
+    transform: translateY(13px);
+    opacity: 0;
   }
 }
 

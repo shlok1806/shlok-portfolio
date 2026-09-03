@@ -24,6 +24,26 @@ type Action =
   | { type: "ARROW_UP" }
   | { type: "ARROW_DOWN" };
 
+const HISTORY_KEY = "os-shell-history";
+
+function loadHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((c): c is string => typeof c === "string").slice(0, 100) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(cmds: string[]) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(cmds));
+  } catch {
+    /* storage blocked - the session still has it */
+  }
+}
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "SET_INPUT":
@@ -34,6 +54,7 @@ function reducer(state: State, action: Action): State {
       const newCmdHistory = cmd
         ? [cmd, ...state.commandHistory.filter(c => c !== cmd)].slice(0, 100)
         : state.commandHistory;
+      if (cmd) saveHistory(newCmdHistory);
       return {
         ...state,
         history: [...state.history, action.entry],
@@ -78,12 +99,13 @@ function reducer(state: State, action: Action): State {
 }
 
 export function useTerminal() {
-  const [state, dispatch] = useReducer(reducer, {
+  const [state, dispatch] = useReducer(reducer, undefined, () => ({
     history: [],
-    commandHistory: [],
+    // Recalled from the last session, so ↑ still finds yesterday's command
+    commandHistory: typeof window === "undefined" ? [] : loadHistory(),
     historyIndex: -1,
     input: "",
-  });
+  }));
 
   const setInput = useCallback((val: string) => {
     dispatch({ type: "SET_INPUT", payload: val });

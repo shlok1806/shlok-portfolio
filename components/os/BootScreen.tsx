@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { OS, PROFILE } from "@/lib/content";
+import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Line {
   text: string;
@@ -40,7 +41,7 @@ export function BootScreen({ onComplete }: Props) {
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = prefersReducedMotion();
     if (document.visibilityState === "hidden" || reduced) {
       setSkipped(true);
       return;
@@ -106,7 +107,7 @@ export function BootScreen({ onComplete }: Props) {
           </span>
         ))}
         {!skipped && shown < SEQUENCE.length && (
-          <span className="inline-block h-[13px] w-[8px] translate-y-[2px] bg-[#d3d7cf]" />
+          <span className="caret-blink inline-block h-[13px] w-[8px] translate-y-[2px] bg-[#d3d7cf]" />
         )}
       </pre>
 

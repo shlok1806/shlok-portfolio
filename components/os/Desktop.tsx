@@ -3,16 +3,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useRemix } from "@/hooks/useRemix";
-import { useWindowManager } from "@/hooks/useWindowManager";
+import { SMALL_W, useWindowManager, type Transition } from "@/hooks/useWindowManager";
+import { zoom, type Rect } from "@/lib/os/zoom";
+import { prefersReducedMotion } from "@/hooks/useReducedMotion";
+import { armAudio, playSfx } from "@/lib/sfx";
 import { APPS, DESKTOP_APPS, appById } from "@/lib/os/registry";
 import { PROFILE } from "@/lib/content";
-import { wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
+import { defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
 import { BootScreen } from "./BootScreen";
 import { DesktopIcon, ICON_H, ICON_PITCH, ICON_W, type IconPos } from "./DesktopIcon";
 import { RootMenu } from "./RootMenu";
 import { Screensaver } from "./Screensaver";
 import { Window } from "./Window";
 import { Panel, PANEL_CHROME_H, PANEL_CHROME_H_TOUCH } from "./Panel";
+import { PlasmaWallpaper } from "./PlasmaWallpaper";
+import { ZoomOutline } from "./ZoomOutline";
+import { CrtPowerOn } from "./CrtPowerOn";
 
 interface RootMenuPos {
   x: number;
@@ -20,7 +26,13 @@ interface RootMenuPos {
 }
 
 export function Desktop() {
-  const [booted, setBooted] = useState(false);
+  /* boot: the kernel log; on: the desktop is up under the tube warming; up: running */
+  const [phase, setPhase] = useState<"boot" | "on" | "up">("boot");
+  const booted = phase !== "boot";
+  const powerDone = useCallback(() => setPhase("up"), []);
+  // The first press on the page is what lets it make a sound
+  useEffect(() => armAudio(), []);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [rootMenu, setRootMenu] = useState<RootMenuPos | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   /** touch has no double-click and no right-click, so the desktop adapts */
@@ -171,7 +183,7 @@ export function Desktop() {
   }, [booted, touch]);
 
   const { preset, mounted, select, soundOn, toggleSound } = useRemix();
-  const wallpaper = wallpaperById(wallpaperId);
+  const wallpaper = wallpaperId ? wallpaperById(wallpaperId) : defaultWallpaperFor(preset.id);
 
   /*
    * The generated backdrops are built by string-concatenating an SVG - the
@@ -194,7 +206,7 @@ export function Desktop() {
    * A photo does not, so over one we fall back to white with a hard shadow -
    * legible over both the sun and the buildings.
    */
-  const labelStyle: React.CSSProperties = wallpaper.src
+  const labelStyle: React.CSSProperties = wallpaper.src || wallpaper.animated
     ? {
         /*
          * Over a photograph the label gets a plate, not just a shadow.
@@ -220,8 +232,123 @@ export function Desktop() {
         color: "hsl(var(--on-desktop))",
         textShadow: "1px 1px 0 hsl(var(--on-desktop-shadow) / 0.55)",
       };
-  const wm = useWindowManager(panelH);
+  /*
+   * Where the last press landed. A window opened from an icon, a menu row, a
+   * panel button or a prompt zooms out of that spot, which is how twm drew it
+   * and also how a visitor knows which click did what.
+   */
+  const originRef = useRef<Rect | null>(null);
+  useEffect(() => {
+    const rectOf = (el: Element | null): Rect | null => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left, y: r.top, w: r.width, h: r.height };
+    };
+    const onDown = (e: PointerEvent) =>
+      (originRef.current = rectOf((e.target as Element).closest("button, a, [role='button'], li")));
+    const onKey = () => (originRef.current = rectOf(document.activeElement));
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("keydown", onKey, true);
+    };
+  }, []);
+
+  /* Windows whose outline is still zooming; held invisible until it lands */
+  const [arriving, setArriving] = useState<Record<string, true>>({});
+  /* One line for screen readers: what the window manager just did */
+  const [announcement, setAnnouncement] = useState("");
+  const onTransition = useCallback((t: Transition) => {
+    const rectOf = (el: Element | null): Rect | null => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left, y: r.top, w: r.width, h: r.height };
+    };
+    const iconAnchor = (appId: string): Rect =>
+      rectOf(document.querySelector(`[data-icon-id="${appId}"]`)) ??
+      rectOf(document.querySelector('[aria-label="Applications"]')) ?? {
+        x: 8,
+        y: window.innerHeight - 8,
+        w: 1,
+        h: 1,
+      };
+    const panelAnchor = (id: string): Rect =>
+      rectOf(document.querySelector(`[data-win-id="${id}"]`)) ?? {
+        x: window.innerWidth / 2,
+        y: window.innerHeight,
+        w: 1,
+        h: 1,
+      };
+
+    const say = (what: string, id: string) => {
+      const title = document.querySelector(`[data-win-id="${id}"]`)?.textContent?.replace(/[[\]]/g, "");
+      setAnnouncement(`${what} ${title ?? ""}`.trim());
+    };
+
+    switch (t.type) {
+      case "open": {
+        playSfx("open");
+        setAnnouncement(`opened ${t.appId}`);
+        setArriving((a) => ({ ...a, [t.id]: true }));
+        void zoom(originRef.current ?? iconAnchor(t.appId), t.to).then(() =>
+          setArriving((a) => {
+            const next = { ...a };
+            delete next[t.id];
+            return next;
+          }),
+        );
+        return;
+      }
+      case "close": {
+        playSfx("close");
+        setAnnouncement(`closed ${t.appId}`);
+        void zoom(t.from, iconAnchor(t.appId));
+        // Hand focus back to where the app lives on the desktop
+        const home =
+          document.querySelector<HTMLElement>(`[data-icon-id="${t.appId}"] button`) ??
+          document.querySelector<HTMLElement>('[aria-label="Applications"]');
+        home?.focus({ preventScroll: true });
+        return;
+      }
+      case "minimize":
+        playSfx("minimize");
+        say("minimised", t.id);
+        void zoom(t.from, panelAnchor(t.id));
+        return;
+      case "restore":
+        playSfx("restore");
+        say("restored", t.id);
+        void zoom(panelAnchor(t.id), t.to);
+        return;
+      case "maximize":
+        void zoom(t.from, t.to);
+        return;
+    }
+  }, []);
+
+  const wm = useWindowManager(panelH, onTransition);
   const { open, windows, focusedId, PANEL_H } = wm;
+
+  /*
+   * Switching tubes degausses the screen: a flash and a wobble, 180ms, then
+   * the stepped colour transition the body already does. Imperative, so it
+   * never re-renders the desktop to play.
+   */
+  const degauss = useCallback(() => {
+    const el = rootRef.current;
+    if (!el || prefersReducedMotion() || typeof el.animate !== "function") return;
+    el.animate(
+      [
+        { filter: "brightness(2.4)", transform: "translateX(0)" },
+        { filter: "brightness(1.5)", transform: "translateX(3px)" },
+        { filter: "brightness(1)", transform: "translateX(-2px)" },
+        { filter: "brightness(1)", transform: "translateX(1px)" },
+        { filter: "brightness(1)", transform: "translateX(0)" },
+      ],
+      { duration: 180, easing: "steps(4, end)" },
+    );
+  }, []);
 
 
   /*
@@ -247,7 +374,11 @@ export function Desktop() {
       const fit = viewport
         ? Math.max(1, Math.floor((viewport.h - PANEL_H - 12) / ICON_PITCH))
         : 6;
-      const columns = Math.max(1, Math.ceil(DESKTOP_APPS.length / fit));
+      // A phone gets two short columns rather than one that runs the full height
+      const columns = Math.max(
+        viewport && viewport.w < SMALL_W ? 2 : 1,
+        Math.ceil(DESKTOP_APPS.length / fit),
+      );
       const perColumn = Math.ceil(DESKTOP_APPS.length / columns);
       const fallback = {
         x: 12 + Math.floor(i / perColumn) * (ICON_W + 8),
@@ -266,7 +397,11 @@ export function Desktop() {
   const launch = useCallback(
     (appId: string) => {
       const app = appById(appId);
-      if (!app) return;
+      if (!app) {
+        playSfx("bell");
+        return;
+      }
+      playSfx("launch");
       // Some entries are documents rather than programs
       if (app.download) {
         const a = document.createElement("a");
@@ -282,34 +417,15 @@ export function Desktop() {
   );
 
   /*
-   * What the machine looks like when you log in.
-   *
-   * On a phone: nothing. Every app is full-screen there, so anything that came
-   * up on its own would bury the desktop before it had been seen.
-   *
-   * On a first visit: the README, alone. A desktop is not self-explanatory to
-   * someone expecting a page, and a second window opening alongside the one
-   * thing that explains the machine reads as clutter rather than as a session.
-   *
-   * On a return visit: a shell, centred. You have read the README already, so
-   * the machine opens on the one window you can actually type into.
+   * What the machine shows when you log in: a shell, with whoami already run.
+   * The same on a phone, where it fills the screen - a grid of icons with no
+   * name on it is a worse first screen than a card you can close.
    */
   useEffect(() => {
     if (!booted) return;
-    let first = false;
-    try {
-      first = !localStorage.getItem("os-seen-readme");
-      if (first) localStorage.setItem("os-seen-readme", "1");
-    } catch {
-      /* storage blocked - treat as a return visit */
-    }
-
-    const t = setTimeout(() => {
-      if (touch || window.innerWidth < 720) return;
-      launch(first ? "readme" : "xterm");
-    }, 260);
+    const t = setTimeout(() => launch("xterm"), 260);
     return () => clearTimeout(t);
-  }, [booted, touch, launch]);
+  }, [booted, launch]);
 
   /*
    * Screensaver after a stretch of nothing. Listeners are passive and only
@@ -348,30 +464,67 @@ export function Desktop() {
     };
   }, [booted]);
 
-  // Alt+Tab cycles, Escape dismisses the root menu
+  /*
+   * Alt+Tab cycles and moves keyboard focus with it. Escape dismisses the root
+   * menu if it is up; otherwise it closes the focused window - unless a menu
+   * or something inside the window already used it.
+   */
+  const rootMenuRef = useRef(rootMenu);
+  rootMenuRef.current = rootMenu;
+  const focusedRef = useRef(focusedId);
+  focusedRef.current = focusedId;
   useEffect(() => {
     if (!booted) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Tab" && e.altKey) {
         e.preventDefault();
-        wm.cycle();
+        const id = wm.cycle();
+        if (id) {
+          requestAnimationFrame(() =>
+            document.querySelector<HTMLElement>(`[data-win-content="${id}"]`)?.focus({ preventScroll: true }),
+          );
+        }
+        return;
       }
-      if (e.key === "Escape") setRootMenu(null);
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (rootMenuRef.current) {
+        setRootMenu(null);
+        return;
+      }
+      if (document.querySelector("[role='menu'][data-state='open']")) return;
+      const id = focusedRef.current;
+      if (id) wm.close(id);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [booted, wm]);
 
-  if (!booted) {
+  /* Arrow keys walk the desktop icons, the way an X11 file manager did */
+  const onIconKeys = useCallback((e: React.KeyboardEvent<HTMLUListElement>) => {
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+    const buttons = Array.from(e.currentTarget.querySelectorAll<HTMLElement>("li button"));
+    const i = buttons.indexOf(document.activeElement as HTMLElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const step = e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 1;
+    buttons[(i + step + buttons.length) % buttons.length]?.focus();
+  }, []);
+
+  if (phase === "boot") {
     return (
-      <div className="scanlines vignette">
-        <BootScreen onComplete={() => setBooted(true)} />
-      </div>
+      <main className="scanlines vignette">
+        <BootScreen
+          onComplete={() => {
+            setPhase("on");
+            playSfx("boot");
+          }}
+        />
+      </main>
     );
   }
 
   return (
-    <div className="scanlines vignette">
+    <main className="scanlines vignette">
       {/*
         overflow-clip, not overflow-hidden: `hidden` still makes this a
         scrollport, so anything inside a window - a focused input, an element
@@ -388,6 +541,7 @@ export function Desktop() {
          * up wearing a Copy / Look Up bar and a pair of drag handles. None of
          * the chrome is text anyone means to select. A document is.
          */
+        ref={rootRef}
         className="relative h-dvh w-screen select-none overflow-clip"
         onPointerDown={(e) => {
           setRootMenu(null);
@@ -418,8 +572,12 @@ export function Desktop() {
         // Otherwise iOS answers the long press with its own selection callout
         style={{ ...backdrop, WebkitTouchCallout: "none" }}
       >
+        {wallpaper.animated && (
+          <PlasmaWallpaper bg={preset.swatch.bg} ink={preset.swatch.primary} light={preset.desktopLight} />
+        )}
+
         {/* Desktop icons, draggable and remembered */}
-        <ul>
+        <ul onKeyDown={onIconKeys}>
           {DESKTOP_APPS.map((app, i) => (
             <DesktopIcon
               key={app.id}
@@ -431,7 +589,10 @@ export function Desktop() {
               touch={touch}
               labelStyle={labelStyle}
               panelHeight={PANEL_H}
-              onSelect={() => setSelected(app.id)}
+              onSelect={() => {
+                if (selected !== app.id) playSfx("select");
+                setSelected(app.id);
+              }}
               onLaunch={() => launch(app.id)}
               onMove={(pos) => moveIcon(app.id, pos)}
             />
@@ -444,10 +605,7 @@ export function Desktop() {
           className="pointer-events-none absolute right-4 font-[family-name:var(--font-ui)] text-[11px] leading-relaxed"
           style={{ bottom: PANEL_H + 12, ...labelStyle, opacity: 0.85 }}
         >
-          <span className="block text-right">{PROFILE.name}</span>
-          <span className="block text-right">
-            {touch ? "tap to open, hold for menu" : "right-click for menu"}
-          </span>
+          {PROFILE.name}
         </p>
 
         {/* Root menu, the twm way */}
@@ -474,6 +632,7 @@ export function Desktop() {
               key={win.id}
               win={win}
               focused={win.id === focusedId}
+              hidden={!!arriving[win.id]}
               panelHeight={PANEL_H}
               touch={touch}
               onFocus={() => wm.focus(win.id)}
@@ -491,7 +650,6 @@ export function Desktop() {
           windows={windows}
           focusedId={focusedId}
           barRef={barRef}
-          chromeHeight={touch ? PANEL_CHROME_H_TOUCH : PANEL_CHROME_H}
           touch={touch}
           preset={preset}
           mounted={mounted}
@@ -499,13 +657,21 @@ export function Desktop() {
           currentWallpaper={wallpaper.id}
           onLaunch={launch}
           onSelectWindow={(id) => wm.toggleMinimize(id)}
-          onSelectPreset={select}
+          onSelectPreset={(id) => {
+            select(id);
+            degauss();
+          }}
           onChooseWallpaper={chooseWallpaper}
           onToggleSound={toggleSound}
         />
       </div>
 
-      {idle && <Screensaver label="ShlokOS" touch={touch} onWake={() => setIdle(false)} />}
-    </div>
+      <div aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
+      <ZoomOutline />
+      {phase === "on" && <CrtPowerOn onDone={powerDone} />}
+      {idle && <Screensaver label="ShlokOS" onWake={() => setIdle(false)} />}
+    </main>
   );
 }

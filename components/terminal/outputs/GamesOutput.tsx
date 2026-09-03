@@ -11,9 +11,6 @@ export function GamesOutput() {
           <span className="text-faint">{g.blurb}</span>
         </div>
       ))}
-      <p className="text-faint text-[11px] mt-2">
-        Run one with <span className="text-accent-ink">play &lt;name&gt;</span>
-      </p>
     </div>
   );
 }

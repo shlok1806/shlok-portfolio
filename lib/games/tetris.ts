@@ -417,7 +417,7 @@ class TetrisGame implements Game {
 export const TETRIS: GameDef = {
   id: "tetris",
   title: "tetris",
-  blurb: "The Game Boy one. Seven-bag, ghost piece, hard drop.",
+  blurb: "Seven-bag, ghost piece, hard drop.",
   controls: "Left/Right move, Up rotate, Z counter-rotate, Down soft drop, Space hard drop",
   w: W,
   h: H,

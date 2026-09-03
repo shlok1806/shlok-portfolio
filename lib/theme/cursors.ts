@@ -56,6 +56,81 @@ const HAND = [
 ];
 
 /** Every empty pixel touching a filled one, including diagonals. */
+
+/* The fleur, for moving a window by its title bar */
+const MOVE = [
+  ".....X......",
+  "....XXX.....",
+  "...XXXXX....",
+  ".....X......",
+  "..X..X..X...",
+  ".XX..X..XX..",
+  "XXXXXXXXXXX.",
+  ".XX..X..XX..",
+  "..X..X..X...",
+  ".....X......",
+  "...XXXXX....",
+  "....XXX.....",
+  ".....X......",
+  "............",
+];
+
+/* Diagonal double arrows for the resize corners */
+const RESIZE_NWSE = [
+  "XXXXXXX.....",
+  "XXXXX.......",
+  "XXXX........",
+  "XXXXX.......",
+  "XX.XXX......",
+  "X...XXX.....",
+  ".....XXX...X",
+  "......XXX.XX",
+  ".......XXXXX",
+  "........XXXX",
+  ".......XXXXX",
+  ".....XXXXXXX",
+  "............",
+  "............",
+];
+
+const RESIZE_NESW = RESIZE_NWSE.map((row) => row.split("").reverse().join(""));
+
+/* The I-beam over anything you can type into */
+const TEXT = [
+  "XXX.XXX.....",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "...X........",
+  "XXX.XXX.....",
+];
+
+/* An hourglass, for the moment between asking and getting */
+const WAIT = [
+  "XXXXXXXXXX..",
+  ".XXXXXXXX...",
+  ".XXXXXXXX...",
+  "..XXXXXX....",
+  "...XXXX.....",
+  "....XX......",
+  "....XX......",
+  "...X..X.....",
+  "..X....X....",
+  ".X..XX..X...",
+  ".X.XXXX.X...",
+  ".XXXXXXXX...",
+  "XXXXXXXXXX..",
+  "............",
+];
+
 function outline(mask: string[]): [number, number][] {
   const h = mask.length;
   const w = mask[0].length;
@@ -137,30 +212,32 @@ function svg(mask: string[], ink: string, keyline: string, scale: number): strin
   return `url("data:image/svg+xml,${encodeURIComponent(markup)}")`;
 }
 
-export interface CursorSet {
-  arrow: string;
-  hand: string;
-  /** hotspots, in the scaled image's pixels */
-  arrowHot: [number, number];
-  handHot: [number, number];
+export type CursorName = "arrow" | "hand" | "move" | "nwse" | "nesw" | "text" | "wait";
+
+export interface Cursor {
+  /** a css url() of the SVG */
+  url: string;
+  /** hotspot in device pixels, already scaled */
+  hot: [number, number];
 }
 
-/**
- * Builds both cursors at 2x.
- *
- * The output must stay inside 32x32 CSS pixels. Chromium drops any custom
- * cursor bigger than that as soon as it touches native UI or a viewport edge -
- * a spoofing mitigation - and silently reinstates the system cursor, which is
- * what made the pointer flip to the macOS arrow over the panel. A 12x14 mask
- * plus a one pixel keyline is 14x16, and 14x16 at 2x is 28x32: the largest
- * these can be. Growing a mask means dropping the scale, not widening this.
- */
-export function buildCursors(ink: string, keyline: string, scale = 2): CursorSet {
-  return {
-    arrow: svg(ARROW, ink, keyline, scale),
-    hand: svg(HAND, ink, keyline, scale),
-    // The arrow points from its top-left pixel; the hand from its fingertip
-    arrowHot: [scale, scale],
-    handHot: [scale * 3, scale],
-  };
+const SHAPES: Record<CursorName, { mask: string[]; hot: [number, number] }> = {
+  // The arrow points from its top-left pixel; the hand from its fingertip
+  arrow: { mask: ARROW, hot: [0, 0] },
+  hand: { mask: HAND, hot: [2, 0] },
+  move: { mask: MOVE, hot: [5, 6] },
+  nwse: { mask: RESIZE_NWSE, hot: [5, 5] },
+  nesw: { mask: RESIZE_NESW, hot: [6, 5] },
+  text: { mask: TEXT, hot: [3, 6] },
+  wait: { mask: WAIT, hot: [5, 6] },
+};
+
+export function buildCursors(ink: string, keyline: string, scale = 2): Record<CursorName, Cursor> {
+  const out = {} as Record<CursorName, Cursor>;
+  (Object.keys(SHAPES) as CursorName[]).forEach((name) => {
+    const { mask, hot } = SHAPES[name];
+    // +1 for the keyline pad the svg adds around every mask
+    out[name] = { url: svg(mask, ink, keyline, scale), hot: [(hot[0] + 1) * scale, (hot[1] + 1) * scale] };
+  });
+  return out;
 }

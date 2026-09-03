@@ -1,49 +1,36 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { useTerminal } from "@/hooks/useTerminal";
 import { useTerminalSound } from "@/hooks/useTerminalSound";
 import { parseCommand } from "@/lib/terminal/parser";
-import { COMMAND_NAMES, runCommand } from "@/lib/terminal/commands";
-import { BootSequence } from "./BootSequence";
+import { COMMAND_NAMES, completions, runCommand } from "@/lib/terminal/commands";
+import { TerminalOpenContext } from "./TerminalOpenContext";
+import { LsOutput } from "./outputs/LsOutput";
 import { TerminalHistory } from "./TerminalHistory";
 import { TerminalInput } from "./TerminalInput";
 import { WhoamiOutput } from "./outputs/WhoamiOutput";
 
 interface TerminalPageProps {
-  /** rendered inside a host container rather than owning the whole viewport */
-  embedded?: boolean;
-  /** the host already draws a title bar, so skip our own window chrome */
-  chromeless?: boolean;
-  /** the machine has already booted; go straight to a shell prompt */
-  skipBoot?: boolean;
   /** called by the close button and the `exit` command */
   onExit?: () => void;
   /** called by `play <game>`; absent when there is no desktop to open into */
   onPlay?: (gameId: string) => void;
+  /** called by `projects`, `open sysinfo` and any clickable file name in output */
+  onOpen?: (appId: string, arg?: string) => void;
 }
 
-export function TerminalPage({
-  embedded = false,
-  chromeless = false,
-  skipBoot = false,
-  onExit,
-  onPlay,
-}: TerminalPageProps = {}) {
-  const [phase, setPhase] = useState<"boot" | "active">(skipBoot ? "active" : "boot");
-  const [reducedMotion, setReducedMotion] = useState(false);
+/*
+ * The shell. It only ever runs inside an xterm window on the desktop, so the
+ * host draws the chrome and the machine has already booted: this hands you a
+ * prompt, nothing more.
+ */
+export function TerminalPage({ onExit, onPlay, onOpen }: TerminalPageProps = {}) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
 
   const { state, setInput, submit, silentSubmit, clear, arrowUp, arrowDown } = useTerminal();
-  const { soundEnabled, play, toggleSound } = useTerminalSound();
-
-  // Detect prefers-reduced-motion
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-  }, []);
+  const { play, toggleSound } = useTerminalSound();
 
   /*
    * How much of the window the soft keyboard is sitting on top of.
@@ -82,7 +69,7 @@ export function TerminalPage({
   useEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [state.history, phase, kbInset]);
+  }, [state.history, kbInset]);
 
   /*
    * Click anywhere in the terminal to focus the prompt - except on something
@@ -95,34 +82,43 @@ export function TerminalPage({
     shellRef.current?.querySelector<HTMLInputElement>(".sr-only")?.focus();
   }, []);
 
-  // On boot complete: transition to active and auto-run whoami
-  const handleBootComplete = useCallback(() => {
-    setPhase("active");
-  }, []);
-
   /*
-   * Auto-run whoami, not help. The help table is taller than the window, so
+   * Auto-run whoami, then ls. The help table is taller than the window, so
    * opening with it scrolled the one thing a first glance needs - who this is -
-   * out of view, and left the games list sitting next to the prompt instead.
-   * Identity first; the hint line hands over to help for everything else.
+   * out of view. Identity first; the listing under it is the way into
+   * everything else, and every name in it opens its window.
    */
   const introRanRef = useRef(false);
   useEffect(() => {
-    if (phase !== "active" || introRanRef.current) return;
+    if (introRanRef.current) return;
     introRanRef.current = true;
-    silentSubmit(
-      "whoami",
-      <div>
-        <WhoamiOutput />
-        <p className="mt-3 text-faint text-[12px]">
-          Type <span className="text-accent-ink">projects</span>,{" "}
-          <span className="text-accent-ink">resume</span> or{" "}
-          <span className="text-accent-ink">contact</span> - or{" "}
-          <span className="text-accent-ink">help</span> for everything else.
-        </p>
-      </div>,
-    );
-  }, [phase, silentSubmit]);
+    silentSubmit("whoami", <WhoamiOutput />);
+    silentSubmit("ls -la ~", <LsOutput />);
+  }, [silentSubmit]);
+
+  /*
+   * Tab: one candidate completes the word; several print like bash does and
+   * leave the line alone.
+   */
+  const handleTab = useCallback(() => {
+    const line = state.input;
+    const words = completions(line);
+    if (words.length === 0) return;
+    const parts = line.split(/\s+/);
+    const partial = parts[parts.length - 1] ?? "";
+    if (words.length === 1) {
+      setInput(`${line.slice(0, line.length - partial.length)}${words[0]} `);
+      return;
+    }
+    // The longest shared prefix, then the list
+    let common = words[0];
+    for (const w of words) while (!w.startsWith(common)) common = common.slice(0, -1);
+    if (common.length > partial.length) {
+      setInput(`${line.slice(0, line.length - partial.length)}${common}`);
+      return;
+    }
+    silentSubmit(line, <p className="text-muted-foreground text-[13px]">{words.join("  ")}</p>);
+  }, [state.input, setInput, silentSubmit]);
 
   const handleSubmit = useCallback(() => {
     const raw = state.input.trim();
@@ -144,136 +140,46 @@ export function TerminalPage({
     if (result.action === "sound-off") { play("enter"); toggleSound(false); }
     if (result.action === "exit" && onExit) { play("enter"); onExit(); return; }
     if (result.action === "play" && result.target) onPlay?.(result.target);
+    if (result.action === "open" && result.target) onOpen?.(result.target);
 
     // The beep is for typos, so ask the dispatcher what it actually knows
     play(COMMAND_NAMES.has(name) ? "enter" : "error");
 
     submit(result.output);
-  }, [state.input, setInput, play, clear, submit, toggleSound, onExit, onPlay]);
+  }, [state.input, setInput, play, clear, submit, toggleSound, onExit, onPlay, onOpen]);
 
   const handleKey = useCallback(() => {
     play("key");
   }, [play]);
 
   return (
-    <div
-      className={
-        chromeless
-          ? "h-full flex flex-col"
-          : embedded
-            ? "h-full flex flex-col items-center"
-            : "min-h-screen px-6 lg:px-16 py-12 flex flex-col items-center"
-      }
-      onClick={focusInput}
-    >
-      <div
-        className={
-          chromeless
-            ? "w-full h-full flex flex-col min-h-0"
-            : `w-full max-w-[900px] ${embedded ? "h-full flex flex-col min-h-0" : ""}`
-        }
-        ref={shellRef}
-      >
+    <TerminalOpenContext.Provider value={onOpen ?? null}>
+    <div className="h-full flex flex-col" onClick={focusInput}>
+      <div className="w-full h-full flex flex-col min-h-0" ref={shellRef}>
+        <div ref={bodyRef} className="bg-card flex flex-col flex-1 min-h-0 overflow-y-auto px-4 py-3">
+          <div className="flex flex-col flex-1">
+            <TerminalHistory history={state.history} />
 
-        {/*
-          Window chrome - omitted when the host already draws a title bar, which
-          today is always, since the only caller is the xterm app inside the
-          desktop. Kept for a standalone terminal route, and drawn in the same
-          language as every other window here: a squared bevel, not the rounded
-          corners and three coloured pills of a Mac. This used to wear Aqua
-          chrome, which is the one window decoration a Motif desktop cannot have.
-        */}
-        <div
-          className={`bevel-out items-center gap-2 shrink-0 bg-secondary px-2 py-1 border-b-0 ${
-            chromeless ? "hidden" : "flex"
-          }`}
-        >
-          <span className="bevel-thin h-[13px] w-[13px] bg-secondary" />
-          <span className="mx-auto text-faint text-[11px] tracking-[0.1em]">
-            shlokthakkar.com - bash - interactive
-          </span>
-          <button
-            onClick={e => { e.stopPropagation(); toggleSound(!soundEnabled); }}
-            className="text-faint hover:text-accent-ink transition-colors text-[10px] tracking-widest select-none"
-            title={soundEnabled ? "Mute sounds" : "Enable sounds"}
-          >
-            {soundEnabled ? "♪ ON" : "♪ OFF"}
-          </button>
+            <TerminalInput
+              value={state.input}
+              onChange={setInput}
+              onSubmit={handleSubmit}
+              onArrowUp={arrowUp}
+              onArrowDown={arrowDown}
+              onTab={handleTab}
+              onKey={handleKey}
+            />
+
+            {/*
+              Scrolled to the bottom, the last thing in the scrollport sits on
+              its bottom edge - which is behind the keyboard. This spacer is
+              what the prompt ends up resting on instead.
+            */}
+            {kbInset > 0 && <div aria-hidden style={{ height: kbInset + 12 }} />}
+          </div>
         </div>
-
-        {/* Terminal body */}
-        <div
-          ref={bodyRef}
-          className={`bg-card flex flex-col ${
-            chromeless
-              ? "flex-1 min-h-0 overflow-y-auto px-4 py-3"
-              : `bevel-in border-t-0 px-6 md:px-8 py-6 ${
-                  embedded ? "flex-1 min-h-0 overflow-y-auto" : "min-h-[70vh]"
-                }`
-          }`}
-        >
-          {/* Boot sequence */}
-          <AnimatePresence mode="wait">
-            {phase === "boot" && (
-              <motion.div
-                key="boot"
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <BootSequence
-                  onComplete={handleBootComplete}
-                  skipAnimation={reducedMotion}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Interactive terminal */}
-          {phase === "active" && (
-            <motion.div
-              key="active"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.35 }}
-              className="flex flex-col flex-1"
-            >
-              <TerminalHistory history={state.history} />
-
-              <TerminalInput
-                value={state.input}
-                onChange={setInput}
-                onSubmit={handleSubmit}
-                onArrowUp={arrowUp}
-                onArrowDown={arrowDown}
-                onKey={handleKey}
-              />
-
-              {/*
-                Scrolled to the bottom, the last thing in the scrollport sits on
-                its bottom edge - which is behind the keyboard. This spacer is
-                what the prompt ends up resting on instead.
-              */}
-              {kbInset > 0 && <div aria-hidden style={{ height: kbInset + 12 }} />}
-            </motion.div>
-          )}
-        </div>
-
-        {phase === "active" && !chromeless && (
-          <p className="shrink-0 text-faint text-[11px] font-mono mt-3 text-center">
-            type a command and press <span className="text-accent-ink">Enter</span>
-            {embedded ? (
-              <>
-                {" · "}
-                <span className="text-accent-ink">esc</span> or{" "}
-                <span className="text-accent-ink">exit</span> to go back
-              </>
-            ) : (
-              " · click anywhere to focus"
-            )}
-          </p>
-        )}
       </div>
     </div>
+    </TerminalOpenContext.Provider>
   );
 }

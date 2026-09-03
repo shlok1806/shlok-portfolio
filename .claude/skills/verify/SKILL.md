@@ -54,9 +54,8 @@ All in `localStorage`; set it, then `location.reload()`:
 
 | key | effect |
 |---|---|
-| `os-seen-readme` | unset = first visit (README alone); set = return visit (xterm) |
 | `theme` + `remix-chosen` | pins a tube; without `remix-chosen` the preset **rotates every visit** |
-| `os-wallpaper` | `nyc` (default photo), `stipple`, `horizon`, `contour`, `stars` |
+| `os-wallpaper` | `nyc`, `stipple`, `horizon`, `contour`, `stars`, `plasma`; unset = the tube's own default |
 | `os-icons` | saved icon positions, JSON `{id:{x,y}}` |
 
 `remix-chosen` matters: forget it and the theme changes under you between reloads
@@ -64,7 +63,6 @@ and your before/after comparison is meaningless.
 
 ## Flows worth driving
 
-- **First visit vs return visit** — different window layouts, gated on `os-seen-readme`.
 - **All four tubes** (Motif / CDE / Console / twm) — every token repaints; a change
   that reads fine on Motif can vanish on Console.
 - **Photo vs generated wallpaper** — desktop icon labels take a different treatment
@@ -78,7 +76,7 @@ and your before/after comparison is meaningless.
 Geometry and computed style are stronger evidence than a screenshot:
 
 ```sh
-npx -y chrome-devtools-axi eval "() => [...document.querySelectorAll('[role=dialog]')]
+npx -y chrome-devtools-axi eval "() => [...document.querySelectorAll('[data-window]')]
   .map(w => { const r = w.getBoundingClientRect();
     return w.getAttribute('aria-label') + ' ' + Math.round(r.y) + '..' + Math.round(r.bottom) })"
 ```

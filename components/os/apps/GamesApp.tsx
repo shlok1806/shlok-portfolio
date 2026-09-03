@@ -8,23 +8,21 @@ import { readBest, subscribeScores } from "@/lib/games/scores";
 import type { AppProps } from "@/lib/os/types";
 import { DocShell } from "./DocShell";
 import { GameFrame } from "./GameFrame";
+import { GameThumb } from "./GameThumb";
 
 const digits = (n: number) => String(Math.max(0, Math.floor(n))).padStart(5, "0");
 
 /**
- * /usr/games, as a file manager over the cabinets. Scores are read after mount -
- * localStorage is not available while the page is being rendered on the server,
- * and a subscription keeps the table honest while a game is running next door.
+ * /usr/games as a row of cabinets. Scores are read after mount - localStorage
+ * is not available while the page is rendered on the server - and a
+ * subscription keeps them honest while a game is running next door.
  */
 export function GamesApp({ open }: AppProps) {
   const [best, setBest] = useState<Record<string, number>>({});
   const touch = useCoarsePointer();
-  // A 26px row is a comfortable ls line and a poor target; a thumb gets 44
-  const rowPad = touch ? "py-3" : "py-[3px]";
 
   useEffect(() => {
-    const sync = () =>
-      setBest(Object.fromEntries(GAMES.map((g) => [g.id, readBest(g.id)])));
+    const sync = () => setBest(Object.fromEntries(GAMES.map((g) => [g.id, readBest(g.id)])));
     sync();
     return subscribeScores(sync);
   }, []);
@@ -39,34 +37,30 @@ export function GamesApp({ open }: AppProps) {
   );
 
   return (
-    <DocShell
-      status={`/usr/games  ${GAMES.length} items  ·  ${touch ? "tap" : "double-click"} to play`}
-    >
-      <p className="mb-2 text-faint">total {GAMES.length}</p>
-      <ul>
+    <DocShell status={`/usr/games  ${GAMES.length} items`}>
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
         {GAMES.map((game) => (
           <li key={game.id}>
             <button
               {...tapToOpen(() => launch(game.id), touch)}
+              // A cabinet is a button: one click with a mouse starts it
+              onClick={touch ? undefined : () => launch(game.id)}
               aria-label={`Play ${game.title}`}
-              className={`group flex w-full items-baseline gap-3 px-1 text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${rowPad}`}
+              className="group flex w-full flex-col bevel-out bg-secondary text-left text-secondary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <span className="shrink-0 text-faint">-rwxr-xr-x</span>
-              <span className="w-[92px] shrink-0 text-accent-ink group-hover:text-inherit group-focus:text-inherit">
-                {game.title}
+              {/* The screen, set into the cabinet */}
+              <span className="bevel-in m-[3px] mb-0 block aspect-[4/3] w-[calc(100%-6px)] overflow-hidden bg-card">
+                <GameThumb def={game} className="h-full w-full object-contain" />
               </span>
-              <span className="w-[74px] shrink-0 text-faint tabular-nums">
-                {digits(best[game.id] ?? 0)}
+              <span className="flex w-full items-baseline justify-between px-2 pb-1.5 pt-1.5">
+                <span className="font-[family-name:var(--font-ui)] text-[13px] font-bold">{game.title}</span>
+                <span className="text-[11px] tabular-nums text-faint">HI {digits(best[game.id] ?? 0)}</span>
               </span>
-              <span className="hidden truncate sm:inline">{game.blurb}</span>
+              <span className="px-2 pb-2 text-[11px] leading-snug text-muted-foreground">{game.blurb}</span>
             </button>
           </li>
         ))}
       </ul>
-
-      <p className="mt-4 text-faint">
-        High scores live in this browser only. Column three is your best run.
-      </p>
     </DocShell>
   );
 }

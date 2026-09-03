@@ -25,6 +25,32 @@ export interface WindowState {
   restore?: { x: number; y: number; w: number; h: number };
 }
 
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/*
+ * What just happened to a window, with the geometry the desktop needs to draw
+ * the outline zoom for it. Emitted synchronously, before the state lands, so
+ * the desktop can hide a window that is still arriving.
+ */
+export type Transition =
+  | { type: "open"; id: string; appId: string; to: Rect }
+  | { type: "close"; id: string; appId: string; from: Rect }
+  | { type: "minimize"; id: string; from: Rect }
+  | { type: "restore"; id: string; to: Rect }
+  | { type: "maximize"; id: string; from: Rect; to: Rect };
+
+const rectOf = (w: { x: number; y: number; w: number; h: number }): Rect => ({
+  x: w.x,
+  y: w.y,
+  w: w.w,
+  h: w.h,
+});
+
 export interface OpenOptions {
   appId: string;
   title: string;
@@ -47,7 +73,7 @@ const PANEL_H = 30;
 const MIN_W = 260;
 const MIN_H = 140;
 /** below this, a floating window is worse than a full-screen one */
-const SMALL_W = 720;
+export const SMALL_W = 720;
 
 /*
  * Windows stack between these two. The panel is z-80 and the root menu z-85, and
@@ -67,8 +93,17 @@ const isSmallScreen = () => typeof window !== "undefined" && window.innerWidth <
  * itself is done with pointer events against a ref so a move does not push a
  * render through the whole tree on every mouse sample.
  */
-export function useWindowManager(panelH: number = PANEL_H) {
+export function useWindowManager(
+  panelH: number = PANEL_H,
+  onTransition?: (t: Transition) => void,
+) {
   const [windows, setWindows] = useState<WindowState[]>([]);
+  // Held in a ref so a new callback identity never invalidates open/close
+  const transitionRef = useRef(onTransition);
+  useEffect(() => {
+    transitionRef.current = onTransition;
+  }, [onTransition]);
+  const emit = useCallback((t: Transition) => transitionRef.current?.(t), []);
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
   /*
@@ -160,6 +195,7 @@ export function useWindowManager(panelH: number = PANEL_H) {
           ),
         );
         setFocusedId(existing.id);
+        if (existing.minimized) emit({ type: "restore", id: existing.id, to: rectOf(existing) });
         return existing.id;
       }
 
@@ -215,22 +251,43 @@ export function useWindowManager(panelH: number = PANEL_H) {
         { id, appId, title, arg, z, minimized: false, ...base },
       ]);
       setFocusedId(id);
+      emit({ type: "open", id, appId, to: rectOf(base) });
       return id;
     },
-    [nextZ],
+    [nextZ, emit],
   );
 
-  const close = useCallback((id: string) => {
-    setWindows((ws) => ws.filter((w) => w.id !== id));
-    setFocusedId((cur) => (cur === id ? null : cur));
-  }, []);
+  const close = useCallback(
+    (id: string) => {
+      const w = windowsRef.current.find((win) => win.id === id);
+      setWindows((ws) => ws.filter((win) => win.id !== id));
+      setFocusedId((cur) => (cur === id ? null : cur));
+      if (w && !w.minimized) emit({ type: "close", id, appId: w.appId, from: rectOf(w) });
+    },
+    [emit],
+  );
 
-  const minimize = useCallback((id: string) => {
-    setWindows((ws) => ws.map((w) => (w.id === id ? { ...w, minimized: true } : w)));
-    setFocusedId((cur) => (cur === id ? null : cur));
-  }, []);
+  const minimize = useCallback(
+    (id: string) => {
+      const w = windowsRef.current.find((win) => win.id === id);
+      setWindows((ws) => ws.map((win) => (win.id === id ? { ...win, minimized: true } : win)));
+      setFocusedId((cur) => (cur === id ? null : cur));
+      if (w && !w.minimized) emit({ type: "minimize", id, from: rectOf(w) });
+    },
+    [emit],
+  );
 
   const toggleMaximize = useCallback((id: string) => {
+    const w = windowsRef.current.find((win) => win.id === id);
+    if (w) {
+      const full = { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight - panelRef.current };
+      emit({
+        type: "maximize",
+        id,
+        from: rectOf(w),
+        to: w.maximized ? (w.restore ?? rectOf(w)) : full,
+      });
+    }
     setWindows((ws) =>
       ws.map((w) => {
         if (w.id !== id) return w;
@@ -251,7 +308,7 @@ export function useWindowManager(panelH: number = PANEL_H) {
       }),
     );
     focus(id);
-  }, [focus]);
+  }, [focus, emit]);
 
   /** Commits a drag or resize once the gesture ends. */
   const setGeometry = useCallback(
@@ -281,10 +338,19 @@ export function useWindowManager(panelH: number = PANEL_H) {
         return ws.map((w) => (w.id === id ? { ...w, minimized: true } : w));
       });
       const target = windows.find((w) => w.id === id);
-      if (target?.minimized || focusedId !== id) focus(id);
-      else setFocusedId(null);
+      if (!target) return;
+      if (target.minimized) {
+        focus(id);
+        emit({ type: "restore", id, to: rectOf(target) });
+      } else if (focusedId !== id) {
+        // Visible but behind something: just raise it
+        focus(id);
+      } else {
+        setFocusedId(null);
+        emit({ type: "minimize", id, from: rectOf(target) });
+      }
     },
-    [windows, focusedId, focus],
+    [windows, focusedId, focus, emit],
   );
 
   /*
@@ -378,11 +444,12 @@ export function useWindowManager(panelH: number = PANEL_H) {
    * must be pure - React runs them twice in StrictMode - and this one both bumped
    * a ref and called setFocusedId, so every press advanced the z counter twice.
    */
-  const cycle = useCallback(() => {
+  const cycle = useCallback((): string | null => {
     const live = windowsRef.current.filter((w) => !w.minimized);
-    if (live.length < 2) return;
+    if (live.length < 2) return null;
     const lowest = live.reduce((a, b) => (a.z < b.z ? a : b));
     focus(lowest.id);
+    return lowest.id;
   }, [focus]);
 
   return {

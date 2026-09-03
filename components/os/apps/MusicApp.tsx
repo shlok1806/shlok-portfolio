@@ -86,6 +86,7 @@ export function MusicApp() {
             bars={Math.round(preset.wave.bars * 0.6)}
             height={22}
             playing={playing}
+            wave={preset.wave}
             className={`mt-2 w-full text-accent-ink ${touch ? "h-11" : ""}`}
           />
         </div>
@@ -157,11 +158,6 @@ export function MusicApp() {
       {empty ? (
         <div className="border-t border-border pt-3">
           <p className="text-foreground">The playlist is empty.</p>
-          <p className="mt-2 max-w-[58ch] text-muted-foreground">
-            Add a file to <span className="text-accent-ink">public/music/</span> and an entry to{" "}
-            <span className="text-accent-ink">lib/music/tracks.ts</span>. CC0 needs nothing; CC-BY
-            needs its credit fields, and this window shows them.
-          </p>
         </div>
       ) : (
         <ul className="border-t border-border pt-2">
@@ -177,7 +173,9 @@ export function MusicApp() {
                   select(i);
                   play();
                 }}
-                className={`group flex w-full items-baseline gap-3 px-1 text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${rowPad}`}
+                className={`group flex w-full items-baseline gap-3 px-1 text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${rowPad} ${
+                  i === index ? "bg-muted" : ""
+                }`}
               >
                 <span aria-hidden className="w-4 shrink-0 text-faint group-hover:text-inherit">
                   {i === index && playing ? "▶" : i === index ? "❚❚" : ""}

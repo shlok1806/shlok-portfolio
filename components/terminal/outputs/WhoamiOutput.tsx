@@ -1,14 +1,14 @@
-import { PROFILE } from "@/lib/content";
+import { EDUCATION, PROFILE } from "@/lib/content";
 
 export function WhoamiOutput() {
   return (
     <div className="space-y-2">
       <p className="text-accent-ink font-bold text-3xl tracking-tight">{PROFILE.name}</p>
       <p className="text-muted-foreground text-[13px]">
-        {PROFILE.role} · CS + Economics @ UIUC · GPA 3.91
+        {PROFILE.role} · CS + Economics @ UIUC · GPA {EDUCATION.gpa.split("/")[0]}
       </p>
       <p className="text-faint text-[12px]">
-        {PROFILE.location} · open to relocation · graduating May 2028
+        {PROFILE.location} · open to relocation · graduating {EDUCATION.grad}
       </p>
       <p className="text-faint text-[12px] leading-relaxed max-w-2xl">
         {PROFILE.bio} I like {PROFILE.interests.join(", ")}.

@@ -33,26 +33,29 @@ export function PixelCursor() {
         return raw ? `hsl(${raw})` : fallback;
       };
 
-      const { arrow, hand, arrowHot, handHot } = buildCursors(
+      const c = buildCursors(
         hsl("--primary", "hsl(0, 0%, 0%)"),
         hsl("--primary-foreground", "hsl(0, 0%, 100%)"),
       );
+      const rule = (name: keyof typeof c, fallback: string) =>
+        `cursor: var(--cursor-${name}) ${c[name].hot[0]} ${c[name].hot[1]}, ${fallback};`;
 
       /*
-       * Tailwind's cursor utilities are plain classes, so a bare `button`
-       * selector would lose to them. The utilities that matter are spelled out
-       * here so the desktop's own arrow, move and resize affordances all stay
-       * in the same visual language.
+       * Each image is held in a custom property so the data URI is written
+       * once. Every cursor Tailwind would otherwise set natively gets its
+       * pixel twin here, so the pointer never changes style mid-desktop.
        */
-      // Each image is held in a custom property so the data URI is written once
       style.textContent = `
-        html { --cursor-arrow: ${arrow}; --cursor-hand: ${hand}; }
-        html, body { cursor: var(--cursor-arrow) ${arrowHot[0]} ${arrowHot[1]}, default; }
-        a, button, summary, [role="button"], .cursor-pointer {
-          cursor: var(--cursor-hand) ${handHot[0]} ${handHot[1]}, pointer;
+        html {
+          ${(Object.keys(c) as (keyof typeof c)[]).map((n) => `--cursor-${n}: ${c[n].url};`).join(" ")}
         }
-        .cursor-default { cursor: var(--cursor-arrow) ${arrowHot[0]} ${arrowHot[1]}, default; }
-        input, textarea, [contenteditable], .cursor-text { cursor: text; }
+        html, body, .cursor-default { ${rule("arrow", "default")} }
+        a, button, summary, [role="button"], .cursor-pointer { ${rule("hand", "pointer")} }
+        .cursor-move { ${rule("move", "move")} }
+        .cursor-nwse-resize { ${rule("nwse", "nwse-resize")} }
+        .cursor-nesw-resize { ${rule("nesw", "nesw-resize")} }
+        input, textarea, [contenteditable], .cursor-text { ${rule("text", "text")} }
+        .cursor-wait, html[data-busy], html[data-busy] * { ${rule("wait", "wait")} }
       `;
     };
 

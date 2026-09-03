@@ -59,16 +59,29 @@ const pad = (v: string | number, n: number) => String(v).padStart(n);
 
 export function TopApp() {
   const [tick, setTick] = useState(0);
+  // Whatever is open on the desktop is, for the moment, a running process
+  const [awake, setAwake] = useState<string[]>([]);
 
   // Real top refreshes every 3s; jitter the numbers on the same cadence
   useEffect(() => {
-    const t = setInterval(() => setTick((n) => n + 1), 3000);
+    const sample = () => {
+      setTick((n) => n + 1);
+      setAwake(
+        Array.from(document.querySelectorAll("[data-window]:not([aria-hidden])")).map(
+          (d) => (d.getAttribute("aria-label") ?? "").replace(/\/$/, ""),
+        ),
+      );
+    };
+    sample();
+    const t = setInterval(sample, 3000);
     return () => clearInterval(t);
   }, []);
 
   const rows = PROCS.map((p, i) => {
-    const wobble = Math.sin(tick * 0.7 + i * 1.9) * (p.state === "R" ? 4.5 : 0.5);
-    return { ...p, cpu: Math.max(0, p.cpu + wobble) };
+    const open = awake.includes(p.command);
+    const state = open ? ("R" as const) : p.state;
+    const wobble = Math.sin(tick * 0.7 + i * 1.9) * (state === "R" ? 4.5 : 0.5);
+    return { ...p, state, cpu: Math.max(0, p.cpu + (open ? 21 : 0) + wobble) };
   }).sort((a, b) => b.cpu - a.cpu);
 
   const totalCpu = rows.reduce((n, r) => n + r.cpu, 0);
@@ -80,7 +93,7 @@ export function TopApp() {
   const idleCpu = Math.max(0, 100 - used - 2.1);
 
   return (
-    <DocShell status="top  ·  refreshes every 3s">
+    <DocShell status="top">
       {/*
         Two tables, one per width, rather than one that scrolls.
 

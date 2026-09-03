@@ -152,9 +152,9 @@ export function GameFrame({ def }: { def: GameDef }) {
                 </p>
               )}
 
-              <p className="mt-2 text-[11px] leading-snug text-faint">
-                {touch ? "Use the buttons below." : def.controls}
-              </p>
+              {!touch && (
+                <p className="mt-2 text-[11px] leading-snug text-faint">{def.controls}</p>
+              )}
 
               <button
                 onPointerDown={(e) => e.preventDefault()}
@@ -163,10 +163,6 @@ export function GameFrame({ def }: { def: GameDef }) {
               >
                 {state === "paused" ? "Resume" : state === "over" ? "Play again" : "Start"}
               </button>
-
-              {!touch && (
-                <p className="mt-2 text-[11px] leading-none text-faint">or press Space</p>
-              )}
             </div>
           </div>
         )}

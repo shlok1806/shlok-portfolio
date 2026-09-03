@@ -53,7 +53,7 @@ export const MAN_PAGES: Record<string, Page> = {
     summary: "list projects",
     description: [
       "Lists every project with its stack and a one-line description.",
-      "Project names are links; clicking one opens its repository.",
+      "Project names open the project.",
     ],
     seeAlso: ["experience"],
   },
@@ -84,7 +84,7 @@ export const MAN_PAGES: Record<string, Page> = {
     section: 1,
     synopsis: "contact",
     summary: "print contact details",
-    description: ["Email, GitHub, LinkedIn, and website. Email is the fastest route."],
+    description: ["Email, GitHub, LinkedIn, and website."],
     seeAlso: ["open"],
   },
   open: {
@@ -114,7 +114,6 @@ export const MAN_PAGES: Record<string, Page> = {
     description: [
       "Opens the named game in its own window. Try snake, tetris, flappy,",
       "breakout, or pong.",
-      "High scores are kept in this browser and survive a reload.",
     ],
     seeAlso: ["games"],
   },
@@ -196,7 +195,7 @@ export const MAN_PAGES: Record<string, Page> = {
     section: 1,
     synopsis: "dir",
     summary: "list directory contents",
-    description: ["An alias for ls, kept for the muscle memory."],
+    description: ["An alias for ls."],
     seeAlso: ["ls"],
   },
 };
@@ -247,7 +246,6 @@ export function ManIndexOutput() {
     <div className="text-[13px]">
       <p className="text-muted-foreground">What manual page do you want?</p>
       <p className="mt-2 text-foreground">{names.join("  ")}</p>
-      <p className="mt-2 text-faint text-[11px]">Try: man resume</p>
     </div>
   );
 }

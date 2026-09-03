@@ -103,6 +103,8 @@ export function useGameRunner(def: GameDef) {
   const emit = useCallback<Emit>((name) => {
     if (spoken.current.has(name)) return;
     spoken.current.add(name);
+    // The end of a game is scored below, once it is known whether it was a record
+    if (name === "over") return;
     playSfx(name);
   }, []);
 
@@ -214,7 +216,10 @@ export function useGameRunner(def: GameDef) {
       if (game.over) {
         held.current.clear();
         setState("over");
-        setBest(writeBest(def.id, game.score));
+        const prev = readBest(def.id);
+        const next = writeBest(def.id, game.score);
+        playSfx(next > prev && game.score > 0 ? "record" : "over");
+        setBest(next);
       }
     };
 
@@ -238,6 +243,7 @@ export function useGameRunner(def: GameDef) {
     if (stateRef.current === "paused") {
       pressed.current.clear();
       setState("playing");
+      playSfx("unpause");
       hostRef.current?.focus();
       return;
     }
@@ -248,6 +254,7 @@ export function useGameRunner(def: GameDef) {
     if (stateRef.current !== "playing") return;
     held.current.clear();
     setState("paused");
+    playSfx("pause");
   }, []);
 
   const togglePause = useCallback(() => {

@@ -9,6 +9,7 @@ interface Props {
   onSubmit: () => void;
   onArrowUp: () => void;
   onArrowDown: () => void;
+  onTab: () => void;
   onKey: () => void;         // called on every keystroke (for sound)
   disabled?: boolean;
 }
@@ -19,6 +20,7 @@ export function TerminalInput({
   onSubmit,
   onArrowUp,
   onArrowDown,
+  onTab,
   onKey,
   disabled = false,
 }: Props) {
@@ -39,7 +41,7 @@ export function TerminalInput({
     if (e.key === "ArrowUp")   { e.preventDefault(); onArrowUp(); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); onArrowDown(); return; }
     if (e.key === "Enter") { onSubmit(); return; }
-    if (e.key === "Tab")   { e.preventDefault(); return; } // placeholder for autocomplete
+    if (e.key === "Tab")   { e.preventDefault(); onTab(); return; }
     onKey();
   };
 
@@ -83,8 +85,8 @@ export function TerminalInput({
         <div className="flex items-center">
           <span className="text-foreground font-bold">{value}</span>
           <span
-            className={`inline-block w-[9px] h-[16px] ml-px align-middle bg-primary transition-opacity ${
-              focused ? "animate-pulse" : "opacity-30"
+            className={`inline-block w-[9px] h-[16px] ml-px align-middle bg-primary ${
+              focused ? "caret-blink" : "opacity-30"
             }`}
           />
         </div>

@@ -75,14 +75,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceMono.variable}`}>
       <body className="min-h-screen antialiased">
-        {/*
-          Entrance animations server-render with opacity:0 and only become
-          visible once Motion runs. Without JS that would hide the content, so
-          opt those elements back in when scripting is off.
-        */}
-        <noscript>
-          <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
-        </noscript>
         {/* Must precede ThemeProvider - it decides which tube next-themes reads */}
         <RotatePresetScript />
         <ThemeProvider>

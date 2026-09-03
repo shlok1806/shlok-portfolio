@@ -2,6 +2,7 @@
 
 import { next, toggle } from "@/lib/music/player";
 import { useMusic } from "@/hooks/useMusic";
+import { useRemix } from "@/hooks/useRemix";
 import { AudioMeter } from "./AudioMeter";
 import { Turntable } from "./Turntable";
 
@@ -16,6 +17,7 @@ import { Turntable } from "./Turntable";
  */
 export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => void }) {
   const { playing, loading, track, error } = useMusic();
+  const { preset } = useRemix();
   const empty = !track;
 
   /*
@@ -82,7 +84,7 @@ export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => v
         window list rather than saying the same thing twice.
       */}
       {!touch && (
-        <AudioMeter bars={10} height={11} playing={playing} className="w-[26px] text-accent-ink" />
+        <AudioMeter bars={10} height={11} playing={playing} wave={preset.wave} className="w-[26px] text-accent-ink" />
       )}
     </div>
   );

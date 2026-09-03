@@ -16,9 +16,6 @@ export function ContactOutput() {
           </a>
         </div>
       ))}
-      <p className="text-faint text-[11px] mt-2">
-        Tip: type <span className="text-accent-ink">open github</span> to open GitHub directly
-      </p>
     </div>
   );
 }

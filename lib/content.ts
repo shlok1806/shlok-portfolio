@@ -294,11 +294,18 @@ export const SKILLS = [
   { key: "tooling",     values: ["Git", "GitHub Actions", "CI/CD", "Vitest", "Catch2", "pytest", "CMake"] },
 ];
 
+const GPA = "3.91/4.00";
+const GRAD = "May 2028";
+const MINOR = "Statistics";
+
 export const EDUCATION = {
   period: "2024 - 2028",
   degree: "B.S. Computer Science + Economics",
   school: "University of Illinois Urbana-Champaign",
-  detail: "Minor in Statistics · GPA 3.91/4.00 · Expected May 2028",
+  gpa: GPA,
+  grad: GRAD,
+  minor: MINOR,
+  detail: `Minor in ${MINOR} · GPA ${GPA} · Expected ${GRAD}`,
   coursework: [
     "Algorithms & Models of Computation (CS/ECE 374)",
     "Computer Architecture (CS 233)",

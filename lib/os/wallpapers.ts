@@ -27,6 +27,8 @@ export interface Wallpaper {
   draw?: (c: WallpaperColors) => string;
   /** a static asset does not */
   src?: string;
+  /** painted live to a canvas by the desktop rather than as a background image */
+  animated?: boolean;
   /** a 4px dither tiles; a drawn scene covers */
   size: string;
   repeat: string;
@@ -157,9 +159,25 @@ export const WALLPAPERS: Wallpaper[] = [
   { id: "horizon", name: "Horizon", draw: horizon, size: "cover", repeat: "no-repeat" },
   { id: "contour", name: "Contours", draw: contour, size: "cover", repeat: "no-repeat" },
   { id: "stars", name: "Starfield", draw: stars, size: "cover", repeat: "no-repeat" },
+  { id: "plasma", name: "Plasma", animated: true, size: "cover", repeat: "no-repeat" },
 ];
 
 export const DEFAULT_WALLPAPER = WALLPAPERS[0];
+
+/*
+ * What a tube shows before the visitor picks anything. The photo suits the
+ * two blue desktops; the console wants stars behind its green, and twm never
+ * had a wallpaper at all, only the root window's dither.
+ */
+const DEFAULT_BY_PRESET: Record<string, string> = {
+  motif: "nyc",
+  cde: "nyc",
+  tango: "stars",
+  twm: "stipple",
+};
+
+export const defaultWallpaperFor = (presetId: string): Wallpaper =>
+  wallpaperById(DEFAULT_BY_PRESET[presetId] ?? DEFAULT_WALLPAPER.id);
 
 export function wallpaperById(id: string | null | undefined): Wallpaper {
   return WALLPAPERS.find((w) => w.id === id) ?? DEFAULT_WALLPAPER;
@@ -169,7 +187,7 @@ export function wallpaperById(id: string | null | undefined): Wallpaper {
 export function wallpaperStyle(w: Wallpaper, c: WallpaperColors): React.CSSProperties {
   return {
     backgroundColor: c.bg,
-    backgroundImage: w.src ? `url("${w.src}")` : w.draw?.(c),
+    backgroundImage: w.src ? `url("${w.src}")` : w.animated ? undefined : w.draw?.(c),
     backgroundSize: w.size,
     backgroundRepeat: w.repeat,
     backgroundPosition: "center",

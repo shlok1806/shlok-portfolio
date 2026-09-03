@@ -6,7 +6,6 @@ import { ProjectsApp, ProjectApp } from "@/components/os/apps/ProjectsApp";
 import { SysInfoApp } from "@/components/os/apps/SysInfoApp";
 import { SkillsApp, EducationApp, ContactApp } from "@/components/os/apps/MiscApps";
 import { XtermApp } from "@/components/os/apps/XtermApp";
-import { ReadmeApp } from "@/components/os/apps/ReadmeApp";
 import { TopApp } from "@/components/os/apps/TopApp";
 import { GamesApp, GameApp } from "@/components/os/apps/GamesApp";
 import { MusicApp } from "@/components/os/apps/MusicApp";
@@ -29,16 +28,6 @@ export interface AppDef {
 }
 
 export const APPS: AppDef[] = [
-  {
-    id: "readme",
-    title: "README",
-    icon: "question",
-    w: 560,
-    h: 520,
-    Component: ReadmeApp,
-    onDesktop: true,
-    inMenu: true,
-  },
   {
     id: "xterm",
     title: "xterm",
@@ -74,8 +63,8 @@ export const APPS: AppDef[] = [
     id: "projects",
     title: "projects",
     icon: "folder",
-    w: 660,
-    h: 400,
+    w: 760,
+    h: 470,
     Component: ProjectsApp,
     onDesktop: true,
     inMenu: true,
@@ -95,7 +84,7 @@ export const APPS: AppDef[] = [
     title: "sysinfo",
     icon: "monitor",
     w: 640,
-    h: 440,
+    h: 520,
     Component: SysInfoApp,
     onDesktop: true,
     inMenu: true,
@@ -114,8 +103,8 @@ export const APPS: AppDef[] = [
     id: "games",
     title: "games",
     icon: "invader",
-    w: 600,
-    h: 340,
+    w: 640,
+    h: 520,
     Component: GamesApp,
     onDesktop: true,
     inMenu: true,

@@ -12,10 +12,10 @@ export function DocShell({
 }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="min-h-0 flex-1 overflow-auto px-4 py-3 font-[family-name:var(--font-mono-src)] text-[12.5px] leading-relaxed">
+      <div className="min-h-0 flex-1 overflow-auto px-4 py-3 font-[family-name:var(--font-mono-src)] text-[13px] leading-[1.55]">
         {children}
       </div>
-      <div className="shrink-0 border-t border-border bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[15px] text-muted-foreground">
+      <div className="flex shrink-0 items-center gap-3 border-t border-border bg-secondary px-3 py-[3px] font-[family-name:var(--font-ui)] text-[12px] leading-none text-muted-foreground">
         {status}
       </div>
     </div>

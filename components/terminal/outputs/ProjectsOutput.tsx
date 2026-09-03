@@ -1,8 +1,12 @@
-import { PROJECTS } from "@/lib/content";
+"use client";
 
-const ROW = "group flex items-baseline gap-x-3 px-1 -mx-1";
+import { PROJECTS } from "@/lib/content";
+import { useTerminalOpen } from "../TerminalOpenContext";
+
+const ROW = "group flex w-full items-baseline gap-x-3 px-1 -mx-1 text-left";
 
 export function ProjectsOutput() {
+  const open = useTerminalOpen();
   return (
     /*
       px-1 to pay for the -mx-1 on the rows below. That negative margin is what
@@ -18,33 +22,31 @@ export function ProjectsOutput() {
         const desc = p.note ? `${p.tagline} · ${p.note}` : p.tagline;
         const cells = (
           <>
-            <span className="text-faint text-[13px] shrink-0 hidden sm:block w-[82px]">drwxr-xr-x</span>
-            <span className="text-faint text-[13px] shrink-0 w-[68px]">{p.date}</span>
-            <span className={`text-accent-ink font-bold text-[13px] shrink-0 w-[116px] ${p.href ? "group-hover:underline" : ""}`}>
+            <span className="text-faint text-[13px] shrink-0 hidden sm:block w-[82px] group-hover:text-inherit">drwxr-xr-x</span>
+            <span className="text-faint text-[13px] shrink-0 w-[68px] group-hover:text-inherit">{p.date}</span>
+            <span className="text-accent-ink font-bold text-[13px] shrink-0 w-[116px] group-hover:text-inherit">
               {p.name}
             </span>
-            <span className="text-accent-ink text-[13px] shrink-0 w-[96px]">[{p.stack}]</span>
-            <span className="text-faint text-[12px] hidden md:block flex-1 min-w-0"># {desc}</span>
+            <span className="text-accent-ink text-[13px] shrink-0 w-[96px] group-hover:text-inherit">[{p.stack}]</span>
+            <span className="text-faint text-[12px] hidden md:block flex-1 min-w-0 group-hover:text-inherit"># {desc}</span>
           </>
         );
 
-        return p.href ? (
-          <a
+        // In the desktop a project opens its window; printed anywhere else it is a listing
+        return open ? (
+          <button
             key={p.slug}
-            href={p.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${ROW} hover:bg-primary/[0.06] transition-colors`}
+            onClick={() => open("project", p.slug)}
+            className={`${ROW} hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none`}
           >
             {cells}
-          </a>
+          </button>
         ) : (
           <div key={p.slug} className={ROW}>
             {cells}
           </div>
         );
       })}
-      <p className="text-faint text-[11px] mt-2">Click a project name to open on GitHub</p>
     </div>
   );
 }

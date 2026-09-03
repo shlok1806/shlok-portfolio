@@ -1,35 +1,43 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Props {
   onWake: () => void;
   label: string;
-  /** a phone has neither of the things the hint would otherwise tell you to use */
-  touch?: boolean;
 }
 
 const STAR_COUNT = 420;
 const SPEED = 0.022;
+/* A wake-on-move in the first moments would be the jitter of a hand settling */
+const GRACE_MS = 400;
 
 /**
  * xscreensaver, more or less: a starfield warp with a bouncing label.
  *
  * Drawn to a canvas rather than to DOM nodes - 420 elements moving every frame
  * would be a layout thrash. Any input wakes it, and the loop stops when the tab
- * is hidden so a backgrounded machine is not burning a core on stars.
+ * is hidden so a backgrounded machine is not burning a core on stars. It paints
+ * in the tube's own colours, read once from the cascade on mount.
  */
-export function Screensaver({ onWake, label, touch = false }: Props) {
+export function Screensaver({ onWake, label }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const born = performance.now();
     const wake = () => onWake();
+    const wakeOnMove = () => {
+      if (performance.now() - born > GRACE_MS) onWake();
+    };
     // pointerdown rather than click: waking should not also press a button
     window.addEventListener("pointerdown", wake);
+    window.addEventListener("pointermove", wakeOnMove, { passive: true });
     window.addEventListener("keydown", wake);
     window.addEventListener("wheel", wake, { passive: true });
     return () => {
       window.removeEventListener("pointerdown", wake);
+      window.removeEventListener("pointermove", wakeOnMove);
       window.removeEventListener("keydown", wake);
       window.removeEventListener("wheel", wake);
     };
@@ -40,8 +48,17 @@ export function Screensaver({ onWake, label, touch = false }: Props) {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = prefersReducedMotion();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cs = getComputedStyle(document.documentElement);
+    const token = (name: string, fallback: string) => {
+      const raw = cs.getPropertyValue(name).trim();
+      return raw ? `hsl(${raw}` : fallback;
+    };
+    const bg = token("--desktop", "hsl(0 0% 0%") + ")";
+    const inkBase = token("--on-desktop", "hsl(0 0% 100%");
+    const ink = (alpha: number) => `${inkBase} / ${alpha.toFixed(3)})`;
+
     let w = 0;
     let h = 0;
 
@@ -67,7 +84,7 @@ export function Screensaver({ onWake, label, touch = false }: Props) {
 
     let raf = 0;
     const frame = () => {
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
       const cx = w / 2;
@@ -89,7 +106,7 @@ export function Screensaver({ onWake, label, touch = false }: Props) {
 
         const size = Math.max(0.6, (1 - s.z) * 2.6);
         const bright = Math.min(1, (1 - s.z) * 1.4);
-        ctx.fillStyle = `rgba(255,255,255,${bright.toFixed(3)})`;
+        ctx.fillStyle = ink(bright);
         ctx.fillRect(px, py, size, size);
       }
 
@@ -105,10 +122,11 @@ export function Screensaver({ onWake, label, touch = false }: Props) {
         box.x = Math.min(Math.max(box.x, 0), Math.max(0, w - tw));
         box.y = Math.min(Math.max(box.y, 0), Math.max(0, h - th));
       }
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.fillStyle = ink(0.92);
       ctx.fillText(label, box.x, box.y + 26);
 
-      raf = requestAnimationFrame(frame);
+      // Under reduced motion one frame is the whole show
+      if (!reduced) raf = requestAnimationFrame(frame);
     };
 
     const start = () => {
@@ -130,17 +148,12 @@ export function Screensaver({ onWake, label, touch = false }: Props) {
   }, [label]);
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black" role="presentation">
+    <div
+      className="fixed inset-0 z-[200]"
+      role="presentation"
+      style={{ background: "hsl(var(--desktop))", animation: "saver-in 600ms steps(6) both" }}
+    >
       <canvas ref={canvasRef} className="h-full w-full" />
-      {/*
-        Stretched and centred rather than positioned at left-1/2: an absolute box
-        anchored to the middle can only be as wide as the half-screen left of the
-        edge, which on a phone is narrower than this sentence - so it wrapped, and
-        the wrapped line no longer sat under the middle of the first.
-      */}
-      <p className="absolute inset-x-0 bottom-6 px-4 text-center font-[family-name:var(--font-mono-src)] text-[12px] text-white/60">
-        {touch ? "tap the screen to wake" : "move the mouse or press a key"}
-      </p>
     </div>
   );
 }

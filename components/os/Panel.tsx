@@ -9,8 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MENU_APPS } from "@/lib/os/registry";
+import { MENU_APPS, appById } from "@/lib/os/registry";
 import { PixelIcon } from "@/lib/os/icons";
+import { playSfx } from "@/lib/sfx";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
 import { PRESETS, type Preset } from "@/lib/theme/presets";
 import { pause as pauseMusic } from "@/lib/music/player";
@@ -38,7 +39,6 @@ interface Props {
   windows: WindowState[];
   focusedId: string | null;
   /** the bar, before the home-indicator strip is added underneath it */
-  chromeHeight: number;
   /** so the desktop can measure what the bar actually came out at */
   barRef?: React.Ref<HTMLDivElement>;
   touch: boolean;
@@ -77,7 +77,6 @@ function Clock() {
 export function Panel({
   windows,
   focusedId,
-  chromeHeight,
   barRef,
   touch,
   preset,
@@ -108,6 +107,8 @@ export function Panel({
   const item = `gap-3 rounded-none leading-none focus:bg-primary focus:text-primary-foreground ${
     touch ? "min-h-11 px-3 py-2" : "px-2 py-[5px]"
   }`;
+  const tickOpen = (open: boolean) => open && playSfx("tick");
+  const tickRow = () => playSfx("tick");
 
   // Silence means silence: whatever is currently making the noise stops
   const onSilence = () => {
@@ -122,22 +123,19 @@ export function Panel({
   return (
     <div
       ref={barRef}
-      className="bevel-out absolute inset-x-0 bottom-0 z-[80] flex select-none items-stretch border-b-0 border-l-0 border-r-0 bg-secondary font-[family-name:var(--font-ui)] text-[13px]"
       /*
        * The bar keeps its full height and grows downwards into the strip the
        * phone reserves for the home indicator, padding its contents back out of
        * it. Sitting on top of that strip instead would leave a band of wallpaper
        * under the taskbar; sitting in it without the padding put the clock and
-       * the window list under the indicator, where a tap does nothing.
+       * the window list under the indicator, where a tap does nothing. The
+       * height comes from CSS so a finger never sees a mouse-sized bar first.
        */
-      style={{
-        height: `calc(${chromeHeight}px + env(safe-area-inset-bottom))`,
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
+      className="bevel-out absolute inset-x-0 bottom-0 z-[80] flex h-[calc(30px+env(safe-area-inset-bottom))] select-none items-stretch border-b-0 border-l-0 border-r-0 bg-secondary pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-ui)] text-[13px] coarse:h-[calc(52px+env(safe-area-inset-bottom))]"
     >
       {/* Applications menu. Radix supplies roving focus and escape handling;
           the twm look is all ours. */}
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={tickOpen}>
         <DropdownMenuTrigger asChild>
           {/*
             The word goes on a phone and the glyph stays. Spelled out it was
@@ -146,7 +144,7 @@ export function Panel({
             so the list of open windows had a third of the room and showed two.
           */}
           <button
-            aria-label="Applications"
+            aria-label={touch ? "Applications" : undefined}
             className={`flex h-full items-center gap-2 border-r-2 border-border leading-none text-accent-ink hover:bg-secondary data-[state=open]:bg-primary data-[state=open]:text-primary-foreground ${
               touch ? "w-11 justify-center px-0" : "px-3"
             }`}
@@ -162,7 +160,7 @@ export function Panel({
           className="bevel-out max-h-[min(70dvh,var(--radix-dropdown-menu-content-available-height))] min-w-[200px] overflow-y-auto rounded-none bg-secondary p-0.5 font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
         >
           {MENU_APPS.map((app) => (
-            <DropdownMenuItem key={app.id} onSelect={() => onLaunch(app.id)} className={item}>
+            <DropdownMenuItem key={app.id} onFocus={tickRow} onSelect={() => onLaunch(app.id)} className={item}>
               <span aria-hidden className="grid w-5 shrink-0 place-items-center">
                 {/* 16 is the grid 1:1; 14 lands between pixels and snaps unevenly */}
                 <PixelIcon name={app.icon} size={16} />
@@ -185,7 +183,7 @@ export function Panel({
                 PHOSPHOR
               </DropdownMenuLabel>
               {PRESETS.map((p) => (
-                <DropdownMenuItem key={p.id} onSelect={() => onSelectPreset(p.id)} className={item}>
+                <DropdownMenuItem key={p.id} onFocus={tickRow} onSelect={() => onSelectPreset(p.id)} className={item}>
                   <span
                     aria-hidden
                     className="h-3 w-3 shrink-0 border border-current"
@@ -202,6 +200,7 @@ export function Panel({
               {WALLPAPERS.map((w) => (
                 <DropdownMenuItem
                   key={w.id}
+                  onFocus={tickRow}
                   onSelect={() => onChooseWallpaper(w.id)}
                   className={item}
                 >
@@ -228,8 +227,9 @@ export function Panel({
         {windows.map((w) => (
           <button
             key={w.id}
+            data-win-id={w.id}
             onClick={() => onSelectWindow(w.id)}
-            className={`my-[3px] h-[calc(100%-6px)] min-w-0 shrink-0 text-left leading-none ${
+            className={`my-[3px] flex h-[calc(100%-6px)] min-w-0 shrink-0 items-center gap-1.5 text-left leading-none ${
               touch ? "max-w-[160px] px-3" : "max-w-[190px] px-2"
             } ${
               w.id === focusedId && !w.minimized
@@ -237,6 +237,9 @@ export function Panel({
                 : "bevel-thin bg-secondary text-secondary-foreground"
             }`}
           >
+            <span aria-hidden className="shrink-0">
+              <PixelIcon name={appById(w.appId)?.icon ?? "document"} size={16} />
+            </span>
             <span className="block truncate">
               {w.minimized ? `[${w.title}]` : w.title}
             </span>
@@ -244,12 +247,14 @@ export function Panel({
         ))}
       </div>
 
+      {!touch && <span aria-hidden className="my-[3px] w-px shrink-0 bg-border" />}
+
       {/* Tube selector. On touch it lives in the Applications menu instead */}
       {!touch && (
-        <DropdownMenu>
+        <DropdownMenu onOpenChange={tickOpen}>
           <DropdownMenuTrigger asChild>
             <button
-              aria-label="Change CRT tube"
+              title="Change tube"
               className="bevel-thin my-[3px] flex items-center gap-2 bg-secondary px-2.5 leading-none text-secondary-foreground data-[state=open]:bevel-in"
             >
               <span
@@ -272,6 +277,7 @@ export function Panel({
             {PRESETS.map((p) => (
               <DropdownMenuItem
                 key={p.id}
+                onFocus={tickRow}
                 onSelect={() => onSelectPreset(p.id)}
                 className="gap-3 rounded-none px-2 py-[5px] leading-none focus:bg-primary focus:text-primary-foreground"
               >
@@ -299,7 +305,10 @@ export function Panel({
       {!touch && (
         <>
           <button
-            onClick={onSilence}
+            onClick={() => {
+              playSfx("button");
+              onSilence();
+            }}
             aria-pressed={audible}
             aria-label={audible ? "Mute" : "Unmute"}
             className="bevel-thin my-[3px] ml-[3px] flex items-center bg-secondary px-2.5 leading-none text-secondary-foreground active:bevel-in"
