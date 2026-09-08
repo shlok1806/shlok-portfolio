@@ -11,9 +11,12 @@ const COMMANDS = [
   { cmd: "ls",          desc: "List files" },
   { cmd: "cat <file>",  desc: "Print a file" },
   { cmd: "man <cmd>",   desc: "Manual page for a command" },
+  { cmd: "sysinfo",     desc: "Machine and operator info" },
+  { cmd: "top",         desc: "Running processes" },
+  { cmd: "audio",       desc: "Open the audio player" },
   { cmd: "open github", desc: "Open GitHub profile" },
   { cmd: "clear",       desc: "Clear the screen" },
-  { cmd: "sound off",   desc: "Mute the machine" },
+  { cmd: "sound <on|off>", desc: "Toggle keyboard sounds" },
   { cmd: "exit",        desc: "Close this terminal" },
 ];
 

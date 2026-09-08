@@ -198,6 +198,37 @@ export const MAN_PAGES: Record<string, Page> = {
     description: ["An alias for ls."],
     seeAlso: ["ls"],
   },
+  sysinfo: {
+    name: "sysinfo",
+    section: 1,
+    synopsis: "sysinfo",
+    summary: "print machine and operator information",
+    description: [
+      "Opens the sysinfo window: the machine on the left, the facts on the right.",
+      "Reports the tube in use, the resolution, uptime, and how many windows are open.",
+    ],
+    seeAlso: ["uname", "whoami", "top"],
+  },
+  top: {
+    name: "top",
+    section: 1,
+    synopsis: "top",
+    summary: "display running processes",
+    description: [
+      "Opens the process table. Current roles run hot; shipped projects idle.",
+    ],
+    seeAlso: ["sysinfo", "experience", "projects"],
+  },
+  audio: {
+    name: "audio",
+    section: 1,
+    synopsis: "audio",
+    summary: "open the audio player",
+    description: [
+      "Opens the deck. The panel carries the same transport controls.",
+    ],
+    seeAlso: ["sound"],
+  },
 };
 
 const Head = ({ children }: { children: React.ReactNode }) => (
