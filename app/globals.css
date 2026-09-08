@@ -311,6 +311,64 @@
 }
 
 /*
+ * Scrollbars, drawn the way Motif drew them: an inset trough with a raised
+ * thumb, both built from the same bevel tokens as every other control, so all
+ * four tubes get one without any per-preset work.
+ *
+ * This exists because the document panes had no scroll affordance at all. macOS
+ * and iOS default to overlay scrollbars that appear only mid-gesture, so a
+ * window showing 13% of the resume looked like a window showing all of it -
+ * the text simply stopped, sliced through the middle of a line. Declaring
+ * ::-webkit-scrollbar opts the element out of overlay behaviour, which is the
+ * point: the bar has to be visible before anyone scrolls, not after.
+ *
+ * Scoped to a fine pointer. A phone maximizes its windows and its owner already
+ * knows the content swipes; a permanent 15px bar in every pane would only eat
+ * the narrow column the text has to live in.
+ */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 15px;
+    height: 15px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-style: solid;
+    border-width: 2px;
+    border-color: hsl(var(--bevel-dark)) hsl(var(--bevel-light)) hsl(var(--bevel-light))
+      hsl(var(--bevel-dark));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--secondary));
+    border-style: solid;
+    border-width: 2px;
+    border-color: hsl(var(--bevel-light)) hsl(var(--bevel-dark)) hsl(var(--bevel-dark))
+      hsl(var(--bevel-light));
+  }
+
+  /* Where a vertical and a horizontal bar meet, the trough continues */
+  ::-webkit-scrollbar-corner {
+    background: hsl(var(--muted));
+  }
+
+  /*
+   * Firefox has no ::-webkit-scrollbar and needs the standard properties. They
+   * cannot simply be set alongside: Chrome treats any element carrying
+   * scrollbar-color as opting into the standard scrollbar and then ignores
+   * every rule above. scrollbar-color inherits, so setting it on html silently
+   * disabled the bevel on every pane. Fenced to engines that cannot select the
+   * pseudo-element, which is exactly the set that needs it.
+   */
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-color: hsl(var(--secondary)) hsl(var(--muted));
+    }
+  }
+}
+
+/*
  * The record on the audio player's deck. 33 1/3 rpm is exactly 1.8 seconds a
  * revolution.
  *
