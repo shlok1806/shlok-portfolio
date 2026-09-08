@@ -40,13 +40,13 @@ export function GamesApp({ open }: AppProps) {
     <DocShell status={`/usr/games  ${GAMES.length} items`}>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
         {GAMES.map((game) => (
-          <li key={game.id}>
+          <li key={game.id} className="h-full">
             <button
               {...tapToOpen(() => launch(game.id), touch)}
               // A cabinet is a button: one click with a mouse starts it
               onClick={touch ? undefined : () => launch(game.id)}
               aria-label={`Play ${game.title}`}
-              className="group flex w-full flex-col bevel-out bg-secondary text-left text-secondary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="group flex h-full w-full flex-col bevel-out bg-secondary text-left text-secondary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {/* The screen, set into the cabinet */}
               <span className="bevel-in m-[3px] mb-0 block aspect-[4/3] w-[calc(100%-6px)] overflow-hidden bg-card">
