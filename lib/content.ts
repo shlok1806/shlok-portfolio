@@ -26,7 +26,7 @@ export const PROFILE = {
 export const LINKS = [
   { label: "email",    value: "shlokthakkar1806@gmail.com", href: "mailto:shlokthakkar1806@gmail.com" },
   { label: "github",   value: "github.com/shlok1806",       href: "https://github.com/shlok1806" },
-  { label: "linkedin", value: "linkedin/shlok-thakkar",     href: "https://linkedin.com/in/shlok-thakkar/" },
+  { label: "linkedin", value: "linkedin.com/in/shlok-thakkar", href: "https://linkedin.com/in/shlok-thakkar/" },
   { label: "site",     value: "shlokthakkar.com",           href: "https://shlokthakkar.com" },
 ];
 
