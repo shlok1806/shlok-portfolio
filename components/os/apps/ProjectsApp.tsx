@@ -8,6 +8,13 @@ import { playSfx } from "@/lib/sfx";
 import { DocShell, DocTitle } from "./DocShell";
 import type { AppProps } from "@/lib/os/types";
 
+/*
+ * How many bullets the browser preview shows. The pane is a preview, not the
+ * document - the rest is behind `Open <project>/`. Cutting silently made the
+ * pane read as finished, so anything held back is now counted below the list.
+ */
+const PREVIEW_BULLETS = 2;
+
 /* A stack name as an inset chip, the way a file manager shows a file type */
 function Chip({ children }: { children: React.ReactNode }) {
   return (
@@ -118,12 +125,21 @@ export function ProjectsApp({ open }: AppProps) {
             ))}
           </div>
           <ul className="mt-3 space-y-1.5">
-            {selected.bullets.slice(0, 2).map((b, i) => (
+            {selected.bullets.slice(0, PREVIEW_BULLETS).map((b, i) => (
               <li key={i} className="flex gap-2">
                 <span aria-hidden className="shrink-0 text-faint">*</span>
                 <span className="text-foreground">{b}</span>
               </li>
             ))}
+            {selected.bullets.length > PREVIEW_BULLETS && (
+              <li className="flex gap-2">
+                <span aria-hidden className="shrink-0 text-faint">*</span>
+                <span className="text-faint">
+                  ... {selected.bullets.length - PREVIEW_BULLETS} more line
+                  {selected.bullets.length - PREVIEW_BULLETS === 1 ? "" : "s"} in {selected.name}
+                </span>
+              </li>
+            )}
           </ul>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
