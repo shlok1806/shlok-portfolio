@@ -155,6 +155,12 @@ export interface Project {
   /** a video or live demo, when there is one */
   demo?: { label: string; href: string };
   note?: string;
+  /**
+   * Captures of the live demo under public/projects, framed in the project
+   * window. Taken by hand with chrome-devtools-axi at 1440x900 and 390x844,
+   * then resized to 960 and 360 wide; retake them when the demo changes.
+   */
+  screenshots?: { desktop?: string; phone?: string };
 }
 
 export const PROJECTS: Project[] = [
@@ -173,6 +179,7 @@ export const PROJECTS: Project[] = [
     ],
     href: "https://github.com/shlok1806/feelens",
     demo: { label: "live demo", href: "https://feelens.vercel.app/demo" },
+    screenshots: { desktop: "/projects/feelens.jpg", phone: "/projects/feelens-phone.jpg" },
   },
   {
     slug: "vibesafe",
@@ -206,6 +213,7 @@ export const PROJECTS: Project[] = [
     ],
     href: "https://github.com/shlok1806/builders-cup",
     demo: { label: "live demo", href: "https://cartel-bice.vercel.app" },
+    screenshots: { desktop: "/projects/builders-cup.jpg", phone: "/projects/builders-cup-phone.jpg" },
   },
   {
     slug: "scroll-royale",
@@ -264,6 +272,7 @@ export const PROJECTS: Project[] = [
     ],
     href: "https://github.com/shlok1806/blueprint-qa",
     demo: { label: "live demo", href: "https://blueprint-qa.vercel.app" },
+    screenshots: { desktop: "/projects/blueprint-qa.jpg", phone: "/projects/blueprint-qa-phone.jpg" },
   },
   {
     slug: "whoop-local",

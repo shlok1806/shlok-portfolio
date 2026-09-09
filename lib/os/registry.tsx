@@ -11,6 +11,7 @@ import { GamesApp, GameApp } from "@/components/os/apps/GamesApp";
 import { MusicApp } from "@/components/os/apps/MusicApp";
 import { XclockApp } from "@/components/os/apps/XclockApp";
 import { ShortcutsApp } from "@/components/os/apps/ShortcutsApp";
+import { GitLogApp } from "@/components/os/apps/GitLogApp";
 
 export interface AppDef {
   id: string;
@@ -86,7 +87,8 @@ export const APPS: AppDef[] = [
     title: "sysinfo",
     icon: "monitor",
     w: 640,
-    h: 520,
+    // Tall enough for the gauges under the machine facts without a scroll
+    h: 640,
     Component: SysInfoApp,
     onDesktop: true,
     inMenu: true,
@@ -154,6 +156,15 @@ export const APPS: AppDef[] = [
     w: 300,
     h: 380,
     Component: XclockApp,
+    inMenu: true,
+  },
+  {
+    id: "gitlog",
+    title: "gitlog",
+    icon: "commit",
+    w: 680,
+    h: 520,
+    Component: GitLogApp,
     inMenu: true,
   },
   {
