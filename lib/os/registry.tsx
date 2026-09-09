@@ -9,6 +9,8 @@ import { XtermApp } from "@/components/os/apps/XtermApp";
 import { TopApp } from "@/components/os/apps/TopApp";
 import { GamesApp, GameApp } from "@/components/os/apps/GamesApp";
 import { MusicApp } from "@/components/os/apps/MusicApp";
+import { XclockApp } from "@/components/os/apps/XclockApp";
+import { ShortcutsApp } from "@/components/os/apps/ShortcutsApp";
 
 export interface AppDef {
   id: string;
@@ -143,6 +145,24 @@ export const APPS: AppDef[] = [
     w: 560,
     h: 440,
     Component: EducationApp,
+    inMenu: true,
+  },
+  {
+    id: "xclock",
+    title: "xclock",
+    icon: "clock",
+    w: 300,
+    h: 380,
+    Component: XclockApp,
+    inMenu: true,
+  },
+  {
+    id: "shortcuts",
+    title: "shortcuts",
+    icon: "question",
+    w: 480,
+    h: 460,
+    Component: ShortcutsApp,
     inMenu: true,
   },
   // Opened by a file manager, never directly

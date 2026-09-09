@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { SKILLS, EDUCATION, LINKS, PROFILE } from "@/lib/content";
-import { playSfx } from "@/lib/sfx";
+import { CopyButton } from "../CopyButton";
 import { IlliniBanner } from "../IlliniBanner";
 import { DocShell, DocTitle, Rule } from "./DocShell";
 
@@ -62,23 +62,8 @@ export function EducationApp() {
  * does with a contact card is put the address somewhere else.
  */
 export function ContactApp() {
+  // Which line was copied last, for the status bar; the buttons keep their own state
   const [copied, setCopied] = useState<string | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
-
-  const copy = async (label: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      playSfx("tick");
-      setCopied(label);
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => setCopied(null), 1500);
-    } catch {
-      playSfx("bell");
-    }
-  };
 
   return (
     <DocShell status={copied ? `contact.txt  ·  ${copied} copied` : "contact.txt"}>
@@ -99,13 +84,11 @@ export function ContactApp() {
             >
               {l.value}
             </a>
-            <button
-              onClick={() => copy(l.label, l.value)}
+            <CopyButton
+              value={l.value}
               aria-label={`Copy ${l.label}`}
-              className="bevel-out shrink-0 bg-secondary px-2 py-[2px] font-[family-name:var(--font-ui)] text-[11px] leading-none text-secondary-foreground active:bevel-in"
-            >
-              {copied === l.label ? "copied" : "copy"}
-            </button>
+              onCopied={(on) => setCopied(on ? l.label : null)}
+            />
           </li>
         ))}
       </ul>
