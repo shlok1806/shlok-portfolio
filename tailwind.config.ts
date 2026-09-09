@@ -79,6 +79,10 @@ const config: Config = {
         input: "hsl(var(--input) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
       },
+      transitionTimingFunction: {
+        // The ease every component adapted from opensourceui.in was tuned on
+        smooth: "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

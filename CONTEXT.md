@@ -37,6 +37,19 @@ print(' '.join(w[1:-1] for w in re.findall(r'\((?:[^()\\\\]|\\\\.)*\)', blob)))
 "
 ```
 
+## Vocabulary
+
+- **app**: something that opens in a window. It exists only as an entry in
+  `APPS` in `lib/os/registry.tsx` and receives `AppProps`.
+- **applet**: something that lives in the panel (the music widget, the clock).
+  It has no window of its own unless it also registers an app.
+- **desktop furniture**: what is neither app nor applet: the root menu, the
+  screensaver, the boot screen, spotlight, the notification tray.
+- **preset**, also **tube**: one of the four themes (Motif, CDE, Console,
+  twm). "Tube" is the word the verify skill uses; both mean the same thing.
+- **pixmap**: a 16x16 one-bit icon in `lib/os/icons.tsx`. The site has no
+  other kind of icon.
+
 ## Surfaces
 
 The site is one client-rendered window manager, so nothing user-facing is
