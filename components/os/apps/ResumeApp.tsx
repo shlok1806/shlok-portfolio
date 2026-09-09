@@ -3,6 +3,7 @@
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { PROFILE, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
 import { ContactLinks } from "@/components/ContactLinks";
+import { DownloadButton } from "@/components/os/DownloadButton";
 import { DocShell, Rule } from "./DocShell";
 
 function Head({ children }: { children: React.ReactNode }) {
@@ -18,10 +19,11 @@ export function ResumeApp() {
   const touch = useCoarsePointer();
 
   /*
-   * These two read as a sentence, so the inline exception in WCAG's target-size
-   * rule covers them - but they are also the only way out of this window to the
-   * PDF, and 18px of link is a poor thing to ask a thumb to hit. The padding is
-   * cancelled by an equal negative margin so the status bar keeps its height.
+   * The link reads as part of the sentence, so the inline exception in WCAG's
+   * target-size rule covers it - but 18px of link is still a poor thing to ask
+   * a thumb to hit. The padding is cancelled by an equal negative margin so
+   * the status bar keeps its height. The PDF is a button now, which is why it
+   * gets none of this: it is already a target.
    */
   const link = `text-accent-ink underline underline-offset-2 ${
     touch ? "inline-block py-[13px] -my-[13px]" : ""
@@ -32,10 +34,7 @@ export function ResumeApp() {
       status={
         <>
           resume.txt ·{" "}
-          <a href="/resume.pdf" download className={link}>
-            download PDF
-          </a>{" "}
-          ·{" "}
+          <DownloadButton href="/resume.pdf" className={touch ? "min-h-8" : ""} /> ·{" "}
           <a href="/resume" className={link}>
             text version
           </a>

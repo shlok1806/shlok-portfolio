@@ -467,7 +467,9 @@ export function Desktop() {
   /*
    * Alt+Tab cycles and moves keyboard focus with it. Escape dismisses the root
    * menu if it is up; otherwise it closes the focused window - unless a menu
-   * or something inside the window already used it.
+   * or something inside the window already used it. `?` opens the shortcuts
+   * list, except while typing, where it is just a character. The list itself
+   * is lib/os/shortcuts.ts; keep the two in step.
    */
   const rootMenuRef = useRef(rootMenu);
   rootMenuRef.current = rootMenu;
@@ -475,7 +477,14 @@ export function Desktop() {
   focusedRef.current = focusedId;
   useEffect(() => {
     if (!booted) return;
+    const typing = (t: EventTarget | null) =>
+      t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e.target)) {
+        e.preventDefault();
+        launch("shortcuts");
+        return;
+      }
       if (e.key === "Tab" && e.altKey) {
         e.preventDefault();
         const id = wm.cycle();
@@ -497,7 +506,7 @@ export function Desktop() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [booted, wm]);
+  }, [booted, wm, launch]);
 
   /* Arrow keys walk the desktop icons, the way an X11 file manager did */
   const onIconKeys = useCallback((e: React.KeyboardEvent<HTMLUListElement>) => {

@@ -6,6 +6,8 @@ import { tapToOpen } from "@/lib/os/tapToOpen";
 import { PROJECTS, type Project } from "@/lib/content";
 import { playSfx } from "@/lib/sfx";
 import { DocShell, DocTitle } from "./DocShell";
+import { BuildLog } from "./BuildLog";
+import { buildTranscript } from "@/lib/os/buildLog";
 import type { AppProps } from "@/lib/os/types";
 
 /*
@@ -186,6 +188,10 @@ export function ProjectApp({ arg }: AppProps) {
       </ul>
       <div className="mt-4">
         <Links p={p} />
+      </div>
+      {/* What building it looks like, generated from the stack; a real log would go stale */}
+      <div className="mt-4">
+        <BuildLog title={`${p.name.replace(/\/$/, "")} - build`} lines={buildTranscript(p)} />
       </div>
     </DocShell>
   );

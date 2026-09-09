@@ -60,6 +60,76 @@ function stipple({ bg, light }: WallpaperColors) {
     </svg>`);
 }
 
+/*
+ * Root-window tiles, the kind `xsetroot -bitmap` painted. Adapted from
+ * opensourceui.in components/background-pattern/* (MIT), see
+ * THIRD_PARTY_NOTICES.md. The source hardcodes greys on white; here the ink
+ * follows the stipple's rule, so the same tile reads on every tube.
+ */
+function tileInk({ light }: WallpaperColors) {
+  return light ? { ink: "#000000", alpha: 0.2 } : { ink: "#ffffff", alpha: 0.09 };
+}
+
+const tile = (size: number, body: string, c: WallpaperColors) =>
+  encode(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" shape-rendering="crispEdges">
+      <rect width="${size}" height="${size}" fill="${c.bg}"/>
+      ${body}
+    </svg>`);
+
+/** One dot every twelve pixels. */
+function dots(c: WallpaperColors) {
+  const { ink, alpha } = tileInk(c);
+  return tile(12, `<rect x="5" y="5" width="2" height="2" fill="${ink}" fill-opacity="${alpha * 1.8}"/>`, c);
+}
+
+/** Graph paper: a one-pixel line every twenty. */
+function graph(c: WallpaperColors) {
+  const { ink, alpha } = tileInk(c);
+  return tile(20, `<path d="M0 0.5H20M0.5 0V20" stroke="${ink}" stroke-opacity="${alpha}" stroke-width="1"/>`, c);
+}
+
+/** Ruled paper: a line every twenty-two pixels and nothing across. */
+function ruled(c: WallpaperColors) {
+  const { ink, alpha } = tileInk(c);
+  return tile(22, `<path d="M0 21.5H22" stroke="${ink}" stroke-opacity="${alpha}" stroke-width="1"/>`, c);
+}
+
+/** Diagonal hatching. The corner strokes keep the tile seamless. */
+function diagonal(c: WallpaperColors) {
+  const { ink, alpha } = tileInk(c);
+  return tile(
+    12,
+    `<path d="M-1 13L13 -1M-1 1L1 -1M11 13L13 11" stroke="${ink}" stroke-opacity="${alpha}" stroke-width="1"/>`,
+    c,
+  );
+}
+
+/** Both diagonals, which is what most X11 root windows actually wore. */
+function crosshatch(c: WallpaperColors) {
+  const { ink, alpha } = tileInk(c);
+  return tile(
+    12,
+    `<path d="M-1 13L13 -1M-1 -1L13 13M-1 1L1 -1M11 13L13 11M11 -1L13 1M-1 11L1 13" stroke="${ink}" stroke-opacity="${alpha * 0.8}" stroke-width="1"/>`,
+    c,
+  );
+}
+
+/** Grain: two dot lattices at different pitches, so no repeat is visible. */
+function grain(c: WallpaperColors) {
+  const { ink, alpha } = tileInk(c);
+  return encode(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" shape-rendering="crispEdges">
+      <rect width="15" height="15" fill="${c.bg}"/>
+      <rect x="1" y="1" width="1" height="1" fill="${ink}" fill-opacity="${alpha * 1.6}"/>
+      <rect x="4" y="9" width="1" height="1" fill="${ink}" fill-opacity="${alpha * 1.6}"/>
+      <rect x="9" y="4" width="1" height="1" fill="${ink}" fill-opacity="${alpha}"/>
+      <rect x="12" y="12" width="1" height="1" fill="${ink}" fill-opacity="${alpha * 1.6}"/>
+      <rect x="7" y="13" width="1" height="1" fill="${ink}" fill-opacity="${alpha}"/>
+      <rect x="13" y="7" width="1" height="1" fill="${ink}" fill-opacity="${alpha}"/>
+    </svg>`);
+}
+
 /** Perspective grid running to a horizon. Every demo and screensaver had one. */
 function horizon({ bg, ink, light }: WallpaperColors) {
   const W = 1600;
@@ -156,6 +226,12 @@ export const WALLPAPERS: Wallpaper[] = [
     pixelated: true,
   },
   { id: "stipple", name: "Stipple", draw: stipple, size: "4px 4px", repeat: "repeat" },
+  { id: "dots", name: "Dot grid", draw: dots, size: "12px 12px", repeat: "repeat" },
+  { id: "graph", name: "Graph paper", draw: graph, size: "20px 20px", repeat: "repeat" },
+  { id: "ruled", name: "Ruled", draw: ruled, size: "22px 22px", repeat: "repeat" },
+  { id: "diagonal", name: "Diagonal", draw: diagonal, size: "12px 12px", repeat: "repeat" },
+  { id: "crosshatch", name: "Crosshatch", draw: crosshatch, size: "12px 12px", repeat: "repeat" },
+  { id: "grain", name: "Grain", draw: grain, size: "15px 15px", repeat: "repeat" },
   { id: "horizon", name: "Horizon", draw: horizon, size: "cover", repeat: "no-repeat" },
   { id: "contour", name: "Contours", draw: contour, size: "cover", repeat: "no-repeat" },
   { id: "stars", name: "Starfield", draw: stars, size: "cover", repeat: "no-repeat" },

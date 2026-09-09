@@ -38,3 +38,9 @@ The PR that adds an adapted file adds its row here.
 
 | In this repo | Source in opensourceui |
 | --- | --- |
+| `components/os/applets/Xclock.tsx` | `components/widgets/analog-clock-widget.tsx` |
+| `lib/os/wallpapers.ts` (the tile patterns) | `components/background-pattern/*` |
+| `components/os/apps/ShortcutsApp.tsx` | `components/text/keyboard-shortcuts-card.tsx` |
+| `components/os/CopyButton.tsx` | `components/buttons/copy-button.tsx` |
+| `components/os/DownloadButton.tsx` | `components/buttons/download-button.tsx` |
+| `components/os/apps/BuildLog.tsx` | `components/others/terminal-log-card.tsx` |

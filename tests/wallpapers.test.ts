@@ -15,6 +15,19 @@ describe("wallpapers", () => {
     expect(style.imageRendering).toBe("pixelated");
   });
 
+  it("tiles the root-window patterns rather than stretching them", () => {
+    const tiles = ["dots", "graph", "ruled", "diagonal", "crosshatch", "grain"];
+    for (const id of tiles) {
+      const w = wallpaperById(id);
+      expect(w.id).toBe(id);
+      expect(w.repeat).toBe("repeat");
+      expect(w.size).toMatch(/^\d+px \d+px$/);
+      const style = wallpaperStyle(w, colours);
+      // the tile's own size is baked into the SVG, so the repeat is seamless
+      expect(decodeURIComponent(style.backgroundImage as string)).toContain(`width="${parseInt(w.size)}"`);
+    }
+  });
+
   it("draws generated backdrops deterministically from the palette", () => {
     for (const w of WALLPAPERS.filter((w) => w.draw)) {
       const a = wallpaperStyle(w, colours);

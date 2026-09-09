@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +17,7 @@ import { pause as pauseMusic } from "@/lib/music/player";
 import { useMusic } from "@/hooks/useMusic";
 import type { WindowState } from "@/hooks/useWindowManager";
 import { MusicWidget } from "./MusicWidget";
+import { PanelClock } from "./applets/Xclock";
 
 /**
  * The bar itself, not counting whatever the phone reserves below it.
@@ -51,27 +51,6 @@ interface Props {
   onSelectPreset: (id: string) => void;
   onChooseWallpaper: (id: string) => void;
   onToggleSound: () => void;
-}
-
-function Clock() {
-  const [now, setNow] = useState<string>("");
-
-  useEffect(() => {
-    // Rendered client-side only; a server-rendered clock would hydrate stale
-    const tick = () =>
-      setNow(
-        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
-      );
-    tick();
-    const t = setInterval(tick, 10_000);
-    return () => clearInterval(t);
-  }, []);
-
-  return (
-    <span suppressHydrationWarning className="tabular-nums">
-      {now || "--:--"}
-    </span>
-  );
 }
 
 export function Panel({
@@ -316,9 +295,7 @@ export function Panel({
             {audible ? "♪" : "♪̸"}
           </button>
 
-          <div className="bevel-in my-[3px] mx-[3px] flex items-center bg-muted px-2.5 leading-none text-secondary-foreground">
-            <Clock />
-          </div>
+          <PanelClock onOpen={() => onLaunch("xclock")} />
         </>
       )}
     </div>
