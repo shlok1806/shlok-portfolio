@@ -44,3 +44,5 @@ The PR that adds an adapted file adds its row here.
 | `components/os/CopyButton.tsx` | `components/buttons/copy-button.tsx` |
 | `components/os/DownloadButton.tsx` | `components/buttons/download-button.tsx` |
 | `components/os/apps/BuildLog.tsx` | `components/others/terminal-log-card.tsx` |
+| `components/os/Spotlight.tsx` | `components/docks/spotlight-bar.tsx` |
+| `components/os/Notifications.tsx`, `lib/os/notify.ts` | `components/notifications/system-alert-banner.tsx`, `toast-notification-banner.tsx` |

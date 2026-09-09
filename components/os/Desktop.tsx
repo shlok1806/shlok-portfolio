@@ -7,9 +7,15 @@ import { SMALL_W, useWindowManager, type Transition } from "@/hooks/useWindowMan
 import { zoom, type Rect } from "@/lib/os/zoom";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import { armAudio, playSfx } from "@/lib/sfx";
-import { APPS, DESKTOP_APPS, appById } from "@/lib/os/registry";
-import { PROFILE } from "@/lib/content";
-import { defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
+import { APPS, DESKTOP_APPS, MENU_APPS, appById } from "@/lib/os/registry";
+import { PROFILE, PROJECTS } from "@/lib/content";
+import { GAMES } from "@/lib/games/registry";
+import { PRESETS } from "@/lib/theme/presets";
+import { notify } from "@/lib/os/notify";
+import { spotlightItems, type SpotlightItem } from "@/lib/os/spotlight";
+import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
+import { Spotlight } from "./Spotlight";
+import { NotificationTray } from "./Notifications";
 import { BootScreen } from "./BootScreen";
 import { DesktopIcon, ICON_H, ICON_PITCH, ICON_W, type IconPos } from "./DesktopIcon";
 import { RootMenu } from "./RootMenu";
@@ -409,11 +415,57 @@ export function Desktop() {
         a.download = "";
         a.rel = "noopener";
         a.click();
+        notify("ok", app.title, "Saved to your downloads");
         return;
       }
       open({ appId: app.id, title: app.title, w: app.w, h: app.h });
     },
     [open],
+  );
+
+  /*
+   * Spotlight: everything that can be opened by name, built once. Running an
+   * item goes through the same paths a click would, so a project window from
+   * here is the same window the file manager opens.
+   */
+  const [spotlight, setSpotlight] = useState(false);
+  const spotlightList = useMemo(
+    () => spotlightItems({ apps: MENU_APPS, projects: PROJECTS, games: GAMES, wallpapers: WALLPAPERS, presets: PRESETS }),
+    [],
+  );
+  const runSpotlight = useCallback(
+    (item: SpotlightItem) => {
+      switch (item.kind) {
+        case "app":
+          launch(item.id);
+          return;
+        case "project": {
+          const app = appById("project");
+          if (app) {
+            playSfx("launch");
+            open({ appId: app.id, title: item.label, arg: item.id, w: app.w, h: app.h });
+          }
+          return;
+        }
+        case "game": {
+          const app = appById("game");
+          const game = GAMES.find((g) => g.id === item.id);
+          if (app && game) {
+            playSfx("launch");
+            open({ appId: app.id, title: game.title, arg: game.id, w: game.winW, h: game.winH });
+          }
+          return;
+        }
+        case "wallpaper":
+          chooseWallpaper(item.id);
+          return;
+        case "tube":
+          select(item.id);
+          degauss();
+          return;
+      }
+    },
+    [launch, open, chooseWallpaper, select, degauss],
   );
 
   /*
@@ -480,6 +532,12 @@ export function Desktop() {
     const typing = (t: EventTarget | null) =>
       t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
     const onKey = (e: KeyboardEvent) => {
+      // A chord, so it works from inside the shell too
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSpotlight((v) => !v);
+        return;
+      }
       if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e.target)) {
         e.preventDefault();
         launch("shortcuts");
@@ -627,9 +685,21 @@ export function Desktop() {
             currentWallpaper={wallpaper.id}
             onLaunch={launch}
             onChooseWallpaper={chooseWallpaper}
+            onSpotlight={() => setSpotlight(true)}
             onDismiss={() => setRootMenu(null)}
           />
         )}
+
+        {spotlight && (
+          <Spotlight
+            items={spotlightList}
+            touch={touch}
+            onRun={runSpotlight}
+            onClose={() => setSpotlight(false)}
+          />
+        )}
+
+        <NotificationTray />
 
         {/* Windows */}
         {windows.map((win) => {

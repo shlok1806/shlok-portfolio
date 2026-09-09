@@ -20,6 +20,7 @@ export const SHORTCUTS: ShortcutGroup[] = [
   {
     scope: "desktop",
     shortcuts: [
+      { keys: ["Ctrl", "K"], label: "Spotlight: open anything by name (Cmd+K on a Mac)" },
       { keys: ["Alt", "Tab"], label: "Cycle through the open windows" },
       { keys: ["Esc"], label: "Close the focused window, or dismiss the root menu" },
       { keys: ["?"], label: "Open this list" },

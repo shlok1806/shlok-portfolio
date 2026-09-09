@@ -5,6 +5,8 @@
  * ends in another window, rather than going stale until the app is reopened.
  */
 
+import { notify } from "@/lib/os/notify";
+
 const key = (id: string) => `os-hiscore-${id}`;
 
 const listeners = new Set<() => void>();
@@ -29,6 +31,8 @@ export function writeBest(id: string, score: number): number {
     /* storage blocked - the score still stands for this session */
   }
   listeners.forEach((fn) => fn());
+  // A first score is just a score; beating one that stood is worth a notice
+  if (best > 0) notify("ok", "New high score", `${id}: ${Math.floor(score)}, up from ${best}`);
   return Math.floor(score);
 }
 
