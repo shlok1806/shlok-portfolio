@@ -7,6 +7,8 @@ import { PROJECTS, type Project } from "@/lib/content";
 import { playSfx } from "@/lib/sfx";
 import { DocShell, DocTitle } from "./DocShell";
 import { BuildLog } from "./BuildLog";
+import { RepoFacts } from "./RepoFacts";
+import { ScreenFrame } from "./ScreenFrame";
 import { buildTranscript } from "@/lib/os/buildLog";
 import type { AppProps } from "@/lib/os/types";
 
@@ -189,6 +191,17 @@ export function ProjectApp({ arg }: AppProps) {
       <div className="mt-4">
         <Links p={p} />
       </div>
+      <RepoFacts href={p.href} />
+      {p.screenshots && (
+        <div className="mt-4 flex flex-col items-start gap-4 md:flex-row">
+          {p.screenshots.desktop && (
+            <ScreenFrame kind="monitor" src={p.screenshots.desktop} alt={`${p.name} on a desktop`} className="min-w-0 flex-1" />
+          )}
+          {p.screenshots.phone && (
+            <ScreenFrame kind="handheld" src={p.screenshots.phone} alt={`${p.name} on a phone`} className="w-[120px] shrink-0" />
+          )}
+        </div>
+      )}
       {/* What building it looks like, generated from the stack; a real log would go stale */}
       <div className="mt-4">
         <BuildLog title={`${p.name.replace(/\/$/, "")} - build`} lines={buildTranscript(p)} />
