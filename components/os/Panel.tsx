@@ -18,6 +18,8 @@ import { useMusic } from "@/hooks/useMusic";
 import type { WindowState } from "@/hooks/useWindowManager";
 import { MusicWidget } from "./MusicWidget";
 import { PanelClock } from "./applets/Xclock";
+import { Weather } from "./applets/Weather";
+import { Tray } from "./applets/Tray";
 
 /**
  * The bar itself, not counting whatever the phone reserves below it.
@@ -283,6 +285,8 @@ export function Panel({
       */}
       {!touch && (
         <>
+          <Tray />
+          <Weather />
           <button
             onClick={() => {
               playSfx("button");

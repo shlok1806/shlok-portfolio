@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react";
 import { PROFILE, EDUCATION, SKILLS, OS } from "@/lib/content";
 import { useRemix } from "@/hooks/useRemix";
+import { PROCS, summarize } from "@/lib/os/procs";
 import { IlliniMachine } from "../IlliniMachine";
+import { ProgressRing } from "../ProgressRing";
 import { DocShell } from "./DocShell";
+
+/* The same table `top` shows, summed; it only has to agree with itself */
+const LOAD = summarize(PROCS);
 
 /* When this session's kernel came up */
 const BOOTED_AT = typeof performance !== "undefined" ? performance.now() : 0;
@@ -23,15 +28,16 @@ const uptime = () => {
  */
 export function SysInfoApp() {
   const { preset, mounted } = useRemix();
-  const [live, setLive] = useState({ up: "0s", windows: 0, res: "" });
+  const [live, setLive] = useState({ up: "0s", windows: 0, res: "", tick: 0 });
 
   useEffect(() => {
     const tick = () =>
-      setLive({
+      setLive((prev) => ({
         up: uptime(),
         windows: document.querySelectorAll("[data-window]:not([aria-hidden])").length,
         res: `${window.innerWidth}x${window.innerHeight}`,
-      });
+        tick: prev.tick + 1,
+      }));
     tick();
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
@@ -81,6 +87,11 @@ export function SysInfoApp() {
               </div>
             ))}
           </dl>
+          {/* Gauges: the load `top` reports, wobbling on the same cadence it does, plus a window for every one open */}
+          <div className="mt-3 flex flex-wrap gap-4" aria-label="Load">
+            <ProgressRing label="cpu" value={LOAD.cpu + live.windows * 3 + Math.sin(live.tick * 0.7) * 3} />
+            <ProgressRing label="mem" value={LOAD.mem + live.windows * 2.5 + Math.sin(live.tick * 0.4) * 1.5} />
+          </div>
           {/* The tube's palette, the way neofetch ends with the terminal colours */}
           <div className="mt-3 flex gap-1" aria-hidden>
             {["--desktop", "--secondary", "--muted", "--primary", "--accent-ink", "--card", "--foreground", "--destructive"].map(

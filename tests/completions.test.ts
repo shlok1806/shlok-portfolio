@@ -11,7 +11,7 @@ describe("shell completions", () => {
   it("completes the argument by command", () => {
     expect(completions("cat re")).toEqual(["resume.txt"]);
     expect(completions("play t")).toEqual(["tetris"]);
-    expect(completions("open g")).toEqual(["games", "github"]);
+    expect(completions("open g")).toEqual(["games", "github", "gitlog"]);
     expect(completions("sound o")).toEqual(["off", "on"]);
     expect(completions("echo hi")).toEqual([]);
   });

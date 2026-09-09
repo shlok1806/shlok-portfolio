@@ -46,3 +46,9 @@ The PR that adds an adapted file adds its row here.
 | `components/os/apps/BuildLog.tsx` | `components/others/terminal-log-card.tsx` |
 | `components/os/Spotlight.tsx` | `components/docks/spotlight-bar.tsx` |
 | `components/os/Notifications.tsx`, `lib/os/notify.ts` | `components/notifications/system-alert-banner.tsx`, `toast-notification-banner.tsx` |
+| `components/os/apps/RepoFacts.tsx` | `components/socials/github-repo-card.tsx` |
+| `components/os/apps/GitLogApp.tsx` | `components/socials/github-contribution.tsx` |
+| `components/os/applets/Weather.tsx`, `lib/os/weather.ts` | `components/others/weather-snapshot-card.tsx` |
+| `components/os/applets/Tray.tsx` | `components/widgets/battery-face-widget.tsx`, `wifi-toggle-widget.tsx` |
+| `components/os/ProgressRing.tsx` | `components/others/progress-ring-card.tsx` |
+| `components/os/apps/ScreenFrame.tsx` | `components/mockups/laptop-mockup-card.tsx`, `phone-mockup-card.tsx` |
