@@ -393,6 +393,15 @@
   }
 }
 
+/*
+ * A notice lands the way a window does: mapped in two frames, no slide. The
+ * source it was adapted from eases in from the side; a Motif message box
+ * simply appeared, and the 20ms of nothing is what makes it feel that way.
+ */
+.notice-in {
+  animation: win-in 100ms steps(2, end) both;
+}
+
 /* The tube warming up over the desktop: two black halves pull apart */
 @keyframes crt-open {
   from {

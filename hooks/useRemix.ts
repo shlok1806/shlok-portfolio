@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { DEFAULT_PRESET, presetById } from "@/lib/theme/presets";
 import { playChord, setSoundOn, soundOn, subscribeSound } from "@/lib/sfx";
+import { notify } from "@/lib/os/notify";
 
 const CHOSEN_KEY = "remix-chosen";
 
@@ -44,6 +45,7 @@ export function useRemix() {
       setTheme(next.id);
       claim();
       playChord(next);
+      notify("info", `${next.name} tube`, `${next.code} · the desktop stays on this one now`);
       return next;
     },
     [setTheme, claim],
@@ -51,7 +53,9 @@ export function useRemix() {
 
   // One preference for the whole machine; lib/sfx owns it and notifies the rest
   const toggleSound = useCallback(() => {
-    setSoundOn(!soundOn());
+    const on = !soundOn();
+    setSoundOn(on);
+    notify("info", on ? "Sound on" : "Sound off", on ? "Key clicks and effects enabled" : "Effects muted");
   }, []);
 
   return { preset, mounted, select, soundOn: soundEnabled, toggleSound };

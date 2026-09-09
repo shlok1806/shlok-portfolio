@@ -3,6 +3,7 @@
 
 import { forwardRef, useEffect, useRef, useState, type ComponentPropsWithoutRef } from "react";
 import { PixelIcon } from "@/lib/os/icons";
+import { notify } from "@/lib/os/notify";
 import { playSfx } from "@/lib/sfx";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +68,7 @@ export const DownloadButton = forwardRef<HTMLButtonElement, DownloadButtonProps>
       document.body.appendChild(a);
       a.click();
       a.remove();
+      notify("ok", href.split("/").pop() ?? "file", "Saved to your downloads");
       setPhase("saving");
       schedule(() => {
         setPhase("done");

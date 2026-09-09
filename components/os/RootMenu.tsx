@@ -15,6 +15,7 @@ interface Props {
   currentWallpaper: string;
   onLaunch: (appId: string) => void;
   onChooseWallpaper: (id: string) => void;
+  onSpotlight: () => void;
   onDismiss: () => void;
 }
 
@@ -38,6 +39,7 @@ export function RootMenu({
   currentWallpaper,
   onLaunch,
   onChooseWallpaper,
+  onSpotlight,
   onDismiss,
 }: Props) {
   useEffect(() => playSfx("tick"), []);
@@ -89,6 +91,21 @@ export function RootMenu({
       <p className="border-b border-border px-3 pb-1 pt-1 text-[11px] uppercase leading-none tracking-wider text-faint">
         ShlokOS
       </p>
+      {/* twm called it "Run..."; it is the one entry that is not an app */}
+      <button
+        onPointerEnter={(e) => e.pointerType === "mouse" && playSfx("tick")}
+        onClick={() => {
+          onDismiss();
+          onSpotlight();
+        }}
+        className={`${row} border-b border-border`}
+      >
+        <span aria-hidden className="grid w-5 shrink-0 place-items-center">
+          <PixelIcon name="search" size={16} />
+        </span>
+        <span className="flex-1">Spotlight...</span>
+        {!touch && <span className="text-[11px] opacity-70">Ctrl+K</span>}
+      </button>
       {MENU_APPS.map((app) => (
         <button
           key={app.id}
