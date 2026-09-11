@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { DEFAULT_PRESET, presetById } from "@/lib/theme/presets";
 import { playChord, setSoundOn, soundOn, subscribeSound } from "@/lib/sfx";
 import { notify } from "@/lib/os/notify";
+import { event } from "@/lib/analytics";
 
 const CHOSEN_KEY = "remix-chosen";
 
@@ -45,6 +46,7 @@ export function useRemix() {
       setTheme(next.id);
       claim();
       playChord(next);
+      event("preset", { id: next.id });
       notify("info", `${next.name} tube`, `${next.code} · the desktop stays on this one now`);
       return next;
     },

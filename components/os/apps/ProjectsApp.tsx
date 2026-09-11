@@ -5,6 +5,7 @@ import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { tapToOpen } from "@/lib/os/tapToOpen";
 import { PROJECTS, type Project } from "@/lib/content";
 import { playSfx } from "@/lib/sfx";
+import { event } from "@/lib/analytics";
 import { DocShell, DocTitle } from "./DocShell";
 import { BuildLog } from "./BuildLog";
 import { RepoFacts } from "./RepoFacts";
@@ -35,7 +36,10 @@ function LinkButton({ href, children }: { href: string; children: React.ReactNod
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => playSfx("button")}
+      onClick={() => {
+        playSfx("button");
+        event("outbound", { href });
+      }}
       className="bevel-out inline-block bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] leading-none text-secondary-foreground active:bevel-in"
     >
       {children}

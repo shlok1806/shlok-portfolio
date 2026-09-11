@@ -23,7 +23,8 @@ const SEQUENCE: Line[] = [
 ];
 
 interface Props {
-  onComplete: () => void;
+  /** skipped is true when a key or a tap cut the sequence short */
+  onComplete: (skipped: boolean) => void;
 }
 
 /**
@@ -64,13 +65,13 @@ export function BootScreen({ onComplete }: Props) {
 
     if (skipped) {
       doneRef.current = true;
-      const t = setTimeout(() => onCompleteRef.current(), 60);
+      const t = setTimeout(() => onCompleteRef.current(true), 60);
       return () => clearTimeout(t);
     }
 
     if (shown >= SEQUENCE.length) {
       doneRef.current = true;
-      const t = setTimeout(() => onCompleteRef.current(), 500);
+      const t = setTimeout(() => onCompleteRef.current(false), 500);
       return () => clearTimeout(t);
     }
 

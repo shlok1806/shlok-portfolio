@@ -5,6 +5,7 @@ import { useTerminal } from "@/hooks/useTerminal";
 import { useTerminalSound } from "@/hooks/useTerminalSound";
 import { parseCommand } from "@/lib/terminal/parser";
 import { COMMAND_NAMES, completions, runCommand } from "@/lib/terminal/commands";
+import { event } from "@/lib/analytics";
 import { TerminalOpenContext } from "./TerminalOpenContext";
 import { LsOutput } from "./outputs/LsOutput";
 import { TerminalHistory } from "./TerminalHistory";
@@ -130,6 +131,8 @@ export function TerminalPage({ onExit, onPlay, onOpen }: TerminalPageProps = {})
 
     const { name, args } = parseCommand(raw);
     const result = runCommand(name, args, raw);
+    // The name only, and only a real one: what a visitor typed is theirs
+    event("command", { name: COMMAND_NAMES.has(name) ? name : "unknown" });
 
     if (result.action === "clear") {
       play("enter");

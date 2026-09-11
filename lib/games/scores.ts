@@ -6,6 +6,7 @@
  */
 
 import { notify } from "@/lib/os/notify";
+import { event } from "@/lib/analytics";
 
 const key = (id: string) => `os-hiscore-${id}`;
 
@@ -23,6 +24,7 @@ export function readBest(id: string): number {
 
 /** Stores `score` if it beats the record. Returns the record afterwards. */
 export function writeBest(id: string, score: number): number {
+  event("score", { game: id, score: Math.floor(score) });
   const best = readBest(id);
   if (score <= best) return best;
   try {
