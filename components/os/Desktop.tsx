@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useRemix } from "@/hooks/useRemix";
-import { SMALL_W, useWindowManager, type Transition } from "@/hooks/useWindowManager";
+import { SMALL_W, useWindowManager, type OpenOptions, type Transition } from "@/hooks/useWindowManager";
 import { zoom, type Rect } from "@/lib/os/zoom";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import { armAudio, playSfx } from "@/lib/sfx";
@@ -12,6 +12,7 @@ import { PROFILE, PROJECTS } from "@/lib/content";
 import { GAMES } from "@/lib/games/registry";
 import { PRESETS } from "@/lib/theme/presets";
 import { notify } from "@/lib/os/notify";
+import { event } from "@/lib/analytics";
 import { spotlightItems, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
 import { Spotlight } from "./Spotlight";
@@ -82,6 +83,7 @@ export function Desktop() {
   }, []);
 
   const chooseWallpaper = useCallback((id: string) => {
+    event("wallpaper", { id });
     setWallpaperId(id);
     try {
       localStorage.setItem("os-wallpaper", id);
@@ -334,7 +336,7 @@ export function Desktop() {
   }, []);
 
   const wm = useWindowManager(panelH, onTransition);
-  const { open, windows, focusedId, PANEL_H } = wm;
+  const { open: wmOpen, windows, focusedId, PANEL_H } = wm;
 
   /*
    * Switching tubes degausses the screen: a flash and a wobble, 180ms, then
@@ -400,6 +402,18 @@ export function Desktop() {
     [iconPos, viewport, PANEL_H],
   );
 
+  /*
+   * Every window on the desktop is asked for through here, so this is where
+   * an open becomes an event. The window manager itself stays unaware.
+   */
+  const open = useCallback(
+    (opts: OpenOptions) => {
+      event("open", { app: opts.appId, ...(opts.arg ? { arg: opts.arg } : {}) });
+      return wmOpen(opts);
+    },
+    [wmOpen],
+  );
+
   const launch = useCallback(
     (appId: string) => {
       const app = appById(appId);
@@ -415,6 +429,7 @@ export function Desktop() {
         a.download = "";
         a.rel = "noopener";
         a.click();
+        event("download", { file: app.download });
         notify("ok", app.title, "Saved to your downloads");
         return;
       }
@@ -435,6 +450,7 @@ export function Desktop() {
   );
   const runSpotlight = useCallback(
     (item: SpotlightItem) => {
+      event("spotlight", { kind: item.kind, id: item.id });
       switch (item.kind) {
         case "app":
           launch(item.id);
@@ -581,7 +597,8 @@ export function Desktop() {
     return (
       <main className="scanlines vignette">
         <BootScreen
-          onComplete={() => {
+          onComplete={(skipped) => {
+            event("boot", { skipped, touch });
             setPhase("on");
             playSfx("boot");
           }}

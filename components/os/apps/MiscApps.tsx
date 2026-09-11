@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SKILLS, EDUCATION, LINKS, PROFILE } from "@/lib/content";
+import { event } from "@/lib/analytics";
 import { CopyButton } from "../CopyButton";
 import { IlliniBanner } from "../IlliniBanner";
 import { DocShell, DocTitle, Rule } from "./DocShell";
@@ -80,6 +81,7 @@ export function ContactApp() {
               href={l.href}
               target={l.href.startsWith("http") ? "_blank" : undefined}
               rel="noopener noreferrer"
+              onClick={() => event("outbound", { label: l.label })}
               className="min-w-0 flex-1 truncate text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
             >
               {l.value}
@@ -87,7 +89,10 @@ export function ContactApp() {
             <CopyButton
               value={l.value}
               aria-label={`Copy ${l.label}`}
-              onCopied={(on) => setCopied(on ? l.label : null)}
+              onCopied={(on) => {
+                if (on) event("copy", { label: l.label });
+                setCopied(on ? l.label : null);
+              }}
             />
           </li>
         ))}

@@ -22,3 +22,10 @@ change lives - not this file unless the change is project-wide. Write what a fut
 could not derive from reading the code: rules, boundaries, ownership decisions.
 
 Anything adapted from opensourceui.in follows `docs/adr/0001-vendor-opensourceui-through-the-token-layer.md`.
+
+## Analytics
+
+Every interaction event goes through `event()` in `lib/analytics.ts`; nothing calls
+`track()` directly. Event names are a closed union there and props are short scalars,
+never anything a visitor typed. Pageviews alone cannot see inside the desktop, which
+is why these exist.
