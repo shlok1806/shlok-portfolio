@@ -23,4 +23,3 @@ out/
 
 # typescript incremental build cache
 tsconfig.tsbuildinfo
-.env*
