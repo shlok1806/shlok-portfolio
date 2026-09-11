@@ -11,9 +11,11 @@ import { track } from "@vercel/analytics";
  * Two sinks. Vercel Web Analytics gets every event, but only records custom
  * events on Pro and above. PostHog is opt-in: set NEXT_PUBLIC_POSTHOG_KEY and
  * the client loads lazily on the first event; without the key it is never
- * even downloaded. PostHog runs with memory persistence, so no cookie is set
- * and a visitor is only a visitor for the length of the visit, which is the
- * question these events exist to answer.
+ * even downloaded. PostHog keeps its anonymous id in localStorage, never a
+ * cookie, so a returning browser is the same visitor and nothing is sent to
+ * the server on every request. Session recording is off in code whatever the
+ * project settings say: a portfolio has no business replaying strangers'
+ * screens, and the events answer the question on their own.
  */
 
 export type EventName =
@@ -68,11 +70,19 @@ function posthog(): Promise<Capture | null> {
       .then((mod) => {
         mod.default.init(POSTHOG_KEY, {
           api_host: POSTHOG_HOST,
-          persistence: "memory",
+          // PostHog's own dated preset of sane defaults; the lines below override the ones that matter here
+          defaults: "2026-05-30",
+          persistence: "localStorage",
           capture_pageview: true,
+          // The pageleave carries how long the page was open: time on site, per visit
           capture_pageleave: true,
           autocapture: false,
+          disable_session_recording: true,
           respect_dnt: true,
+          // PostHog drops events from bot user agents, which includes any driven
+          // browser. Set NEXT_PUBLIC_POSTHOG_ALLOW_BOTS=1 in .env.local to check
+          // the pipeline from automation; never in a deployed environment.
+          opt_out_useragent_filter: process.env.NEXT_PUBLIC_POSTHOG_ALLOW_BOTS === "1",
         });
         return mod.default;
       })
