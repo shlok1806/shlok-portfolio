@@ -131,6 +131,7 @@ export function MusicApp() {
           vol
           <input
             type="range"
+            name="volume"
             min={0}
             max={100}
             value={Math.round(volume * 100)}
@@ -145,6 +146,7 @@ export function MusicApp() {
         <span className="sr-only">Seek</span>
         <input
           type="range"
+          name="seek"
           min={0}
           max={Math.max(1, Math.floor(duration))}
           value={Math.floor(position)}

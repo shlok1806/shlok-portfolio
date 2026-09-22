@@ -668,6 +668,11 @@ const PATHS: Record<string, string> = Object.fromEntries(
 
 export type IconName = keyof typeof PIXMAPS;
 
+/** The same pixmap as SVG path data on the 16x16 grid, for drawing into a canvas with Path2D */
+export function pixmapPath(name: IconName): string {
+  return PATHS[name] ?? "";
+}
+
 /**
  * One pixmap, inheriting the colour of whatever chrome it sits in.
  *

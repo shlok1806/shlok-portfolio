@@ -17,7 +17,7 @@ import { spotlightItems, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
 import { Spotlight } from "./Spotlight";
 import { NotificationTray } from "./Notifications";
-import { BootScreen } from "./BootScreen";
+import { MacBoot, type BootEnd } from "./MacBoot";
 import { DesktopIcon, ICON_H, ICON_PITCH, ICON_W, type IconPos } from "./DesktopIcon";
 import { RootMenu } from "./RootMenu";
 import { Screensaver } from "./Screensaver";
@@ -33,7 +33,10 @@ interface RootMenuPos {
 }
 
 export function Desktop() {
-  /* boot: the kernel log; on: the desktop is up under the tube warming; up: running */
+  /*
+   * boot: the desktop is running under the Macintosh overlay, inert;
+   * on: the boot was cut short and the tube warms up over it; up: running
+   */
   const [phase, setPhase] = useState<"boot" | "on" | "up">("boot");
   const booted = phase !== "boot";
   const powerDone = useCallback(() => setPhase("up"), []);
@@ -488,12 +491,14 @@ export function Desktop() {
    * What the machine shows when you log in: a shell, with whoami already run.
    * The same on a phone, where it fills the screen - a grid of icons with no
    * name on it is a worse first screen than a card you can close.
+   *
+   * It opens under the boot rather than after it, so the screen the camera
+   * flies into already has it.
    */
   useEffect(() => {
-    if (!booted) return;
     const t = setTimeout(() => launch("xterm"), 260);
     return () => clearTimeout(t);
-  }, [booted, launch]);
+  }, [launch]);
 
   /*
    * Screensaver after a stretch of nothing. Listeners are passive and only
@@ -582,6 +587,21 @@ export function Desktop() {
     return () => window.removeEventListener("keydown", onKey);
   }, [booted, wm, launch]);
 
+  /*
+   * Nothing under the boot overlay can be reached until it is gone. The shell
+   * tried to take focus when it opened and could not, so it gets it now -
+   * where there is a keyboard to type with, as the terminal itself decides.
+   */
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    el.inert = !booted;
+    if (!booted || touch) return;
+    const id = focusedRef.current;
+    const win = id ? el.querySelector<HTMLElement>(`[data-win-content="${id}"]`) : null;
+    (win?.querySelector<HTMLElement>("input") ?? win)?.focus({ preventScroll: true });
+  }, [booted, touch]);
+
   /* Arrow keys walk the desktop icons, the way an X11 file manager did */
   const onIconKeys = useCallback((e: React.KeyboardEvent<HTMLUListElement>) => {
     if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
@@ -593,19 +613,15 @@ export function Desktop() {
     buttons[(i + step + buttons.length) % buttons.length]?.focus();
   }, []);
 
-  if (phase === "boot") {
-    return (
-      <main className="scanlines vignette">
-        <BootScreen
-          onComplete={(skipped) => {
-            event("boot", { skipped, touch });
-            setPhase("on");
-            playSfx("boot");
-          }}
-        />
-      </main>
-    );
-  }
+  const bootDone = useCallback(
+    (how: BootEnd) => {
+      event("boot", { skipped: how !== "played", touch });
+      // The push-in through the screen was the power-on; cut short, the tube still warms up
+      setPhase(how === "played" ? "up" : "on");
+      playSfx("boot");
+    },
+    [touch],
+  );
 
   return (
     <main className="scanlines vignette">
@@ -766,6 +782,7 @@ export function Desktop() {
         {announcement}
       </div>
       <ZoomOutline />
+      {phase === "boot" && <MacBoot desktop={rootRef} onDone={bootDone} />}
       {phase === "on" && <CrtPowerOn onDone={powerDone} />}
       {idle && <Screensaver label="ShlokOS" onWake={() => setIdle(false)} />}
     </main>

@@ -59,6 +59,7 @@ export function TerminalInput({
         <input
           ref={inputRef}
           type="text"
+          name="command"
           value={value}
           onChange={e => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
