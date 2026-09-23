@@ -1,10 +1,21 @@
 import { createRef } from "react";
 import { act, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MacSceneProps } from "@/components/os/boot/MacScene";
 
-// The scene is WebGL and is verified in a browser; here it is a stage that never gets ready
-vi.mock("next/dynamic", () => ({ default: () => () => null }));
-vi.mock("modern-screenshot", () => ({ domToCanvas: vi.fn(() => new Promise(() => {})) }));
+/*
+ * The scene is WebGL and is verified in a browser; here it is a stage that
+ * only gets ready when a test says so, and whose props a test can read.
+ */
+const scene = vi.hoisted(() => ({ props: null as MacSceneProps | null }));
+vi.mock("next/dynamic", () => ({
+  default: () => (props: MacSceneProps) => {
+    scene.props = props;
+    return null;
+  },
+}));
+const photo = vi.hoisted(() => ({ take: () => new Promise<HTMLCanvasElement>(() => {}) }));
+vi.mock("modern-screenshot", () => ({ domToCanvas: () => photo.take() }));
 
 import { MacBoot } from "@/components/os/MacBoot";
 
@@ -23,17 +34,27 @@ function gl(available: boolean) {
   );
 }
 
-function boot() {
+function boot(desktop = createRef<HTMLElement>()) {
   const onDone = vi.fn();
-  const desktop = createRef<HTMLElement>();
   render(<MacBoot desktop={desktop} onDone={onDone} />);
   return onDone;
+}
+
+/** A desktop with its first window mapped, ready to be photographed */
+function mappedDesktop() {
+  const el = document.createElement("div");
+  el.innerHTML = "<div data-window></div>";
+  document.body.append(el);
+  return { current: el };
 }
 
 describe("MacBoot", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     motion(false);
+    scene.props = null;
+    photo.take = () => new Promise(() => {});
+    Object.defineProperty(document, "fonts", { value: { ready: Promise.resolve() }, configurable: true });
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -71,6 +92,43 @@ describe("MacBoot", () => {
     act(() => {
       vi.advanceTimersByTime(200);
     });
+    expect(onDone).toHaveBeenCalledWith("failed");
+  });
+
+  it("holds the machine still until the desktop has been photographed", async () => {
+    gl(true);
+    let develop!: (c: HTMLCanvasElement) => void;
+    photo.take = () => new Promise((r) => (develop = r));
+    const onDone = boot(mappedDesktop());
+    act(() => scene.props!.onReady());
+    await act(() => vi.advanceTimersByTimeAsync(1000));
+    // The rasteriser is still holding the main thread: nothing may be moving
+    expect(scene.props!.play).toBe(false);
+
+    const picture = document.createElement("canvas");
+    await act(async () => develop(picture));
+    expect(scene.props!.play).toBe(true);
+    expect(scene.props!.desktop).toBe(picture);
+    await act(() => vi.advanceTimersByTimeAsync(5000));
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("plays on a boot glyph when the desktop cannot be photographed", async () => {
+    gl(true);
+    photo.take = () => Promise.reject(new Error("tainted"));
+    boot(mappedDesktop());
+    act(() => scene.props!.onReady());
+    await act(() => vi.advanceTimersByTimeAsync(500));
+    expect(scene.props!.play).toBe(true);
+    expect(scene.props!.desktop).toBeNull();
+  });
+
+  it("gives up on a stage that is loaded but a photo that has not come in four seconds", async () => {
+    gl(true);
+    const onDone = boot(mappedDesktop());
+    act(() => scene.props!.onReady());
+    await act(() => vi.advanceTimersByTimeAsync(4100));
+    expect(scene.props!.play).toBe(false);
     expect(onDone).toHaveBeenCalledWith("failed");
   });
 
