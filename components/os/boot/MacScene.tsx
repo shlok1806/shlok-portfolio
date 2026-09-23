@@ -27,9 +27,14 @@ const PIXEL = 4;
 const MAX_STEP = 1 / 30;
 
 export interface MacSceneProps {
-  /** the live desktop, rasterised; the screen shows a boot glyph until it lands */
+  /** the live desktop, rasterised; the screen shows a boot glyph if it could not be */
   desktop: HTMLCanvasElement | null;
-  /** first frame drawn: the overlay can drop its loading state */
+  /**
+   * start the performance; until then the stage holds its first frame, so
+   * nothing is moving while the desktop is photographed
+   */
+  play: boolean;
+  /** first frame drawn: the stage is loaded */
   onReady: () => void;
   /** the camera is square on the glass and the screen fills the viewport */
   onArrive: () => void;
@@ -120,7 +125,7 @@ function frozenAt(): number | null {
   return v === null || Number.isNaN(Number(v)) ? null : Number(v);
 }
 
-/** What the tube shows before the desktop is ready: the site's own monitor pixmap */
+/** What the tube shows when the desktop could not be photographed: the site's own monitor pixmap */
 function bootGlyph(aspect: number): HTMLCanvasElement {
   const h = 96;
   const w = Math.round(h * aspect);
@@ -158,7 +163,7 @@ function mapping(glassAspect: number, viewAspect: number, zoom: number) {
   return { rx, ry, ox: (1 - rx) / 2, oy: (1 - ry) / 2 };
 }
 
-function Stage({ desktop, onReady, onArrive }: MacSceneProps) {
+function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
   const { scene: gltfScene } = useLoader(GLTFLoader, MODEL);
   const { camera, size, setDpr } = useThree();
   const aspect = size.width / size.height;
@@ -247,7 +252,7 @@ function Stage({ desktop, onReady, onArrive }: MacSceneProps) {
     );
   }, [glass]);
 
-  const clock = useRef({ t: 0, frames: 0, arrived: false, swappedAt: -1 });
+  const clock = useRef({ t: 0, frames: 0, arrived: false });
   const stage = useMemo(() => ({ pos: new THREE.Vector3(), look: new THREE.Vector3(), rise: 0 }), []);
   const tmp = useMemo(
     () => ({
@@ -261,17 +266,12 @@ function Stage({ desktop, onReady, onArrive }: MacSceneProps) {
     [],
   );
 
-  useEffect(() => {
-    // Wall time, not performance time: a held frame must not hold the blink too
-    clock.current.swappedAt = picture ? performance.now() : -1;
-  }, [picture]);
-
   useFrame((_, dt) => {
     const k = clock.current;
     k.frames += 1;
     // The first frames compile shaders and upload the model; start the clock after them
     if (k.frames === 2) onReady();
-    if (k.frames > 2) k.t = freeze ?? k.t + Math.min(dt, MAX_STEP);
+    if (k.frames > 2 && play) k.t = freeze ?? k.t + Math.min(dt, MAX_STEP);
     show.timeline.time(Math.min(k.t, show.duration));
     const p: Pose = show.pose;
 
@@ -282,15 +282,14 @@ function Stage({ desktop, onReady, onArrive }: MacSceneProps) {
     const side = 1 / Math.sqrt(p.squash);
     body.current!.scale.set(side, p.squash, side);
 
-    // The tube: warm-up flicker from the timeline, and a blink when the picture arrives
+    // The tube: warm-up flicker from the timeline
     const mat = glassRef.current!.material as THREE.MeshBasicMaterial;
-    const blink = k.swappedAt >= 0 && performance.now() - k.swappedAt < 90 ? 0.25 : 1;
     const tex = picture ?? glyph;
     if (mat.map !== tex) {
       mat.map = tex;
       mat.needsUpdate = true;
     }
-    mat.color.setScalar(p.screen * blink);
+    mat.color.setScalar(p.screen);
     if (picture) {
       // The mapping is in terms of the photo; step inside its one-pixel frame
       const img = picture.image as HTMLCanvasElement;

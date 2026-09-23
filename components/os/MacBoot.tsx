@@ -13,7 +13,7 @@ import { useCoarsePointer } from "@/hooks/useCoarsePointer";
  */
 const MacScene = dynamic(() => import("./boot/MacScene"), { ssr: false });
 
-/** How long a slow connection may keep a visitor looking at black before the desktop just appears */
+/** How long a slow connection or machine may keep a visitor looking at black before the desktop just appears */
 const LOAD_LIMIT = 4000;
 /** The xterm maps in over 100ms; photograph it once it has, or without it after WINDOW_WAIT */
 const MAPPED = 150;
@@ -43,18 +43,29 @@ function webgl(): boolean {
  * hops about a dark stage showing that desktop, then the camera goes in
  * through its screen and the overlay steps away from the real thing.
  *
+ * The desktop is photographed before the machine moves. Rasterising it holds
+ * the main thread for half a second on a fast laptop and seconds on a slow
+ * one; with the performance running, the Macintosh hung in mid-air for that
+ * long. So the stage loads while the photo is taken, and the performance
+ * starts only once both are done.
+ *
  * Any key or tap skips it, and it never plays where it cannot or should not:
  * reduced motion, a hidden tab (background timers would stretch it to
- * minutes), no WebGL, or a connection too slow to bring the scene in time.
+ * minutes), no WebGL, or a connection or machine too slow to have the scene
+ * and the photo in time.
  */
 export function MacBoot({ desktop, onDone }: Props) {
-  const [ready, setReady] = useState(false);
+  const [staged, setStaged] = useState(false);
+  /* The photo is taken, or could not be; either way the performance can start */
+  const [photographed, setPhotographed] = useState(false);
   const [fading, setFading] = useState(false);
   const [picture, setPicture] = useState<HTMLCanvasElement | null>(null);
+  const ready = staged && photographed;
   const done = useRef(false);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
   const readyRef = useRef(false);
+  readyRef.current = ready;
   const touch = useCoarsePointer();
 
   const finish = useCallback((how: BootEnd) => {
@@ -117,6 +128,7 @@ export function MacBoot({ desktop, onDone }: Props) {
       } catch {
         /* the screen keeps its boot glyph; the handoff still lands on the real desktop */
       }
+      if (live) setPhotographed(true);
     };
     void shoot();
     return () => {
@@ -124,10 +136,7 @@ export function MacBoot({ desktop, onDone }: Props) {
     };
   }, [desktop]);
 
-  const onReady = useCallback(() => {
-    readyRef.current = true;
-    setReady(true);
-  }, []);
+  const onReady = useCallback(() => setStaged(true), []);
 
   const onArrive = useCallback(() => {
     setFading(true);
@@ -140,7 +149,7 @@ export function MacBoot({ desktop, onDone }: Props) {
       style={fading ? { animation: `crt-line ${FADE}ms steps(3) both` } : undefined}
     >
       <div aria-hidden>
-        <MacScene desktop={picture} onReady={onReady} onArrive={onArrive} />
+        <MacScene desktop={picture} play={ready} onReady={onReady} onArrive={onArrive} />
       </div>
 
       {/*
