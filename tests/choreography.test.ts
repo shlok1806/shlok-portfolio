@@ -88,8 +88,8 @@ describe("boot choreography", () => {
     expect(b.map(({ p }) => p.plug)).toEqual(a.map(({ p }) => p.plug));
   });
 
-  it("fits inside the time a visitor will wait for a boot", () => {
+  it("is over before a visitor gets bored of it", () => {
     const { show } = play();
-    expect(show.duration).toBeLessThan(7);
+    expect(show.duration).toBeLessThan(3);
   });
 });
