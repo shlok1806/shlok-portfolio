@@ -40,12 +40,12 @@ function webgl(): boolean {
 
 /**
  * The boot, as an overlay over a desktop that is already running: a Macintosh
- * hops about a dark stage showing that desktop, then the camera goes in
+ * on a dark stage gets plugged in and powers up showing that desktop, then the camera goes in
  * through its screen and the overlay steps away from the real thing.
  *
  * The desktop is photographed before the machine moves. Rasterising it holds
  * the main thread for half a second on a fast laptop and seconds on a slow
- * one; with the performance running, the Macintosh hung in mid-air for that
+ * one; with the performance running, the performance froze mid-motion for that
  * long. So the stage loads while the photo is taken, and the performance
  * starts only once both are done.
  *
