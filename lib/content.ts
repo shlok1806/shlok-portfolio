@@ -19,7 +19,7 @@ export const PROFILE = {
   role: "Software Engineer",
   bio: "Currently at JCAIL, Johnson Controls' AI lab in the University of Illinois Research Park, and working on the Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
   location: "Champaign, IL",
-  status: "Actively seeking SWE internships 2027",
+  status: "Incoming a16z speedrun Alpha, Summer 2027",
   interests: ["low-latency systems", "compilers", "LLM inference"],
 };
 
@@ -44,6 +44,17 @@ export interface Role {
 }
 
 export const EXPERIENCE: Role[] = [
+  {
+    period: "Summer 2027",
+    years: "2027",
+    role: "speedrun Alpha (incoming)",
+    org: "a16z",
+    current: false,
+    metrics: [],
+    bullets: [
+      "Incoming member of a16z speedrun Alpha for Summer 2027",
+    ],
+  },
   {
     period: "Sep 2026 - Present",
     years: "2026",
@@ -164,6 +175,22 @@ export interface Project {
 }
 
 export const PROJECTS: Project[] = [
+  {
+    slug: "window-organizer",
+    name: "window-organizer/",
+    date: "Sep 2026",
+    stack: "Swift",
+    stackFull: ["Swift", "macOS Accessibility API", "CGWindowList"],
+    tagline: "macOS window organizer that takes over nothing until you press a key",
+    note: "in progress",
+    bullets: [
+      "Content-aware layout engine that sizes windows by what they are, so a music player gives up its monitor and a terminal keeps its space",
+      "On a real desktop, cut hidden window pixels from 64.8% to 0% and windows more than half buried from 5 to 0",
+      "Combines CGWindowList for true on-screen order with the Accessibility API for moving windows, and discovers each window's undocumented minimum size by requesting 1x1 and reading back the refusal",
+      "Undoable by design: a dry-run plan by default, --apply to arrange, --undo to put every window back",
+    ],
+    href: "https://github.com/shlok1806/window-organizer",
+  },
   {
     slug: "feelens",
     name: "feelens/",
