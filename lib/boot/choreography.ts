@@ -84,35 +84,33 @@ export function choreograph(): Choreography {
   const tl = gsap.timeline({ paused: true });
 
   // The cord snakes in across the floor and rises to the socket, slowing as it lines up
-  tl.to(pose, { plug: PLUG_AIMED, duration: 1.5, ease: "power2.inOut" }, 0.25);
+  tl.to(pose, { plug: PLUG_AIMED, duration: 0.75, ease: "power2.inOut" }, 0.05);
 
   // A beat to aim, a small wind-up back, then pushed home hard
-  const plugAt = 2.2;
-  tl.to(pose, { plug: PLUG_AIMED - 0.03, duration: 0.14, ease: "power1.out" }, plugAt - 0.26);
-  tl.to(pose, { plug: 1, duration: 0.12, ease: "power3.in" }, plugAt - 0.12);
+  const plugAt = 1.05;
+  tl.to(pose, { plug: PLUG_AIMED - 0.03, duration: 0.1, ease: "power1.out" }, plugAt - 0.2);
+  tl.to(pose, { plug: 1, duration: 0.1, ease: "power2.in" }, plugAt - 0.1);
 
   // Contact: a spark, and the jolt runs through the case
   tl.to(pose, { spark: 1, duration: 0.03, ease: "none" }, plugAt);
-  tl.to(pose, { spark: 0, duration: 0.3, ease: "power2.out" }, plugAt + 0.03);
+  tl.to(pose, { spark: 0, duration: 0.25, ease: "power2.out" }, plugAt + 0.03);
   tl.to(pose, { squash: 0.9, roll: 0.05, duration: 0.05, ease: "power2.out" }, plugAt);
-  tl.to(pose, { squash: 1, duration: 0.6, ease: "elastic.out(1.2, 0.3)" }, plugAt + 0.05);
-  tl.to(pose, { roll: 0, duration: 0.55, ease: "elastic.out(1, 0.35)" }, plugAt + 0.05);
+  tl.to(pose, { squash: 1, duration: 0.45, ease: "elastic.out(1.2, 0.3)" }, plugAt + 0.05);
+  tl.to(pose, { roll: 0, duration: 0.45, ease: "elastic.out(1, 0.35)" }, plugAt + 0.05);
 
-  // The tube warms up: a flicker, a false start, then it comes up
-  tl.to(pose, { screen: 0.4, duration: 0.04, ease: "none" }, plugAt + 0.14);
-  tl.to(pose, { screen: 0.05, duration: 0.06, ease: "none" }, plugAt + 0.2);
-  tl.to(pose, { screen: 0.6, duration: 0.04, ease: "none" }, plugAt + 0.34);
-  tl.to(pose, { screen: 0.15, duration: 0.08, ease: "none" }, plugAt + 0.4);
-  tl.to(pose, { screen: 1, duration: 0.35, ease: "power2.out" }, plugAt + 0.55);
+  // The tube warms up: one flicker, then it comes up
+  tl.to(pose, { screen: 0.4, duration: 0.03, ease: "none" }, plugAt + 0.08);
+  tl.to(pose, { screen: 0.05, duration: 0.04, ease: "none" }, plugAt + 0.12);
+  tl.to(pose, { screen: 1, duration: 0.25, ease: "power2.out" }, plugAt + 0.2);
 
   // The camera swings round to face it
-  const swingAt = plugAt + 0.45;
-  const swingFor = 1.05;
-  tl.to(pose, { orbit: 0, duration: swingFor, ease: "power2.inOut" }, swingAt);
+  const swingAt = plugAt + 0.15;
+  const swingFor = 0.6;
+  tl.to(pose, { orbit: 0, duration: swingFor, ease: "sine.inOut" }, swingAt);
 
   // And goes in through the glass
-  const zoomAt = swingAt + swingFor + 0.15;
-  const zoomFor = 1.2;
+  const zoomAt = swingAt + swingFor + 0.05;
+  const zoomFor = 0.8;
   tl.to(pose, { zoom: 1, duration: zoomFor, ease: "power3.inOut" }, zoomAt);
 
   return { timeline: tl, pose, duration: zoomAt + zoomFor, plugAt, zoomAt };
