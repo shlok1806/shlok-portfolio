@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, type ComponentType } from "react";
 import * as THREE from "three";
-import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { choreograph, PLUG_AIMED, type Pose } from "@/lib/boot/choreography";
 import { pixmapPath } from "@/lib/os/icons";
@@ -32,12 +32,7 @@ const CABLE_RADIUS = 0.014;
 const CABLE_SAMPLES = 40;
 
 export interface MacSceneProps {
-  /** the live desktop, rasterised; the screen shows a boot glyph if it could not be */
-  desktop: HTMLCanvasElement | null;
-  /**
-   * start the performance; until then the stage holds its first frame, so
-   * nothing is moving while the desktop is photographed
-   */
+  /** start the performance; until then the stage holds its first frame */
   play: boolean;
   /** first frame drawn: the stage is loaded */
   onReady: () => void;
@@ -57,7 +52,7 @@ interface Glass {
 /**
  * The model's screen quad, in the model's normalised space. The mesh is a few
  * triangles tilted back a little, the way the real case is; the plane that
- * carries the desktop is laid exactly over it.
+ * carries the boot screen is laid exactly over it.
  */
 function measureGlass(mesh: THREE.Mesh, root: THREE.Object3D): Glass {
   root.updateWorldMatrix(true, true);
@@ -130,9 +125,10 @@ function frozenAt(): number | null {
   return v === null || Number.isNaN(Number(v)) ? null : Number(v);
 }
 
-/** What the tube shows when the desktop could not be photographed: the site's own monitor pixmap */
+/** What the tube boots to: the site's own monitor pixmap on a Macintosh's grey */
 function bootGlyph(aspect: number): HTMLCanvasElement {
-  const h = 96;
+  // Tall enough that the icon sits small and centred once the screen fills the viewport, as a real boot screen
+  const h = 240;
   const w = Math.round(h * aspect);
   const c = document.createElement("canvas");
   c.width = w;
@@ -146,26 +142,6 @@ function bootGlyph(aspect: number): HTMLCanvasElement {
   g.fillStyle = "#111";
   g.fill(new Path2D(pixmapPath("monitor")));
   return c;
-}
-
-/**
- * How the desktop image maps onto the glass. On the stage it is cropped to
- * cover the screen like a picture on a tube; with the camera square on, it is
- * exactly the part of the glass the viewport shows, so the last frame is the
- * real desktop at 1:1 and the overlay can simply fade.
- */
-function mapping(glassAspect: number, viewAspect: number, zoom: number) {
-  // cover-crop the image into the glass
-  const rx0 = viewAspect > glassAspect ? glassAspect / viewAspect : 1;
-  const ry0 = viewAspect > glassAspect ? 1 : viewAspect / glassAspect;
-  // the visible rectangle of the glass once the camera fills the viewport with it
-  const vw = viewAspect > glassAspect ? 1 : viewAspect / glassAspect;
-  const vh = viewAspect > glassAspect ? glassAspect / viewAspect : 1;
-  const rx1 = 1 / vw;
-  const ry1 = 1 / vh;
-  const rx = THREE.MathUtils.lerp(rx0, rx1, zoom);
-  const ry = THREE.MathUtils.lerp(ry0, ry1, zoom);
-  return { rx, ry, ox: (1 - rx) / 2, oy: (1 - ry) / 2 };
 }
 
 /**
@@ -192,8 +168,7 @@ function cordRoute(socket: THREE.Vector3) {
   return { approach, aimed, seated };
 }
 
-function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
-  const { scene: gltfScene } = useLoader(GLTFLoader, MODEL);
+function Stage({ play, onReady, onArrive, gltfScene }: MacSceneProps & { gltfScene: THREE.Group }) {
   const { camera, size, setDpr } = useThree();
   const aspect = size.width / size.height;
 
@@ -253,31 +228,8 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
     tex.magFilter = THREE.NearestFilter;
     return tex;
   }, [glassAspect]);
-  /*
-   * The photo gets a one-pixel black frame. Mid push-in the mapping reaches
-   * past the photo's edges, and clamping would smear its last row of pixels
-   * across the glass; clamped to black, it reads as the dark border a tube
-   * always had around its picture.
-   */
-  const picture = useMemo(() => {
-    if (!desktop) return null;
-    const framed = document.createElement("canvas");
-    framed.width = desktop.width + 2;
-    framed.height = desktop.height + 2;
-    const g = framed.getContext("2d")!;
-    g.fillStyle = "#000";
-    g.fillRect(0, 0, framed.width, framed.height);
-    g.drawImage(desktop, 1, 1);
-    const tex = new THREE.CanvasTexture(framed);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-    tex.generateMipmaps = false;
-    tex.minFilter = THREE.LinearFilter;
-    return tex;
-  }, [desktop]);
   useEffect(() => () => glyph.dispose(), [glyph]);
-  useEffect(() => () => picture?.dispose(), [picture]);
-
+  
   // The glass plane, oriented once in model space
   useLayoutEffect(() => {
     const g = glassRef.current;
@@ -325,21 +277,7 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
 
     // The tube: warm-up flicker from the timeline
     const mat = glassRef.current!.material as THREE.MeshBasicMaterial;
-    const tex = picture ?? glyph;
-    if (mat.map !== tex) {
-      mat.map = tex;
-      mat.needsUpdate = true;
-    }
     mat.color.setScalar(p.screen);
-    if (picture) {
-      // The mapping is in terms of the photo; step inside its one-pixel frame
-      const img = picture.image as HTMLCanvasElement;
-      const fx = (img.width - 2) / img.width;
-      const fy = (img.height - 2) / img.height;
-      const m = mapping(glassAspect, aspect, p.zoom);
-      picture.repeat.set(m.rx * fx, m.ry * fy);
-      picture.offset.set(m.ox * fx + 1 / img.width, m.oy * fy + 1 / img.height);
-    }
 
     // The power cord: the socket where the case is now, jolt and all, and the plug on its way to it
     socketRef.current!.updateWorldMatrix(true, false);
@@ -444,7 +382,7 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
             <primitive object={model} />
             <mesh ref={glassRef} renderOrder={1}>
               <planeGeometry args={[glass.width, glass.height]} />
-              <meshBasicMaterial toneMapped={false} color="black" />
+              <meshBasicMaterial toneMapped={false} color="black" map={glyph} />
             </mesh>
             {/* The socket the cord goes into */}
             <group ref={socketRef} position={socket}>
@@ -501,10 +439,10 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
 
 /**
  * The boot: a dark Macintosh under a spotlight gets plugged in, powers on,
- * and the camera goes in through its screen, where the desktop is already
+ * and the camera goes in through its screen, behind which the desktop is already
  * running.
  */
-export default function MacScene(props: MacSceneProps) {
+function MacScene({ gltfScene, ...props }: MacSceneProps & { gltfScene: THREE.Group }) {
   return (
     <Canvas
       flat
@@ -517,11 +455,22 @@ export default function MacScene(props: MacSceneProps) {
         gl.domElement.style.imageRendering = "pixelated";
       }}
     >
-      <Suspense fallback={null}>
-        <Stage {...props} />
-      </Suspense>
+      <Stage {...props} gltfScene={gltfScene} />
     </Canvas>
   );
 }
 
-useLoader.preload(GLTFLoader, MODEL);
+/* The model starts downloading the moment this module loads */
+const model = new GLTFLoader().loadAsync(MODEL);
+
+/**
+ * The scene, handed over once its model is in. Nothing inside it suspends:
+ * React holds back revealing a resolved Suspense boundary for a few hundred
+ * milliseconds, which on the boot is a few hundred milliseconds of black.
+ */
+export async function loadMacScene(): Promise<ComponentType<MacSceneProps>> {
+  const { scene } = await model;
+  return function LoadedMacScene(props: MacSceneProps) {
+    return <MacScene {...props} gltfScene={scene} />;
+  };
+}
