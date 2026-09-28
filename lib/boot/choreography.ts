@@ -62,6 +62,12 @@ export const MARK = { x: 0, z: 0.15 } as const;
 /** Plug value where it hangs lined up with the socket, a finger's width out */
 export const PLUG_AIMED = 0.85;
 
+/**
+ * Plug value just outside the frame. The route before it is off stage, so the
+ * performance starts the plug here rather than spend time moving it unseen.
+ */
+const PLUG_ENTERS = 0.8 * PLUG_AIMED;
+
 /** Where the camera starts: round to the machine's right, so the socket is in view */
 const ORBIT_START = 0.62;
 
@@ -80,14 +86,14 @@ export interface Choreography {
 
 /** Builds the whole boot. */
 export function choreograph(): Choreography {
-  const pose: Pose = { ...REST, x: MARK.x, z: MARK.z, orbit: ORBIT_START };
+  const pose: Pose = { ...REST, x: MARK.x, z: MARK.z, plug: PLUG_ENTERS, orbit: ORBIT_START };
   const tl = gsap.timeline({ paused: true });
 
-  // The cord snakes in across the floor and rises to the socket, slowing as it lines up
-  tl.to(pose, { plug: PLUG_AIMED, duration: 0.75, ease: "power2.inOut" }, 0.05);
+  // The cord shoots in across the floor and rises to the socket, slowing as it lines up
+  tl.to(pose, { plug: PLUG_AIMED, duration: 0.4, ease: "power2.out" }, 0);
 
   // A beat to aim, a small wind-up back, then pushed home hard
-  const plugAt = 1.05;
+  const plugAt = 0.65;
   tl.to(pose, { plug: PLUG_AIMED - 0.03, duration: 0.1, ease: "power1.out" }, plugAt - 0.2);
   tl.to(pose, { plug: 1, duration: 0.1, ease: "power2.in" }, plugAt - 0.1);
 
