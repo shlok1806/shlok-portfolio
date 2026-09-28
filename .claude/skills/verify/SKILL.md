@@ -45,10 +45,10 @@ npx -y chrome-devtools-axi screenshot shot.png
 - **Take snapshot refs fresh.** Refs (`uid=g227:35_3`) go stale on reload and a
   stale click silently lands on a different element — a tube-selector click looked
   like an off-by-one bug until re-tested with fresh refs.
-- The boot (a 3D Macintosh being plugged in, ~2.6s) skips on any key or tap, on reduced motion, when
+- The boot (a 3D Macintosh being plugged in, ~2.2s) skips on any key or tap, on reduced motion, when
   the tab is hidden, or without WebGL. Press a key to get straight to the desktop.
 - **`?boot-at=<seconds>`** holds the boot on one frame of its performance, e.g.
-  `?boot-at=1.05` as the plug goes home or `?boot-at=2.64` for the last frame before the handoff,
+  `?boot-at=0.65` as the plug goes home or `?boot-at=2.24` for the last frame before the handoff,
   which should match the live desktop pixel for pixel. Headless Chrome renders it
   with SwiftShader.
 
