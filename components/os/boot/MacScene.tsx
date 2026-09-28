@@ -4,7 +4,7 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { choreograph, type Pose } from "@/lib/boot/choreography";
+import { choreograph, PLUG_AIMED, type Pose } from "@/lib/boot/choreography";
 import { pixmapPath } from "@/lib/os/icons";
 
 /*
@@ -25,6 +25,11 @@ const FOV = 28;
 const PIXEL = 4;
 /** The longest a frame may advance the performance, so a stall slows it rather than skipping */
 const MAX_STEP = 1 / 30;
+
+/* The power cord, in the machine's units (it stands 1 tall) */
+const PLUG_LEN = 0.09;
+const CABLE_RADIUS = 0.014;
+const CABLE_SAMPLES = 40;
 
 export interface MacSceneProps {
   /** the live desktop, rasterised; the screen shows a boot glyph if it could not be */
@@ -163,19 +168,46 @@ function mapping(glassAspect: number, viewAspect: number, zoom: number) {
   return { rx, ry, ox: (1 - rx) / 2, oy: (1 - ry) / 2 };
 }
 
+/**
+ * Where the back of the plug travels, in the world: in from off stage across
+ * the floor, up to hang a little out from the socket, then straight in.
+ * `socket` is the hole in the side of the case; the plug points along -x.
+ */
+function cordRoute(socket: THREE.Vector3) {
+  const seated = socket.clone().add(new THREE.Vector3(PLUG_LEN, 0, 0));
+  const aimed = seated.clone().add(new THREE.Vector3(0.08, 0, 0));
+  const floor = CABLE_RADIUS;
+  const approach = new THREE.CatmullRomCurve3(
+    [
+      new THREE.Vector3(socket.x + 6, floor, socket.z + 1.1),
+      new THREE.Vector3(socket.x + 2.4, floor, socket.z + 0.75),
+      new THREE.Vector3(socket.x + 1.1, floor, socket.z + 0.1),
+      new THREE.Vector3(socket.x + 0.55, floor, socket.z - 0.02),
+      new THREE.Vector3(aimed.x + 0.14, socket.y * 0.8, socket.z),
+      aimed,
+    ],
+    false,
+    "centripetal",
+  );
+  return { approach, aimed, seated };
+}
+
 function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
   const { scene: gltfScene } = useLoader(GLTFLoader, MODEL);
   const { camera, size, setDpr } = useThree();
   const aspect = size.width / size.height;
 
-  // A phone held upright sees a narrow stage, so the hops get shorter
-  const span = THREE.MathUtils.clamp(aspect / 1.6, 0.32, 1);
-  const show = useMemo(() => choreograph(span), [span]);
+  const show = useMemo(() => choreograph(), []);
 
   const rig = useRef<THREE.Group>(null);
   const tilt = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const glassRef = useRef<THREE.Mesh>(null);
+  const socketRef = useRef<THREE.Group>(null);
+  const plugRef = useRef<THREE.Group>(null);
+  const cableRef = useRef<THREE.Mesh>(null);
+  const sparkRef = useRef<THREE.Mesh>(null);
+  const sparkLight = useRef<THREE.PointLight>(null);
   const grain = useRef(PIXEL);
   const spot = useRef<THREE.SpotLight>(null);
   const floor = useRef<THREE.Group>(null);
@@ -184,7 +216,7 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
   const freeze = useMemo(frozenAt, []);
 
   /* The machine, normalised to stand 1 tall on the origin, with the desk set put away */
-  const { model, glass } = useMemo(() => {
+  const { model, glass, socket } = useMemo(() => {
     const m = gltfScene.clone(true);
     let screenMesh: THREE.Mesh | null = null;
     m.traverse((o) => {
@@ -207,7 +239,11 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
     const holder = new THREE.Group();
     holder.add(m);
     const glass = measureGlass(screenMesh!, holder);
-    return { model: holder, glass };
+    // The power socket: low in the right side of the case, toward the back, the way the real one sits
+    holder.updateWorldMatrix(true, true);
+    const b = new THREE.Box3().setFromObject(body);
+    const socket = new THREE.Vector3(b.max.x - 0.004, 0.17, THREE.MathUtils.lerp(b.min.z, b.max.z, 0.28));
+    return { model: holder, glass, socket };
   }, [gltfScene]);
 
   const glassAspect = glass.width / glass.height;
@@ -253,7 +289,7 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
   }, [glass]);
 
   const clock = useRef({ t: 0, frames: 0, arrived: false });
-  const stage = useMemo(() => ({ pos: new THREE.Vector3(), look: new THREE.Vector3(), rise: 0 }), []);
+  const stage = useMemo(() => ({ pos: new THREE.Vector3(), look: new THREE.Vector3() }), []);
   const tmp = useMemo(
     () => ({
       c: new THREE.Vector3(),
@@ -262,9 +298,14 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
       q: new THREE.Quaternion(),
       pos: new THREE.Vector3(),
       look: new THREE.Vector3(),
+      socket: new THREE.Vector3(),
+      back: new THREE.Vector3(),
+      dir: new THREE.Vector3(),
+      minusX: new THREE.Vector3(-1, 0, 0),
     }),
     [],
   );
+  useEffect(() => () => cableRef.current?.geometry.dispose(), []);
 
   useFrame((_, dt) => {
     const k = clock.current;
@@ -300,14 +341,45 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
       picture.offset.set(m.ox * fx + 1 / img.width, m.oy * fy + 1 / img.height);
     }
 
-    // The camera on the stage: far enough back that the whole floor is in frame, drifting after the machine
+    // The power cord: the socket where the case is now, jolt and all, and the plug on its way to it
+    socketRef.current!.updateWorldMatrix(true, false);
+    socketRef.current!.getWorldPosition(tmp.socket);
+    const route = cordRoute(tmp.socket);
+    const along = Math.min(p.plug / PLUG_AIMED, 1);
+    if (p.plug <= PLUG_AIMED) {
+      route.approach.getPointAt(along, tmp.back);
+      route.approach.getTangentAt(Math.max(along, 0.001), tmp.dir).negate();
+    } else {
+      tmp.back.lerpVectors(route.aimed, route.seated, (p.plug - PLUG_AIMED) / (1 - PLUG_AIMED));
+      tmp.dir.copy(tmp.minusX);
+    }
+    const plugG = plugRef.current!;
+    plugG.visible = p.plug > 0.001;
+    plugG.position.copy(tmp.back);
+    plugG.quaternion.setFromUnitVectors(tmp.minusX, tmp.dir.normalize());
+    // The cable is everything behind the plug, back to wherever it comes in from off stage
+    const cable = cableRef.current!;
+    cable.visible = plugG.visible;
+    if (cable.visible) {
+      const pts: THREE.Vector3[] = [];
+      for (let i = 0; i <= CABLE_SAMPLES; i++) pts.push(route.approach.getPointAt((along * i) / CABLE_SAMPLES));
+      if (p.plug > PLUG_AIMED) pts.push(tmp.back.clone());
+      cable.geometry.dispose();
+      cable.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), CABLE_SAMPLES * 2, CABLE_RADIUS, 6);
+    }
+    const spark = sparkRef.current!;
+    spark.visible = p.spark > 0.01;
+    spark.position.copy(tmp.socket);
+    spark.scale.setScalar(0.01 + p.spark * 0.035);
+    sparkLight.current!.position.copy(tmp.socket).x += 0.08;
+    sparkLight.current!.intensity = p.spark * 1.2;
+
+    // The camera on the stage: round to the machine's right until the power is on, then square on
     const half = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-    const stageW = 1.9 * span + 1.1;
-    const dist = Math.max(3.9, stageW / (2 * half * aspect));
-    // and tilting up after a jump a beat late, the way an operator would, so the peak stays in shot
-    stage.rise += (Math.min(p.y, 1.1) - stage.rise) * (1 - Math.exp(-dt * 7));
-    stage.pos.set(p.x * 0.18, 0.55 + dist * 0.1 + stage.rise * 0.25, dist);
-    stage.look.set(p.x * 0.3, 0.42 + stage.rise * 0.55, p.z * 0.3);
+    const dist = Math.max(3.4, 2.1 / (2 * half * aspect));
+    stage.pos.set(p.x + Math.sin(p.orbit) * dist, 0.55 + dist * 0.1, p.z + Math.cos(p.orbit) * dist);
+    // looking a little past the machine toward where the cord comes in
+    stage.look.set(p.x + p.orbit * 0.45, 0.42, p.z);
 
     // The glass in the world, and the spot square in front of it that fills the viewport
     const g = glassRef.current!;
@@ -374,9 +446,43 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
               <planeGeometry args={[glass.width, glass.height]} />
               <meshBasicMaterial toneMapped={false} color="black" />
             </mesh>
+            {/* The socket the cord goes into */}
+            <group ref={socketRef} position={socket}>
+              <mesh>
+                <boxGeometry args={[0.012, 0.07, 0.085]} />
+                <meshStandardMaterial color="#1a1816" roughness={0.9} />
+              </mesh>
+            </group>
           </group>
         </group>
       </group>
+
+      {/* The plug points along -x from its back, where the cable joins */}
+      <group ref={plugRef} visible={false}>
+        <mesh position-x={-PLUG_LEN / 2} castShadow>
+          <boxGeometry args={[PLUG_LEN, 0.058, 0.07]} />
+          <meshStandardMaterial color="#26241f" roughness={0.55} />
+        </mesh>
+        {/* strain relief */}
+        <mesh position-x={0.02} rotation-z={Math.PI / 2} castShadow>
+          <cylinderGeometry args={[CABLE_RADIUS * 1.4, 0.024, 0.04, 8]} />
+          <meshStandardMaterial color="#26241f" roughness={0.55} />
+        </mesh>
+        {[-0.016, 0.016].map((dz) => (
+          <mesh key={dz} position={[-PLUG_LEN - 0.02, 0, dz]}>
+            <boxGeometry args={[0.04, 0.012, 0.006]} />
+            <meshStandardMaterial color="#b9b4a8" metalness={0.8} roughness={0.3} />
+          </mesh>
+        ))}
+      </group>
+      <mesh ref={cableRef} visible={false} castShadow>
+        <meshStandardMaterial color="#26241f" roughness={0.6} />
+      </mesh>
+      <mesh ref={sparkRef} visible={false}>
+        <icosahedronGeometry args={[1, 0]} />
+        <meshBasicMaterial color="#fff2b8" toneMapped={false} />
+      </mesh>
+      <pointLight ref={sparkLight} color="#ffd98a" intensity={0} distance={0.7} decay={2} />
 
       <group ref={floor}>
         <mesh rotation-x={-Math.PI / 2} position-y={-0.002}>
@@ -394,9 +500,9 @@ function Stage({ desktop, play, onReady, onArrive }: MacSceneProps) {
 }
 
 /**
- * The boot: a Macintosh dropped onto a dark stage, hopping about under a
- * spotlight until it stands up straight and the camera goes in through its
- * screen, where the desktop is already running.
+ * The boot: a dark Macintosh under a spotlight gets plugged in, powers on,
+ * and the camera goes in through its screen, where the desktop is already
+ * running.
  */
 export default function MacScene(props: MacSceneProps) {
   return (
