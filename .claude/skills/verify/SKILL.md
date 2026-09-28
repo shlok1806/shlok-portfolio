@@ -49,8 +49,9 @@ npx -y chrome-devtools-axi screenshot shot.png
   the tab is hidden, or without WebGL. Press a key to get straight to the desktop.
 - **`?boot-at=<seconds>`** holds the boot on one frame of its performance, e.g.
   `?boot-at=0.65` as the plug goes home or `?boot-at=2.24` for the last frame before the handoff,
-  which is the grey boot screen filling the viewport. Headless Chrome renders it
-  with SwiftShader.
+  which should match the live desktop pixel for pixel. Headless Chrome renders it
+  with SwiftShader, in the boot worker (`components/os/boot/scene.worker.tsx`);
+  browsers without OffscreenCanvas get the main-thread stage and a grey boot screen.
 
 ## State that changes what you see
 

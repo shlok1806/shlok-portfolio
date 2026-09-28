@@ -782,7 +782,7 @@ export function Desktop() {
         {announcement}
       </div>
       <ZoomOutline />
-      {phase === "boot" && <MacBoot onDone={bootDone} />}
+      {phase === "boot" && <MacBoot desktop={rootRef} onDone={bootDone} />}
       {phase === "on" && <CrtPowerOn onDone={powerDone} />}
       {idle && <Screensaver label="ShlokOS" onWake={() => setIdle(false)} />}
     </main>
