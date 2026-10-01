@@ -1,6 +1,19 @@
-import { EDUCATION } from "@/lib/content";
+import { EDUCATION, FELLOWSHIPS } from "@/lib/content";
 
-export function EducationOutput() {
+export function FellowshipsOutput() {
+  return (
+    <div className="space-y-3">
+      {FELLOWSHIPS.map((f) => (
+        <div key={f.name} className="space-y-1">
+          <p className="text-accent-ink font-bold text-[14px]">{f.name}</p>
+          <p className="text-faint text-[12px] pl-4">Fellowship · {f.org} · {f.period}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function EducationOutput({ fellowships = false }: { fellowships?: boolean }) {
   return (
     <div className="space-y-1">
       <div className="flex flex-wrap items-baseline gap-x-4">
@@ -13,6 +26,12 @@ export function EducationOutput() {
         <span className="shrink-0 text-faint">└─</span>
         <span className="text-faint">{EDUCATION.coursework.join(" · ")}</span>
       </div>
+      {fellowships && (
+        <div className="space-y-2 pt-3">
+          <p className="text-accent-ink text-[10px] tracking-[0.3em]">FELLOWSHIPS</p>
+          <FellowshipsOutput />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PROFILE, LINKS, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
+import { PROFILE, LINKS, EXPERIENCE, FELLOWSHIPS, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
 
 /*
  * The text version of the desktop.
@@ -99,6 +99,17 @@ export default function ResumePage() {
             {EDUCATION.coursework.join(", ")}
           </p>
         </div>
+      </Section>
+
+      <Section title="Fellowships">
+        {FELLOWSHIPS.map((f) => (
+          <article key={f.name} className="break-inside-avoid">
+            <h3 className="font-semibold text-neutral-950">{f.name}</h3>
+            <p className="font-mono text-[13px] tabular-nums text-neutral-600">
+              Fellowship · {f.org} · {f.period}
+            </p>
+          </article>
+        ))}
       </Section>
 
       <Section title="Experience">

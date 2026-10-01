@@ -13,10 +13,10 @@ export function WhoamiOutput() {
       <p className="text-faint text-[12px] leading-relaxed max-w-2xl">
         {PROFILE.bio} I like {PROFILE.interests.join(", ")}.
       </p>
-      <div className="flex items-center gap-2 mt-1">
+      <div className="flex items-start gap-2 mt-1">
         {/* A real status flag, so it stays - but nothing on this desktop is round */}
-        <span className="w-2 h-2 bg-primary animate-pulse" />
-        <span className="text-accent-ink text-[12px] font-bold tracking-widest uppercase">
+        <span className="mt-[5px] w-2 h-2 shrink-0 bg-primary animate-pulse" />
+        <span className="min-w-0 text-accent-ink text-[12px] font-bold tracking-widest uppercase">
           {PROFILE.status}
         </span>
       </div>

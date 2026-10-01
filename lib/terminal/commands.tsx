@@ -47,7 +47,7 @@ const PRINTERS: Record<string, () => React.ReactNode> = {
   projects:   () => <ProjectsOutput />,
   experience: () => <ExperienceOutput />,
   skills:     () => <SkillsOutput />,
-  education:  () => <EducationOutput />,
+  education:  () => <EducationOutput fellowships />,
   contact:    () => <ContactOutput />,
 };
 

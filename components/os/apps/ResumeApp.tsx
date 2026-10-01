@@ -1,7 +1,7 @@
 "use client";
 
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
-import { PROFILE, EXPERIENCE, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
+import { PROFILE, EXPERIENCE, FELLOWSHIPS, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
 import { ContactLinks } from "@/components/ContactLinks";
 import { DownloadButton } from "@/components/os/DownloadButton";
 import { DocShell, Rule } from "./DocShell";
@@ -56,6 +56,15 @@ export function ResumeApp() {
       </p>
       <p className="text-faint">{EDUCATION.detail}</p>
       <p className="mt-2 text-faint">{EDUCATION.coursework.join("  ·  ")}</p>
+
+      <Rule />
+      <Head>FELLOWSHIPS</Head>
+      {FELLOWSHIPS.map((f) => (
+        <div key={f.name}>
+          <p className="text-foreground">{f.name}</p>
+          <p className="text-faint">Fellowship · {f.org} · {f.period}</p>
+        </div>
+      ))}
 
       <Rule />
       <Head>EXPERIENCE</Head>

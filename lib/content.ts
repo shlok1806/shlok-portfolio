@@ -19,7 +19,7 @@ export const PROFILE = {
   role: "Software Engineer",
   bio: "Currently at JCAIL, Johnson Controls' AI lab in the University of Illinois Research Park, and working on the Charm++ parallel runtime at UIUC's Parallel Programming Lab.",
   location: "Champaign, IL",
-  status: "Incoming a16z speedrun Alpha, Summer 2027",
+  status: "Actively looking for Summer 2027 SWE, AI, and FDE opportunities",
   interests: ["low-latency systems", "compilers", "LLM inference"],
 };
 
@@ -44,17 +44,6 @@ export interface Role {
 }
 
 export const EXPERIENCE: Role[] = [
-  {
-    period: "Summer 2027",
-    years: "2027",
-    role: "speedrun Alpha (incoming)",
-    org: "a16z",
-    current: false,
-    metrics: [],
-    bullets: [
-      "Incoming member of a16z speedrun Alpha for Summer 2027",
-    ],
-  },
   {
     period: "Sep 2026 - Present",
     years: "2026",
@@ -328,6 +317,25 @@ export const SKILLS = [
   { key: "distributed", values: ["Raft consensus", "Charm++", "concurrency", "low-latency services", "large-scale data pipelines"] },
   { key: "cloud",       values: ["AWS (Lambda, Aurora, Bedrock, EC2, S3)", "Terraform", "Docker", "Vercel"] },
   { key: "tooling",     values: ["Git", "GitHub Actions", "CI/CD", "Vitest", "Catch2", "pytest", "CMake"] },
+];
+
+/**
+ * Not employment. EXPERIENCE is jobs and research roles; a fellowship stays
+ * here so it cannot be read as one of them. No metrics and no bullets: there
+ * is nothing to count until the program starts.
+ */
+export interface Fellowship {
+  period: string;
+  name: string;
+  org: string;
+}
+
+export const FELLOWSHIPS: Fellowship[] = [
+  {
+    period: "Summer 2027",
+    name: "a16z speedrun Alpha",
+    org: "a16z",
+  },
 ];
 
 const GPA = "3.91/4.00";

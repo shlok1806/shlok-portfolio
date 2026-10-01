@@ -1,5 +1,5 @@
 import { PROFILE } from "@/lib/content";
-import { EducationOutput } from "./EducationOutput";
+import { EducationOutput, FellowshipsOutput } from "./EducationOutput";
 import { ExperienceOutput } from "./ExperienceOutput";
 import { ProjectsOutput } from "./ProjectsOutput";
 import { SkillsOutput } from "./SkillsOutput";
@@ -22,6 +22,7 @@ export function ResumeOutput() {
         <ContactLinks className="text-[12px]" />
       </div>
       <Section title="EDUCATION"><EducationOutput /></Section>
+      <Section title="FELLOWSHIPS"><FellowshipsOutput /></Section>
       <Section title="EXPERIENCE"><ExperienceOutput /></Section>
       <Section title="PROJECTS"><ProjectsOutput /></Section>
       <Section title="SKILLS"><SkillsOutput /></Section>
