@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { SKILLS, EDUCATION, LINKS, PROFILE } from "@/lib/content";
+import { SKILLS, EDUCATION, FELLOWSHIPS, LINKS, PROFILE } from "@/lib/content";
 import { event } from "@/lib/analytics";
 import { CopyButton } from "../CopyButton";
 import { IlliniBanner } from "../IlliniBanner";
@@ -51,6 +51,16 @@ export function EducationApp() {
           <li key={c} className="flex gap-2">
             <span aria-hidden className="text-faint">-</span>
             <span className="text-foreground">{c}</span>
+          </li>
+        ))}
+      </ul>
+      <Rule />
+      <p className="text-accent-ink">fellowships</p>
+      <ul className="mt-1 space-y-2">
+        {FELLOWSHIPS.map((f) => (
+          <li key={f.name}>
+            <p className="text-foreground">{f.name}</p>
+            <p className="text-faint">Fellowship · {f.org} · {f.period}</p>
           </li>
         ))}
       </ul>

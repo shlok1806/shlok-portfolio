@@ -145,7 +145,8 @@ export const APPS: AppDef[] = [
     title: "education.md",
     icon: "book",
     w: 560,
-    h: 440,
+    // Degree, coursework, and the fellowships block under them
+    h: 540,
     Component: EducationApp,
     inMenu: true,
   },
