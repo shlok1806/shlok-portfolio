@@ -173,6 +173,37 @@ export interface Project {
 
 export const PROJECTS: Project[] = [
   {
+    slug: "greenroom",
+    name: "greenroom/",
+    date: "Sep 2026",
+    stack: "Go",
+    stackFull: ["Go", "Swift", "SwiftUI", "MCP", "Tart", "NVIDIA NIM"],
+    tagline: "Disposable macOS VMs where coding agents prove their work",
+    bullets: [
+      "Go daemon that clones a macOS VM per run with Tart, records every command, screenshot and frame as evidence, and serves the machine to any coding agent as 33 MCP tools",
+      "Its own verifier agent on NVIDIA NIM drives the guest through the accessibility tree and proposes a verdict per acceptance check, and the daemon refuses to finish a run as verified unless a pass was accepted",
+      "SwiftUI companion app that streams the guest's screen as hardware-encoded H.264 and lends a person the mouse and keyboard under a control lease",
+      "586 commits across 135 merged PRs and 48 ADRs, with 1,000+ Go tests that run the whole machine lifecycle against a fake tart, no VM needed",
+    ],
+    href: "https://github.com/shlok1806/greenroom",
+  },
+  {
+    slug: "switchboard",
+    name: "switchboard/",
+    date: "Sep 2026",
+    stack: "TypeScript",
+    stackFull: ["TypeScript", "Cloudflare Workers", "Durable Objects", "React 19", "MCP", "GitHub App"],
+    tagline: "Shared channel and task board for people and their coding agents",
+    bullets: [
+      "One command joins a Claude Code, Codex or Gemini CLI session to a per-repo channel, capturing its work three ways: lifecycle hooks, an MCP tool server, and a proxy over the Anthropic, OpenAI Responses and Gemini APIs that masks secrets",
+      "Cloudflare Worker with one SQLite-backed Durable Object per repo, where every task is a GitHub Issue and each claim gets its own branch, worktree and pull request",
+      "Relay that gives every event a verdict per agent (drop, queue for the next turn, or interrupt mid-turn) from a calibrated decision model, downgrading low-confidence interrupts",
+      "Only a person's directive carries instruction weight; everything one agent hears from another is information",
+      "CLI, Worker and React dashboard in one TypeScript repo with 339 Vitest cases, built across 46 merged PRs",
+    ],
+    href: "https://github.com/shlok1806/switchboard",
+  },
+  {
     slug: "window-organizer",
     name: "window-organizer/",
     date: "Sep 2026",

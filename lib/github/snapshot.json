@@ -1,7 +1,21 @@
 {
-  "syncedAt": "2026-09-28T18:00:53.928Z",
+  "syncedAt": "2026-10-04T04:42:35.809Z",
   "login": "shlok1806",
   "repos": {
+    "shlok1806/greenroom": {
+      "stars": 0,
+      "forks": 0,
+      "language": "Go",
+      "description": "A machine for AI coding agents to build, run, click through, and verify their work on. macOS first.",
+      "pushedAt": "2026-10-02T16:34:45Z"
+    },
+    "shlok1806/switchboard": {
+      "stars": 0,
+      "forks": 0,
+      "language": "TypeScript",
+      "description": "Shared channel and task board for people and their coding agents across machines",
+      "pushedAt": "2026-10-01T16:07:02Z"
+    },
     "shlok1806/window-organizer": {
       "stars": 0,
       "forks": 0,
@@ -67,9 +81,9 @@
     }
   },
   "contributions": {
-    "total": 2361,
+    "total": 2717,
     "from": "2025-09-28",
-    "to": "2026-09-28",
+    "to": "2026-10-03",
     "weeks": [
       [
         0,
@@ -87,6 +101,51 @@
         0,
         0,
         0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
         1
       ],
       [
@@ -112,52 +171,7 @@
         0,
         0,
         0,
-        0,
-        0,
-        0
-      ],
-      [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1
-      ],
-      [
-        2,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      [
         1,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      [
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0
-      ],
-      [
-        0,
-        0,
-        0,
-        0,
-        0,
         0,
         1
       ],
@@ -499,49 +513,54 @@
         0,
         0,
         39,
-        23,
+        22,
         1,
         0
       ],
       [
         1,
-        8,
+        7,
         1,
         0,
-        6,
+        4,
         0,
         0
       ],
       [
         0,
-        3,
+        2,
         19,
-        30,
+        29,
         0,
         15,
-        7
+        6
       ],
       [
         2,
-        16,
+        14,
         49,
-        12,
+        10,
         11,
         3,
         13
       ],
       [
-        34,
-        4,
+        32,
+        3,
         66,
-        153,
+        149,
         72,
         121,
         131
       ],
       [
-        71,
-        18
+        81,
+        100,
+        73,
+        85,
+        110,
+        6,
+        9
       ]
     ]
   }
