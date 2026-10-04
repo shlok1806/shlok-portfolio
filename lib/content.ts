@@ -143,6 +143,12 @@ export const EXPERIENCE: Role[] = [
   },
 ];
 
+export interface Screenshot {
+  src: string;
+  width: number;
+  height: number;
+}
+
 export interface Project {
   slug: string;
   name: string;
@@ -158,9 +164,11 @@ export interface Project {
   /**
    * Captures of the live demo under public/projects, framed in the project
    * window. Taken by hand with chrome-devtools-axi at 1440x900 and 390x844,
-   * then resized to 960 and 360 wide; retake them when the demo changes.
+   * then resized to 960 and 360 wide and encoded with `cwebp -q 80`; retake
+   * them when the demo changes. The pixel size travels with the path so the
+   * frame can reserve its box before the image arrives.
    */
-  screenshots?: { desktop?: string; phone?: string };
+  screenshots?: { desktop?: Screenshot; phone?: Screenshot };
 }
 
 export const PROJECTS: Project[] = [
@@ -195,7 +203,7 @@ export const PROJECTS: Project[] = [
     ],
     href: "https://github.com/shlok1806/feelens",
     demo: { label: "live demo", href: "https://feelens.vercel.app/demo" },
-    screenshots: { desktop: "/projects/feelens.jpg", phone: "/projects/feelens-phone.jpg" },
+    screenshots: { desktop: { src: "/projects/feelens.webp", width: 960, height: 600 }, phone: { src: "/projects/feelens-phone.webp", width: 360, height: 779 } },
   },
   {
     slug: "vibesafe",
@@ -229,7 +237,7 @@ export const PROJECTS: Project[] = [
     ],
     href: "https://github.com/shlok1806/builders-cup",
     demo: { label: "live demo", href: "https://cartel-bice.vercel.app" },
-    screenshots: { desktop: "/projects/builders-cup.jpg", phone: "/projects/builders-cup-phone.jpg" },
+    screenshots: { desktop: { src: "/projects/builders-cup.webp", width: 960, height: 600 }, phone: { src: "/projects/builders-cup-phone.webp", width: 360, height: 779 } },
   },
   {
     slug: "scroll-royale",
@@ -288,7 +296,7 @@ export const PROJECTS: Project[] = [
     ],
     href: "https://github.com/shlok1806/blueprint-qa",
     demo: { label: "live demo", href: "https://blueprint-qa.vercel.app" },
-    screenshots: { desktop: "/projects/blueprint-qa.jpg", phone: "/projects/blueprint-qa-phone.jpg" },
+    screenshots: { desktop: { src: "/projects/blueprint-qa.webp", width: 960, height: 386 }, phone: { src: "/projects/blueprint-qa-phone.webp", width: 360, height: 517 } },
   },
   {
     slug: "whoop-local",

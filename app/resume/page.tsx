@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { PROFILE, LINKS, EXPERIENCE, FELLOWSHIPS, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
+import { JsonLd } from "@/components/site/JsonLd";
+import { resumeJsonLd } from "@/lib/seo";
 
 /*
  * The text version of the desktop.
@@ -31,6 +33,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function ResumePage() {
   return (
     <div className="min-h-screen bg-white">
+      <JsonLd data={resumeJsonLd()} />
       {/*
         Deliberately not themed off the desktop's tokens. This route exists for
         crawlers, ATS parsers, screen readers and printers, and all four want a
@@ -47,7 +50,7 @@ export default function ResumePage() {
           out of the accessibility tree and off the printed page. */}
       <p
         aria-hidden
-        className="mb-8 font-mono text-[12px] text-neutral-400 print:hidden"
+        className="mb-8 font-mono text-[12px] text-neutral-500 print:hidden"
       >
         shlok@portfolio:~$ cat resume.txt
       </p>

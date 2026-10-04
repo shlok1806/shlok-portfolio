@@ -29,3 +29,17 @@ Every interaction event goes through `event()` in `lib/analytics.ts`; nothing ca
 `track()` directly. Event names are a closed union there and props are short scalars,
 never anything a visitor typed. Pageviews alone cannot see inside the desktop, which
 is why these exist.
+
+## Search and crawlers
+
+`/` is a client-rendered desktop, so what a crawler reads there is
+`components/site/HomeIntro.tsx`: a visually hidden, server-rendered summary built
+from `lib/content.ts`. It may only restate what the windows show; hidden text that
+says more than the visible page is cloaking.
+
+- **Canonicals are set per page, never in `app/layout.tsx`.** A layout canonical is
+  inherited by every route that does not override it, including the 404.
+- **Structured data comes from `lib/seo.ts`** and is rendered with
+  `components/site/JsonLd.tsx`. A new route adds its node to the graph there.
+- **A new route goes in `app/sitemap.ts` and gets a link from `HomeIntro`**, or it
+  is reachable only through the sitemap.

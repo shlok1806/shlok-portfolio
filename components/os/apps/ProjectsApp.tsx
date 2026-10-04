@@ -199,10 +199,10 @@ export function ProjectApp({ arg }: AppProps) {
       {p.screenshots && (
         <div className="mt-4 flex flex-col items-start gap-4 md:flex-row">
           {p.screenshots.desktop && (
-            <ScreenFrame kind="monitor" src={p.screenshots.desktop} alt={`${p.name} on a desktop`} className="min-w-0 flex-1" />
+            <ScreenFrame kind="monitor" shot={p.screenshots.desktop} alt={`${p.name} on a desktop`} className="min-w-0 flex-1" />
           )}
           {p.screenshots.phone && (
-            <ScreenFrame kind="handheld" src={p.screenshots.phone} alt={`${p.name} on a phone`} className="w-[120px] shrink-0" />
+            <ScreenFrame kind="handheld" shot={p.screenshots.phone} alt={`${p.name} on a phone`} className="w-[120px] shrink-0" />
           )}
         </div>
       )}

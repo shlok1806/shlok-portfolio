@@ -54,9 +54,10 @@ export const metadata: Metadata = {
   // Open Graph and sitemap URLs must be absolute; without this they resolve
   // relative and the preview card silently breaks.
   metadataBase: new URL(SITE_URL),
-  title: { default: "ShlokOS - Shlok Thakkar", template: "%s" },
+  // The name leads: it is the query this site has to answer, and a results
+  // page truncates from the right.
+  title: { default: "Shlok Thakkar - Software Engineer · ShlokOS", template: "%s" },
   description: DESCRIPTION,
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "Shlok Thakkar",
