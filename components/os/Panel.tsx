@@ -104,6 +104,8 @@ export function Panel({
   return (
     <div
       ref={barRef}
+      // where DeskPals lounge and perch
+      data-pal-perch
       /*
        * The bar keeps its full height and grows downwards into the strip the
        * phone reserves for the home indicator, padding its contents back out of

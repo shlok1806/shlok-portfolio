@@ -19,3 +19,9 @@ Anything adapted from opensourceui.in follows
 `docs/adr/0001-vendor-opensourceui-through-the-token-layer.md` and carries the
 source header. Nothing here is observable from stdout: verify in a browser
 with `.claude/skills/verify`.
+
+Piixpal (`piixpal` on npm) is the one exception to "tokens only": its
+creatures are pre-coloured pixel art on their own overlay, not chrome. They
+live on the panel only (`DeskPals.tsx`, `data-pal-perch`), because the
+overlay sits above the panel at `--piix-z: 81` and would draw over any window.
+Keep new pals off windows and icons, and keep `--piix-z` below the root menu (85).
