@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PROFILE, LINKS, EXPERIENCE, FELLOWSHIPS, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
 import { JsonLd } from "@/components/site/JsonLd";
 import { resumeJsonLd } from "@/lib/seo";
+import { PiixPal } from "piixpal/react";
 
 /*
  * The text version of the desktop.
@@ -57,6 +58,9 @@ export default function ResumePage() {
       <header>
         <h1 className="text-[30px] font-bold leading-none tracking-tight text-neutral-950">
           {PROFILE.name}
+          {/* Bitbug walks the letters of the name. Drawn on an overlay that is
+              aria-hidden and hidden in print, so the document itself is unchanged. */}
+          <PiixPal pal="bitbug" />
         </h1>
         <p className="mt-2 text-neutral-600">
           {PROFILE.role} · {PROFILE.location}

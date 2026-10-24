@@ -503,3 +503,20 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Piixpal draws its creatures on one overlay layer appended to <body>, by
+ * default above everything. On the desktop it goes just above the panel (80)
+ * and below the root menu (85), Spotlight, the screensaver and the boot screen.
+ */
+html:has([data-pal-perch]) {
+  --piix-z: 81;
+}
+
+/* The creatures are decoration; a printed resume does not carry them */
+@media print {
+  [data-piixpal],
+  [data-piixpal-ui] {
+    display: none !important;
+  }
+}

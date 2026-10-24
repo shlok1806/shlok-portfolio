@@ -26,6 +26,7 @@ import { Panel, PANEL_CHROME_H, PANEL_CHROME_H_TOUCH } from "./Panel";
 import { PlasmaWallpaper } from "./PlasmaWallpaper";
 import { ZoomOutline } from "./ZoomOutline";
 import { CrtPowerOn } from "./CrtPowerOn";
+import { DeskPals } from "./DeskPals";
 
 interface RootMenuPos {
   x: number;
@@ -784,6 +785,7 @@ export function Desktop() {
       <ZoomOutline />
       {phase === "boot" && <MacBoot desktop={rootRef} onDone={bootDone} />}
       {phase === "on" && <CrtPowerOn onDone={powerDone} />}
+      {phase === "up" && !idle && <DeskPals />}
       {idle && <Screensaver label="ShlokOS" onWake={() => setIdle(false)} />}
     </main>
   );
