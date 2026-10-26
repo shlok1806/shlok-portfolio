@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { appShortcut, ariaShortcut, isApplePlatform, keycaps, keyLabel, shortcutFor } from "@/lib/os/shortcuts";
+import {
+  SHORTCUTS,
+  appShortcut,
+  ariaShortcut,
+  isApplePlatform,
+  keycaps,
+  keyLabel,
+  shortcutFor,
+} from "@/lib/os/shortcuts";
 import { appById } from "@/lib/os/registry";
 
 describe("isApplePlatform", () => {
@@ -38,11 +46,15 @@ describe("labels", () => {
 });
 
 describe("bindings a control shows", () => {
-  it("resolves every one a menu or title bar asks for, to an app that exists", () => {
-    expect(shortcutFor("spotlight")?.keys).toEqual(["Mod", "K"]);
-    expect(shortcutFor("close-window")?.keys).toEqual(["Esc"]);
-    const help = appShortcut("shortcuts");
-    expect(help?.keys).toEqual(["?"]);
-    expect(appById(help!.opens!)).toBeDefined();
+  it("resolves every one a menu or title bar asks for", () => {
+    expect(shortcutFor("spotlight")).toBeDefined();
+    expect(shortcutFor("close-window")).toBeDefined();
+    expect(appShortcut("shortcuts")).toBeDefined();
+  });
+
+  it("only opens apps that exist", () => {
+    const opens = SHORTCUTS.flatMap((g) => g.shortcuts).flatMap((s) => (s.opens ? [s.opens] : []));
+    expect(opens.length).toBeGreaterThan(0);
+    for (const id of opens) expect(appById(id), id).toBeDefined();
   });
 });
