@@ -29,6 +29,10 @@ otherwise:
 - **`data-autofocus`** marks the element an app wants focused when its window
   lands (the shell's prompt, a game). A `focus()` in the app's mount effect
   does nothing: the window is invisible behind its zoom outline at that point.
+- **Back on touch** is `hooks/useBackDismiss.ts`. A new thing that sits over
+  the desktop and should close on Back is added to the layer list in
+  `Desktop.tsx`, top-most first. Nothing else on `/` should push history
+  entries; the hook assumes it owns the one on top.
 - **Throw-away gestures** (the full-screen sheet, a notice) share
   `lib/os/swipe.ts`: follow the finger with a transform, decide on release
   by distance or speed, step back to rest, and pick up from the live

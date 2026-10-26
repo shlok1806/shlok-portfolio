@@ -1,9 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useRemix } from "@/hooks/useRemix";
-import { SMALL_W, useWindowManager, type OpenOptions, type Transition } from "@/hooks/useWindowManager";
+import {
+  SMALL_W,
+  useWindowManager,
+  type OpenOptions,
+  type Transition,
+  type WindowState,
+} from "@/hooks/useWindowManager";
 import { zoom, type Rect } from "@/lib/os/zoom";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import { armAudio, playSfx } from "@/lib/sfx";
@@ -555,6 +562,38 @@ export function Desktop() {
       events.forEach((e) => window.removeEventListener(e, reset));
     };
   }, [booted]);
+
+  /*
+   * The system Back closes what is on top before it leaves the site:
+   * Spotlight, an open panel menu, the root menu, then the full-screen
+   * windows one at a time, iconified the way pulling one down does it -
+   * nothing is lost.
+   *
+   * Only for a finger. That is where windows are full-screen, where there is
+   * no Escape key, and where Back is the reflex for "close this" in every
+   * other app on the device. On a desk the Back button is the browser's own
+   * and means "leave this page", and taking that over would be a trap.
+   */
+  const topSheet = useMemo(
+    () =>
+      windows
+        .filter((w) => w.maximized && !w.minimized)
+        .reduce<WindowState | null>((top, w) => (!top || w.z > top.z ? w : top), null),
+    [windows],
+  );
+  useBackDismiss(touch && booted, [
+    { open: spotlight, dismiss: () => setSpotlight(false) },
+    // The panel's menus keep their own state; Escape is how they are asked to close
+    {
+      open: () => document.querySelector("[role='menu'][data-state='open']") !== null,
+      dismiss: () =>
+        document
+          .querySelector("[role='menu'][data-state='open']")
+          ?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+    },
+    { open: rootMenu !== null, dismiss: () => setRootMenu(null) },
+    { open: topSheet !== null, dismiss: () => topSheet && wm.minimize(topSheet.id) },
+  ]);
 
   /*
    * Alt+Tab cycles and moves keyboard focus with it. Escape dismisses the root
