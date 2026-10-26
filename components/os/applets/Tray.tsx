@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { PixelIcon } from "@/lib/os/icons";
+import { Readout } from "./Readout";
 
 interface BatteryLike extends EventTarget {
   level: number;
@@ -21,6 +22,10 @@ interface BatteryLike extends EventTarget {
  * deck and the tube selector 73px to the left on every load. Removing the
  * slot happens in the commit that mounts the desktop, which nobody sees: the
  * boot screen is still up, or comes down in that same commit.
+ *
+ * Charging is the glyph, a bolt in the battery, rather than a `+` after the
+ * number: the suffix made a charging reading a figure wider than the dashes
+ * it replaced, so the bar still moved whenever the machine was plugged in.
  */
 export function Tray() {
   /* undefined: not asked yet. null: this browser will not say */
@@ -83,10 +88,8 @@ export function Tray() {
           }
           className="bevel-thin flex items-center gap-1.5 bg-secondary px-2 leading-none text-secondary-foreground"
         >
-          <PixelIcon name="battery" size={16} />
-          <span className="tabular-nums">
-            {battery ? `${Math.round(battery.level * 100)}%${battery.charging ? "+" : ""}` : "--%"}
-          </span>
+          <PixelIcon name={battery?.charging ? "battery-charging" : "battery"} size={16} />
+          <Readout value={battery ? `${Math.round(battery.level * 100)}%` : "--%"} widest="100%" />
         </span>
       )}
     </span>

@@ -16,6 +16,14 @@ import {
   writeCachedWeather,
   type Weather as Reading,
 } from "@/lib/os/weather";
+import { Readout } from "./Readout";
+
+/*
+ * Two figures: a Champaign reading is two figures nearly every day of the
+ * year, and one figure is the winter mornings, which get a blank in front
+ * rather than a narrower slot. Below -9 or at 100 it grows by one.
+ */
+const WIDEST = "00°";
 
 interface WeatherState {
   reading: Reading | null;
@@ -132,7 +140,7 @@ export function Weather() {
         className={slot}
       >
         <PixelIcon name="thermometer" size={16} />
-        <span className="tabular-nums">--°</span>
+        <Readout value="--°" widest={WIDEST} />
       </span>
     );
   }
@@ -147,7 +155,7 @@ export function Weather() {
       className={slot}
     >
       <PixelIcon name={icon} size={16} />
-      <span className="tabular-nums">{temp}°</span>
+      <Readout value={`${temp}°`} widest={WIDEST} />
     </span>
   );
 }

@@ -20,7 +20,12 @@ const setVisibility = (v: DocumentVisibilityState) => {
 };
 /* Lets the fetch mock's promises settle inside React's act */
 const settle = () => act(async () => {});
-const temperature = () => document.querySelector("[data-slot='weather']")?.textContent;
+/* What is printed in the slot, leaving out the hidden reading that sizes it */
+const temperature = () =>
+  Array.from(document.querySelectorAll("[data-slot='weather'] span"))
+    .filter((el) => el.childElementCount === 0 && !el.closest("[aria-hidden]"))
+    .map((el) => el.textContent)
+    .join("");
 
 describe("Weather applet", () => {
   const fetchMock = vi.fn();

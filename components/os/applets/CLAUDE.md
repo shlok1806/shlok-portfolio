@@ -15,9 +15,13 @@ Things that live in the panel. The contract:
   reading lands: the clock draws its dial before it has hands, the weather
   shows `--°` and a thermometer, the battery `--%`. In Inter with
   `tabular-nums` a hyphen is exactly a figure wide, so `--` covers any
-  two-digit number. A slot may only go away in the mount commit (the battery,
-  where the browser has no Battery API), which nobody sees: the boot screen
-  is still up, or comes down in that same commit.
+  two-digit number. A number whose length varies goes in a `Readout`, a
+  field sized by the widest reading it should hold (`100%`, `00°`), so a
+  battery on the mains or a one-figure winter morning does not move the bar
+  either; state such as charging goes in the glyph, never in a suffix. A
+  slot may only go away in the mount commit (the battery, where the browser
+  has no Battery API), which nobody sees: the boot screen is still up, or
+  comes down in that same commit.
 - Panel shifts are measured, not eyeballed: a buffered `layout-shift`
   PerformanceObserver after a cold load lists every element that moved.
 - The panel drops some applets on a phone (the clock, the speaker). Check
