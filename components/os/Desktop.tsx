@@ -340,8 +340,8 @@ export function Desktop() {
         return;
       }
       case "close": {
+        // Not announced here: the notice offering Undo says it, once
         playSfx("close");
-        setAnnouncement(`closed ${t.appId}`);
         void zoom(t.from, iconAnchor(t.appId));
         // Hand focus back to where the app lives on the desktop
         const home =

@@ -40,7 +40,10 @@ otherwise:
   invent thresholds.
 - **Notices** can carry one action and an `onLapse` (`lib/os/notify.ts`). The
   same message posted twice folds into one. Downloads go through `saveFile`
-  in `lib/os/download.ts`, which is what makes a double tap save once.
+  in `lib/os/download.ts`, which is what makes a double tap save once. The
+  tray reads each new notice to screen readers through its one live region,
+  so whatever posts a notice does not also announce it on the desktop's
+  live line (that is why a close is not announced there).
 
 Anything adapted from opensourceui.in follows
 `docs/adr/0001-vendor-opensourceui-through-the-token-layer.md` and carries the

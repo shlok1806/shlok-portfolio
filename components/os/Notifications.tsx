@@ -1,7 +1,7 @@
 "use client";
 // Adapted from opensourceui.in components/notifications/system-alert-banner.tsx and toast-notification-banner.tsx (MIT). See THIRD_PARTY_NOTICES.md.
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { PixelIcon, type IconName } from "@/lib/os/icons";
 import type { Notice } from "@/lib/os/notify";
@@ -39,6 +39,25 @@ function NoticeCard({
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
   const returning = useRef<Animation | null>(null);
+
+  /*
+   * Its clock stops while it is being read: a pointer moving over it, a
+   * finger on it, or keyboard focus inside it - so an Undo is never snatched
+   * away from someone on their way to it. Movement, not mere arrival: a
+   * notice that appears under a resting mouse is not being read, and holding
+   * it for that kept it up for as long as the mouse stayed still.
+   */
+  const reading = useRef(false);
+  const read = () => {
+    if (reading.current) return;
+    reading.current = true;
+    onHold();
+  };
+  const unread = () => {
+    if (!reading.current) return;
+    reading.current = false;
+    onRelease();
+  };
 
   /*
    * A finger can push a notice off to either side, the way a phone clears
@@ -89,20 +108,19 @@ function NoticeCard({
   return (
     <div
       ref={ref}
-      role="status"
       data-slot="notice"
       data-kind={notice.kind}
-      onPointerDown={grab}
-      onPointerMove={follow}
+      onPointerDown={(e) => {
+        read();
+        grab(e);
+      }}
+      onPointerMove={(e) => {
+        read();
+        follow(e);
+      }}
       onPointerUp={letGo}
       onPointerCancel={letGo}
-      /*
-       * Its clock stops while it is being read: under the pointer, under a
-       * finger, or holding keyboard focus - so an Undo is never snatched away
-       * from someone on their way to it.
-       */
-      onPointerEnter={onHold}
-      onPointerLeave={onRelease}
+      onPointerLeave={unread}
       onFocus={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onHold();
       }}
@@ -157,6 +175,12 @@ function NoticeCard({
  * bevelled card the way a Motif message box was, minus the OK button, since
  * it goes away on its own.
  *
+ * It starts below the band a maximised window's title bar occupies (2px of
+ * frame, 26px of bar, then the same 8px margin as the right edge). Closing
+ * a window posts a notice, and at the top of the screen it landed on the
+ * close box of the window behind, under the pointer that had just clicked
+ * there: the next click hit the notice and closed nothing.
+ *
  * On a phone every window is full-screen, so the top right corner is a
  * window's close button; there the stack sits above the panel instead. The
  * offset is the touch panel's height plus the home-indicator strip, the same
@@ -164,22 +188,44 @@ function NoticeCard({
  */
 export function NotificationTray() {
   const { notices, dismiss, runAction, hold, release } = useNotifications();
-  if (notices.length === 0) return null;
+
+  /*
+   * Screen readers hear each new notice once, through one live region that
+   * is on the page before anything is posted. A card that arrives already
+   * holding its text is read out by some readers and not by others, which
+   * is the one thing an announcement cannot be.
+   */
+  const [said, setSaid] = useState("");
+  const heard = useRef(0);
+  useEffect(() => {
+    const newest = notices[notices.length - 1];
+    if (!newest || newest.id <= heard.current) return;
+    heard.current = newest.id;
+    setSaid(newest.text ? `${newest.title}. ${newest.text}` : newest.title);
+  }, [notices]);
+
   return (
-    <div
-      data-slot="notification-tray"
-      className="pointer-events-none absolute right-2 top-2 z-[84] flex w-[min(320px,calc(100vw-16px))] flex-col gap-1.5 coarse:top-auto coarse:bottom-[calc(52px+env(safe-area-inset-bottom)+8px)] [&>*]:pointer-events-auto"
-    >
-      {notices.map((n) => (
-        <NoticeCard
-          key={n.id}
-          notice={n}
-          onDismiss={() => dismiss(n.id)}
-          onAction={() => runAction(n.id)}
-          onHold={() => hold(n.id)}
-          onRelease={() => release(n.id)}
-        />
-      ))}
-    </div>
+    <>
+      <p aria-live="polite" className="sr-only">
+        {said}
+      </p>
+      {notices.length > 0 && (
+        <div
+          data-slot="notification-tray"
+          className="pointer-events-none absolute right-2 top-9 z-[84] flex w-[min(320px,calc(100vw-16px))] flex-col gap-1.5 coarse:top-auto coarse:bottom-[calc(52px+env(safe-area-inset-bottom)+8px)] [&>*]:pointer-events-auto"
+        >
+          {notices.map((n) => (
+            <NoticeCard
+              key={n.id}
+              notice={n}
+              onDismiss={() => dismiss(n.id)}
+              onAction={() => runAction(n.id)}
+              onHold={() => hold(n.id)}
+              onRelease={() => release(n.id)}
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
