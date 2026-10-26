@@ -503,3 +503,15 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Loading. Everything below is how a thing that is not here yet shows that it
+ * is coming, and how it arrives.
+ *
+ * A project screenshot lands the way a window does, in two frames, over the
+ * mosaic that stood in for it (components/os/apps/ScreenFrame.tsx). The
+ * reduced-motion block above already cuts this to nothing.
+ */
+.shot-in {
+  animation: win-in 80ms steps(2, end) both;
+}
