@@ -91,9 +91,27 @@ function posthog(): Promise<Capture | null> {
   return posthogReady;
 }
 
+/**
+ * Runs `fn` once the page is actually in front of someone: now, or when a
+ * speculative prerender is activated by the click it was made for. A prerender
+ * that is thrown away never runs it, which is the point: Chrome prerenders
+ * /resume when the pointer settles on its link, and that is not a visit.
+ */
+export function whenShown(fn: () => void): void {
+  if ((document as Document & { prerendering?: boolean }).prerendering) {
+    document.addEventListener("prerenderingchange", fn, { once: true });
+    return;
+  }
+  fn();
+}
+
 /** Records one event. Safe to call anywhere; a no-op on the server. */
 export function event(name: EventName, props: EventProps = {}): void {
   if (typeof window === "undefined") return;
+  if ((document as Document & { prerendering?: boolean }).prerendering) {
+    whenShown(() => event(name, props));
+    return;
+  }
   const data = clean(props);
   try {
     track(name, data);

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PROFILE, LINKS, EXPERIENCE, FELLOWSHIPS, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
 import { JsonLd } from "@/components/site/JsonLd";
+import { SpeculationRules } from "@/components/site/SpeculationRules";
 import { resumeJsonLd } from "@/lib/seo";
 
 /*
@@ -19,6 +20,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/resume" },
 };
 
+/*
+ * The way back to the desktop, fetched when someone points at it. Prefetched,
+ * not prerendered: the desktop boots a Macintosh, arms its audio and opens a
+ * shell the moment it runs, and none of that should happen to a page nobody
+ * has opened yet.
+ */
+const NEXT = { prefetch: [{ where: { href_matches: "/" }, eagerness: "moderate" }] };
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-10 break-inside-avoid-page">
@@ -34,6 +43,7 @@ export default function ResumePage() {
   return (
     <div className="min-h-screen bg-white">
       <JsonLd data={resumeJsonLd()} />
+      <SpeculationRules rules={NEXT} />
       {/*
         Deliberately not themed off the desktop's tokens. This route exists for
         crawlers, ATS parsers, screen readers and printers, and all four want a

@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/components/site/ThemeProvider";
 import { RotatePresetScript } from "@/components/site/RotatePresetScript";
 import { PixelCursor } from "@/components/site/PixelCursor";
 import { ThemeColorMeta } from "@/components/site/ThemeColorMeta";
-import { Analytics } from "@vercel/analytics/react";
+import { VisitAnalytics } from "@/components/site/VisitAnalytics";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -83,7 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <PixelCursor />
           {children}
         </ThemeProvider>
-        <Analytics />
+        <VisitAnalytics />
       </body>
     </html>
   );
