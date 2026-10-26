@@ -11,6 +11,7 @@ import { createMenuAim, placeSubmenu, type Placement } from "@/lib/os/menuAim";
 import { SMALL_W } from "@/hooks/useWindowManager";
 import { useApplePlatform } from "@/hooks/useApplePlatform";
 import { KeyHint } from "./KeyHint";
+import { Swatch } from "./Swatch";
 
 type SubId = "background" | "tube";
 
@@ -376,7 +377,7 @@ export function RootMenu({
             className={row}
           >
             <span aria-hidden className="grid w-5 shrink-0 place-items-center">
-              <span className="h-3 w-3 border border-current" style={{ background: p.swatch.primary }} />
+              <Swatch color={p.swatch.primary} />
             </span>
             <span className="flex-1">{p.name}</span>
             <span aria-hidden className="pl-4 text-[11px] opacity-70">
@@ -489,7 +490,7 @@ export function RootMenu({
             {parentRow("background", <PixelIcon name="picture" size={16} />)}
             {parentRow(
               "tube",
-              tube && <span className="h-3 w-3 border border-current" style={{ background: tube.swatch.primary }} />,
+              tube && <Swatch color={tube.swatch.primary} />,
             )}
             <div role="separator" className="border-t border-border" />
             {MENU_APPS.map((app) => {

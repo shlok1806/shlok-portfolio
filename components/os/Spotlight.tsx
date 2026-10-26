@@ -15,6 +15,7 @@ import { ariaShortcut } from "@/lib/os/shortcuts";
 import { playSfx } from "@/lib/sfx";
 import { useApplePlatform } from "@/hooks/useApplePlatform";
 import { KeyHint } from "./KeyHint";
+import { Swatch } from "./Swatch";
 
 interface Props {
   items: SpotlightItem[];
@@ -212,7 +213,7 @@ export function Spotlight({ items, touch, onRun, onClose }: Props) {
                   >
                     <span aria-hidden className="grid w-5 shrink-0 place-items-center">
                       {item.swatch ? (
-                        <span className="h-3 w-3 border border-current" style={{ background: item.swatch }} />
+                        <Swatch color={item.swatch} />
                       ) : (
                         <PixelIcon name={item.icon} size={16} />
                       )}

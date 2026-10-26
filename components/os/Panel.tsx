@@ -19,6 +19,7 @@ import { useApplePlatform } from "@/hooks/useApplePlatform";
 import { useSpeaker } from "@/hooks/useSpeaker";
 import type { WindowState } from "@/hooks/useWindowManager";
 import { KeyHint } from "./KeyHint";
+import { Swatch } from "./Swatch";
 import { MusicWidget } from "./MusicWidget";
 import { PanelClock } from "./applets/Xclock";
 import { Weather } from "./applets/Weather";
@@ -203,11 +204,10 @@ export function Panel({
               </DropdownMenuLabel>
               {PRESETS.map((p) => (
                 <DropdownMenuItem key={p.id} onFocus={tickRow} onSelect={() => onSelectPreset(p.id)} className={item}>
-                  <span
-                    aria-hidden
-                    className="h-3 w-3 shrink-0 border border-current"
-                    style={{ background: p.swatch.primary }}
-                  />
+                  {/* In the same slot as the app icons above, so the names line up */}
+                  <span aria-hidden className="grid w-5 shrink-0 place-items-center">
+                    <Swatch color={p.swatch.primary} />
+                  </span>
                   <span className="flex-1">{p.name}</span>
                   {mounted && p.id === preset.id && <span aria-hidden>•</span>}
                 </DropdownMenuItem>
@@ -300,11 +300,7 @@ export function Panel({
                 onSelect={() => onSelectPreset(p.id)}
                 className="gap-3 rounded-none px-2 py-[5px] leading-none focus:bg-primary focus:text-primary-foreground"
               >
-                <span
-                  aria-hidden
-                  className="h-3 w-3 shrink-0 border border-current"
-                  style={{ background: p.swatch.primary }}
-                />
+                <Swatch color={p.swatch.primary} />
                 <span className="flex-1">{p.name}</span>
                 <span className="text-[11px] opacity-70">{p.code}</span>
                 {mounted && p.id === preset.id && <span aria-hidden>•</span>}
