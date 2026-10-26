@@ -218,15 +218,12 @@ export function GameFrame({ def }: { def: GameDef }) {
         </div>
       )}
 
-      <div className="flex shrink-0 items-center gap-3 border-t border-border bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] text-muted-foreground coarse:py-1.5">
+      {/* Tabular throughout: the score, and the HUD beside it, change every few frames */}
+      <div className="flex shrink-0 items-center gap-3 border-t border-border bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] tabular-nums text-muted-foreground coarse:py-1.5">
         <span className="shrink-0 text-secondary-foreground">
-          SCORE <b className="tabular-nums">{digits(score)}</b>
+          SCORE <b>{digits(score)}</b>
         </span>
-        {!touch && (
-          <span className="shrink-0">
-            HI <span className="tabular-nums">{digits(best)}</span>
-          </span>
-        )}
+        {!touch && <span className="shrink-0">HI {digits(best)}</span>}
         <span className="truncate">{hud}</span>
         {touch ? (
           /*

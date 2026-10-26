@@ -33,7 +33,7 @@ export function LsOutput() {
             */}
             <span className="hidden shrink-0 text-faint md:inline">-rw-r--r--  shlok  staff</span>
             <span className="hidden shrink-0 text-faint sm:inline md:hidden">-rw-r--r--</span>
-            <span className="text-faint w-12 shrink-0">{f.size}</span>
+            <span className="text-faint w-12 shrink-0 tabular-nums">{f.size}</span>
             {/* The rows touch, so a finger's 44 has to be the row itself rather than slop */}
             {open ? (
               <button

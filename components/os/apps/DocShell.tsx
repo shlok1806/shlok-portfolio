@@ -15,7 +15,8 @@ export function DocShell({
       <div className="min-h-0 flex-1 overflow-auto px-4 py-3 font-[family-name:var(--font-mono-src)] text-[13px] leading-[1.55]">
         {children}
       </div>
-      <div className="flex shrink-0 items-center gap-3 border-t border-border bg-secondary px-3 py-[3px] font-[family-name:var(--font-ui)] text-[12px] leading-none text-muted-foreground">
+      {/* Tabular, because a pager's status line is counters - and the player's is a clock that ticks */}
+      <div className="flex shrink-0 items-center gap-3 border-t border-border bg-secondary px-3 py-[3px] font-[family-name:var(--font-ui)] text-[12px] leading-none tabular-nums text-muted-foreground">
         {status}
       </div>
     </div>
