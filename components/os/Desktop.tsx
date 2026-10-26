@@ -13,6 +13,7 @@ import { LINKS, PROFILE, PROJECTS } from "@/lib/content";
 import { GAMES } from "@/lib/games/registry";
 import { PRESETS } from "@/lib/theme/presets";
 import { notify } from "@/lib/os/notify";
+import { copyText } from "@/lib/os/clipboard";
 import { event } from "@/lib/analytics";
 import { spotlightItems, type CommandId, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
@@ -482,19 +483,14 @@ export function Desktop() {
       switch (id) {
         case "copy-email":
           // What the copy button on contact.txt does, plus a notice, since the dialog that ran it is gone
-          void Promise.resolve()
-            .then(() => navigator.clipboard.writeText(EMAIL))
-            .then(
-              () => {
-                playSfx("tick");
-                event("copy", { label: "email" });
-                notify("ok", "Email address copied", EMAIL);
-              },
-              () => {
-                playSfx("bell");
-                notify("warn", "The clipboard said no", EMAIL);
-              },
-            );
+          void copyText(EMAIL).then((ok) => {
+            if (!ok) {
+              notify("warn", "The clipboard said no", EMAIL);
+              return;
+            }
+            event("copy", { label: "email" });
+            notify("ok", "Email address copied", EMAIL);
+          });
           return;
         case "printable-resume":
           // The same full navigation as the "text version" link on resume.txt

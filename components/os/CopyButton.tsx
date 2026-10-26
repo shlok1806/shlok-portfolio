@@ -3,7 +3,7 @@
 
 import { forwardRef, useEffect, useRef, useState, type ComponentPropsWithoutRef } from "react";
 import { PixelIcon } from "@/lib/os/icons";
-import { playSfx } from "@/lib/sfx";
+import { copyText } from "@/lib/os/clipboard";
 import { cn } from "@/lib/utils";
 
 export type CopyButtonProps = Readonly<
@@ -39,14 +39,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
 
     const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
       onClick?.(e);
-      try {
-        await navigator.clipboard.writeText(value);
-      } catch {
-        // No clipboard (an insecure context, a denied permission): ring the bell and stop
-        playSfx("bell");
-        return;
-      }
-      playSfx("tick");
+      if (!(await copyText(value))) return;
       setCopied(true);
       onCopied?.(true);
       if (timer.current) clearTimeout(timer.current);
