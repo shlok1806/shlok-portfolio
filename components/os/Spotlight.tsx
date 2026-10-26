@@ -75,6 +75,30 @@ export function Spotlight({ items, touch, onRun, onClose }: Props) {
    * pointer.
    */
   const follow = useRef(false);
+
+  /*
+   * The list stops where the keyboard starts. iOS draws its soft keyboard over
+   * the page without resizing it, so dvh does not shrink: the bottom half of a
+   * 50dvh list sat under the keys, and the last commands could only be reached
+   * by dismissing the keyboard first. The visual viewport is the part of the
+   * page still showing; on a desktop it is the whole window and this changes
+   * nothing.
+   */
+  const [room, setRoom] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const vv = window.visualViewport;
+    const list = listRef.current;
+    if (!vv || !list) return;
+    const fit = () => setRoom(Math.max(120, Math.floor(vv.offsetTop + vv.height - list.getBoundingClientRect().top - 8)));
+    fit();
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+    return () => {
+      vv.removeEventListener("resize", fit);
+      vv.removeEventListener("scroll", fit);
+    };
+  }, []);
+
   useEffect(() => {
     if (!follow.current || !current) return;
     follow.current = false;
@@ -170,6 +194,7 @@ export function Spotlight({ items, touch, onRun, onClose }: Props) {
           role="listbox"
           aria-label="Results"
           className="mt-[3px] max-h-[min(50dvh,360px)] overflow-y-auto bg-secondary"
+          style={room === null ? undefined : { maxHeight: `min(50dvh, 360px, ${room}px)` }}
         >
           {results.length === 0 && (
             <p className="px-2 py-1.5 text-faint">
