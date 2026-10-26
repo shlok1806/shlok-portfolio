@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { WindowState } from "@/hooks/useWindowManager";
 import { PixelIcon } from "@/lib/os/icons";
+import { ariaShortcut, keyLabel, shortcutFor } from "@/lib/os/shortcuts";
 import { playSfx } from "@/lib/sfx";
+import { useApplePlatform } from "@/hooks/useApplePlatform";
 
 interface Props {
   win: WindowState;
@@ -57,15 +59,31 @@ const CORNERS: { corner: Corner; className: string }[] = [
   { corner: "se", className: "bottom-0 right-0 cursor-nwse-resize" },
 ];
 
+/*
+ * Escape closes the focused window and no other, so only the focused window's
+ * close button claims it. Nothing else on the title bar has a key; Motif bound
+ * them to the window menu, which this desktop does not have.
+ */
+const CLOSE_KEYS = shortcutFor("close-window")?.keys;
+
 function TitleButton({
   label,
+  action,
+  keys,
+  touch,
   onClick,
   children,
 }: {
   label: string;
+  /** the verb, for the tooltip */
+  action: string;
+  /** the key that does the same thing to this window, if there is one */
+  keys?: string[];
+  touch: boolean;
   onClick: () => void;
   children: React.ReactNode;
 }) {
+  const apple = useApplePlatform();
   return (
     <button
       onPointerDown={(e) => e.stopPropagation()}
@@ -74,6 +92,9 @@ function TitleButton({
         onClick();
       }}
       aria-label={label}
+      // Tooltips need a pointer that hovers; a finger gets none
+      title={touch ? undefined : keys ? `${action} (${keyLabel(keys, apple)})` : action}
+      aria-keyshortcuts={!touch && keys ? ariaShortcut(keys, apple) : undefined}
       className="group grid h-6 w-6 place-items-center coarse:h-11 coarse:w-11"
     >
       {/* The glyph is the 16px grid at 1:1 inside a 1px bevel, so it never blurs */}
@@ -305,16 +326,24 @@ export function Window({
           {win.title}
         </span>
         <div className={`ml-auto flex items-center ${touch ? "-mr-1.5" : "-mr-[3px]"}`}>
-          <TitleButton onClick={onMinimize} label={`Minimize ${win.title}`}>
+          <TitleButton onClick={onMinimize} label={`Minimize ${win.title}`} action="Minimize" touch={touch}>
             <PixelIcon name="minimize" size={16} />
           </TitleButton>
           <TitleButton
             onClick={onToggleMaximize}
             label={`${win.maximized ? "Restore" : "Maximize"} ${win.title}`}
+            action={win.maximized ? "Restore" : "Maximize"}
+            touch={touch}
           >
             <PixelIcon name={win.maximized ? "restore" : "maximize"} size={16} />
           </TitleButton>
-          <TitleButton onClick={onClose} label={`Close ${win.title}`}>
+          <TitleButton
+            onClick={onClose}
+            label={`Close ${win.title}`}
+            action="Close"
+            keys={focused ? CLOSE_KEYS : undefined}
+            touch={touch}
+          >
             <PixelIcon name="close" size={16} />
           </TitleButton>
         </div>

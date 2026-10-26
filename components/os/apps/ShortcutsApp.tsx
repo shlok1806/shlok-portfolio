@@ -1,6 +1,8 @@
+"use client";
 // Adapted from opensourceui.in components/text/keyboard-shortcuts-card.tsx (MIT). See THIRD_PARTY_NOTICES.md.
 
-import { SHORTCUTS, type Shortcut } from "@/lib/os/shortcuts";
+import { useApplePlatform } from "@/hooks/useApplePlatform";
+import { SHORTCUTS, keycaps, type Shortcut } from "@/lib/os/shortcuts";
 import { DocShell, DocTitle } from "./DocShell";
 
 /** A keycap as a raised bevel, the way a Motif push button looked at rest. */
@@ -12,12 +14,12 @@ function Key({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Row({ shortcut }: { shortcut: Shortcut }) {
+function Row({ shortcut, apple }: { shortcut: Shortcut; apple: boolean }) {
   return (
     <li data-slot="shortcut" className="flex items-center justify-between gap-3 py-[3px]">
       <span className="min-w-0 text-foreground">{shortcut.label}</span>
       <span className="flex shrink-0 gap-1">
-        {shortcut.keys.map((k) => (
+        {keycaps(shortcut.keys, apple).map((k) => (
           <Key key={k}>{k}</Key>
         ))}
       </span>
@@ -27,6 +29,8 @@ function Row({ shortcut }: { shortcut: Shortcut }) {
 
 /** Everything the keyboard does here, grouped by where it does it. */
 export function ShortcutsApp() {
+  // ⌘ on a Mac, Ctrl everywhere else; the desktop answers to either on both
+  const apple = useApplePlatform();
   const total = SHORTCUTS.reduce((n, g) => n + g.shortcuts.length, 0);
   return (
     <DocShell status={`shortcuts  ${total} bindings`}>
@@ -39,7 +43,7 @@ export function ShortcutsApp() {
           </h3>
           <ul>
             {group.shortcuts.map((s) => (
-              <Row key={s.label} shortcut={s} />
+              <Row key={s.label} shortcut={s} apple={apple} />
             ))}
           </ul>
         </section>

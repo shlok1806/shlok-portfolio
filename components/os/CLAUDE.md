@@ -15,6 +15,14 @@ otherwise:
 - **Icons are pixmaps.** Add a 16x16 entry to `lib/os/icons.tsx`; never add
   an icon package. The file's docblock says why.
 
+Menus, hints and commands:
+
+- **A key hint is looked up, never typed.** A control that does what a key
+  does shows it through `lib/os/shortcuts.ts` (`shortcutFor`, `appShortcut`,
+  `KeyHint`, `ariaShortcut`), so a hint cannot name a key the desktop does not
+  answer to. `"Mod"` is Ctrl or ⌘; `useApplePlatform` decides which, and the
+  server always says Ctrl. A new handler in `Desktop.tsx` gets its row there.
+
 Anything adapted from opensourceui.in follows
 `docs/adr/0001-vendor-opensourceui-through-the-token-layer.md` and carries the
 source header. Nothing here is observable from stdout: verify in a browser
