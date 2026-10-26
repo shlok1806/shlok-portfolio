@@ -47,6 +47,17 @@ describe("useWindowManager", () => {
     expect(h.result.current.windows[0]).toMatchObject({ w: 1280 - 40, h: 800 - PANEL - 60 });
   });
 
+  it("keeps every cascaded window above the panel on a short screen", () => {
+    resize(1280, 800);
+    const h = renderHook(() => useWindowManager(PANEL));
+    for (let i = 0; i < 6; i++) {
+      act(() => {
+        h.result.current.open({ appId: "doc", title: "doc", arg: `d${i}`, w: 700, h: 700 });
+      });
+    }
+    for (const win of h.result.current.windows) expect(win.y + win.h).toBeLessThanOrEqual(800 - PANEL);
+  });
+
   it("dedupes singletons on appId + arg and refocuses the existing one", () => {
     const h = renderHook(() => useWindowManager(PANEL));
     let a = "";
@@ -246,5 +257,66 @@ describe("useWindowManager", () => {
     const win = h.result.current.windows[0];
     expect(win.x + win.w).toBeLessThanOrEqual(1000);
     expect(win.y + win.h).toBeLessThanOrEqual(700 - PANEL);
+  });
+});
+
+/*
+ * An installed copy on an iPhone draws under the status bar and, in landscape,
+ * under the notch. The desktop measures the insets and hands them in; the panel
+ * already includes the bottom one, since it grows down into it.
+ */
+describe("useWindowManager inside a safe area", () => {
+  const portrait = { top: 47, right: 0, bottom: 34, left: 0 };
+  const landscape = { top: 0, right: 47, bottom: 21, left: 47 };
+  const PHONE_PANEL = 52 + 34;
+  const LANDSCAPE_PANEL = 52 + 21;
+
+  it("starts a phone's full-screen window below the status bar", () => {
+    resize(390, 844);
+    const h = renderHook(() => useWindowManager(PHONE_PANEL, undefined, portrait));
+    act(() => {
+      h.result.current.open(app("xterm"));
+    });
+    expect(h.result.current.windows[0]).toMatchObject({
+      x: 0,
+      y: 47,
+      w: 390,
+      h: 844 - PHONE_PANEL - 47,
+      maximized: true,
+    });
+  });
+
+  it("maximizes between the notch and the rounded corner in landscape", () => {
+    resize(844, 390);
+    const h = renderHook(() => useWindowManager(LANDSCAPE_PANEL, undefined, landscape));
+    let id = "";
+    act(() => {
+      id = h.result.current.open(app("xterm"));
+    });
+    const floating = h.result.current.windows[0];
+    expect(floating.x).toBeGreaterThanOrEqual(47);
+    expect(floating.x + floating.w).toBeLessThanOrEqual(844 - 47);
+    act(() => {
+      h.result.current.toggleMaximize(id);
+    });
+    expect(h.result.current.windows[0]).toMatchObject({ x: 47, y: 0, w: 844 - 94, h: 390 - LANDSCAPE_PANEL });
+  });
+
+  it("refits when a rotation moves the insets", () => {
+    resize(390, 844);
+    const h = renderHook(({ panel, safe }) => useWindowManager(panel, undefined, safe), {
+      initialProps: { panel: PHONE_PANEL, safe: portrait },
+    });
+    act(() => {
+      h.result.current.open(app("xterm"));
+    });
+    resize(844, 390);
+    h.rerender({ panel: LANDSCAPE_PANEL, safe: landscape });
+    // Wide enough to float again, and handed back inside the new safe area
+    const win = h.result.current.windows[0];
+    expect(win.maximized).toBe(false);
+    expect(win.x).toBeGreaterThanOrEqual(47);
+    expect(win.x + win.w).toBeLessThanOrEqual(844 - 47);
+    expect(win.y + win.h).toBeLessThanOrEqual(390 - LANDSCAPE_PANEL);
   });
 });

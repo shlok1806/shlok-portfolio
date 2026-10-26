@@ -5,6 +5,7 @@ import { MENU_APPS } from "@/lib/os/registry";
 import { PixelIcon } from "@/lib/os/icons";
 import { playSfx } from "@/lib/sfx";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
+import { readSafeArea } from "@/lib/os/safeArea";
 
 interface Props {
   /** where the pointer was when the menu was summoned */
@@ -50,10 +51,11 @@ export function RootMenu({
    * hover: with no focus: pair was the only one left in the shell, and on touch
    * it is worse than useless: a tap leaves the row lit up until something else
    * is tapped, so the menu closes with a highlight painted on whatever the
-   * finger last touched.
+   * finger last touched. min-h-6 because a row without a pixmap - every
+   * Background entry - came out 23px, a pixel under the minimum for a mouse.
    */
   const row = `flex w-full items-center gap-3 text-left leading-none hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${
-    touch ? "min-h-11 px-3 py-2" : "px-3 py-[5px]"
+    touch ? "min-h-11 px-3 py-2" : "min-h-6 px-3 py-[5px]"
   }`;
 
   // Layout effect, so the corrected position is in place before the first paint
@@ -62,9 +64,11 @@ export function RootMenu({
     if (!el) return;
     const { width, height } = el.getBoundingClientRect();
     const room = window.innerHeight - panelHeight;
+    // Clear of the notch and the status bar too; a row under either cannot be tapped
+    const safe = readSafeArea();
     setPos({
-      left: Math.max(GAP, Math.min(x, window.innerWidth - width - GAP)),
-      top: Math.max(GAP, Math.min(y, room - height - GAP)),
+      left: Math.max(safe.left + GAP, Math.min(x, window.innerWidth - safe.right - width - GAP)),
+      top: Math.max(safe.top + GAP, Math.min(y, room - height - GAP)),
     });
   }, [x, y, panelHeight]);
 
@@ -83,7 +87,7 @@ export function RootMenu({
          * screen, so the last few entries sat below the fold on a surface that
          * refuses to scroll.
          */
-        maxHeight: `calc(100dvh - ${panelHeight + GAP * 2}px)`,
+        maxHeight: `calc(100dvh - ${panelHeight + GAP * 2}px - var(--safe-top))`,
         // Hidden for the one frame between mount and measurement
         visibility: pos ? "visible" : "hidden",
       }}

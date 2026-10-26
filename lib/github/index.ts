@@ -69,6 +69,9 @@ export function relativeDate(iso: string, now: Date = new Date()): string {
   return y === 1 ? "a year ago" : `${y} years ago`;
 }
 
+/** Columns a three-letter month label needs before the next one starts */
+const LABEL_COLUMNS = 3;
+
 /** Month labels for the graph: which week column each month starts in. */
 export function monthColumns(from: string | null, weeks: number): { label: string; week: number }[] {
   if (!from) return [];
@@ -80,9 +83,13 @@ export function monthColumns(from: string | null, weeks: number): { label: strin
     d.setDate(start.getDate() + w * 7);
     if (d.getMonth() !== last) {
       last = d.getMonth();
-      // A month that only gets the first, partial column would print on top of the next
-      if (w === 0 || w < weeks - 2) out.push({ label: d.toLocaleString("en-US", { month: "short" }), week: w });
+      out.push({ label: d.toLocaleString("en-US", { month: "short" }), week: w });
     }
   }
-  return out;
+  /*
+   * A month cut short at either end of the year - the snapshot starting on the
+   * 28th, say - gets a column or two, and its label printed on top of the next
+   * one ("SeOct"). It goes unlabelled instead, the way GitHub's own graph does.
+   */
+  return out.filter((m, i) => (out[i + 1]?.week ?? weeks) - m.week >= LABEL_COLUMNS);
 }

@@ -25,7 +25,7 @@ export function LsOutput() {
           </span>
         );
         return (
-          <div key={f.name} className="flex min-h-6 items-center gap-4 text-[13px]">
+          <div key={f.name} className="flex min-h-6 items-center gap-4 text-[13px] coarse:min-h-11">
             {/*
               Owner and group first, then the mode. Spelled out, this row wanted
               376px of fixed columns inside a 343px phone window, so it was the
@@ -33,11 +33,12 @@ export function LsOutput() {
             */}
             <span className="hidden shrink-0 text-faint md:inline">-rw-r--r--  shlok  staff</span>
             <span className="hidden shrink-0 text-faint sm:inline md:hidden">-rw-r--r--</span>
-            <span className="text-faint w-12 shrink-0">{f.size}</span>
+            <span className="text-faint w-12 shrink-0 tabular-nums">{f.size}</span>
+            {/* The rows touch, so a finger's 44 has to be the row itself rather than slop */}
             {open ? (
               <button
                 onClick={() => open(f.app)}
-                className="min-h-6 shrink-0 px-1 -mx-1 text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none [&>span]:hover:text-inherit [&>span]:focus:text-inherit"
+                className="min-h-6 shrink-0 coarse:min-h-11 px-1 -mx-1 text-left hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none [&>span]:hover:text-inherit [&>span]:focus:text-inherit"
               >
                 {name}
               </button>

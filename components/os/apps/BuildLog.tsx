@@ -28,7 +28,7 @@ export function BuildLog({
   return (
     <div
       data-slot="build-log"
-      className="bevel-in bg-card font-[family-name:var(--font-mono-src)] text-[12px] leading-[1.5] text-card-foreground"
+      className="verbatim bevel-in bg-card font-[family-name:var(--font-mono-src)] text-[12px] leading-[1.5] text-card-foreground"
     >
       <div
         data-slot="build-log-header"

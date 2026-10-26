@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { WindowState } from "@/hooks/useWindowManager";
 import { PixelIcon } from "@/lib/os/icons";
+import { NO_REACH, type Corner, type Reach } from "@/lib/os/cornerReach";
+import { NO_INSETS, readSafeArea } from "@/lib/os/safeArea";
 import { playSfx } from "@/lib/sfx";
 
 interface Props {
   win: WindowState;
   focused: boolean;
+  /** which resize corners may reach outside the frame; see lib/os/cornerReach.ts */
+  reach?: Reach;
   /** the outline zoom is still on its way; hold the window back until it lands */
   hidden?: boolean;
   panelHeight: number;
@@ -19,8 +23,6 @@ interface Props {
   onCommit: (geo: { x?: number; y?: number; w?: number; h?: number }) => void;
   children: React.ReactNode;
 }
-
-type Corner = "nw" | "ne" | "sw" | "se";
 
 type Gesture =
   | { kind: "move"; startX: number; startY: number; originX: number; originY: number; tx: number; ty: number }
@@ -48,13 +50,14 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), M
 /*
  * The four resize corners. Motif put a handle on every corner and edge of the
  * frame; corners alone cover every resize a visitor actually makes, and they
- * do it without an edge strip stealing pointer events from the content.
+ * do it without an edge strip stealing pointer events from the content. Their
+ * geometry is .resize-corner in app/globals.css.
  */
-const CORNERS: { corner: Corner; className: string }[] = [
-  { corner: "nw", className: "left-0 top-0 cursor-nwse-resize" },
-  { corner: "ne", className: "right-0 top-0 cursor-nesw-resize" },
-  { corner: "sw", className: "bottom-0 left-0 cursor-nesw-resize" },
-  { corner: "se", className: "bottom-0 right-0 cursor-nwse-resize" },
+const CORNERS: { corner: Corner; cursor: string }[] = [
+  { corner: "nw", cursor: "cursor-nwse-resize" },
+  { corner: "ne", cursor: "cursor-nesw-resize" },
+  { corner: "sw", cursor: "cursor-nesw-resize" },
+  { corner: "se", cursor: "cursor-nwse-resize" },
 ];
 
 function TitleButton({
@@ -87,6 +90,7 @@ function TitleButton({
 export function Window({
   win,
   focused,
+  reach = NO_REACH,
   hidden = false,
   panelHeight,
   touch,
@@ -100,6 +104,8 @@ export function Window({
   const ref = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
+  // The safe area as it stood when the gesture began; read once, not per sample
+  const safe = useRef(NO_INSETS);
 
   /*
    * A window takes keyboard focus once it has actually appeared, so Escape
@@ -163,6 +169,7 @@ export function Window({
       const dy = e.clientY - g.startY;
       const screenW = window.innerWidth;
       const screenH = window.innerHeight - panelHeight;
+      const { top, right, left } = safe.current;
 
       if (g.kind === "move") {
         /*
@@ -173,11 +180,11 @@ export function Window({
          */
         const w = el.offsetWidth;
         const h = el.offsetHeight;
-        let tx = clamp(g.originX + dx, -w + 90, screenW - 60);
-        let ty = clamp(g.originY + dy, 0, screenH - 24);
-        if (Math.abs(tx) < SNAP) tx = 0;
-        else if (Math.abs(tx + w - screenW) < SNAP) tx = screenW - w;
-        if (Math.abs(ty) < SNAP) ty = 0;
+        let tx = clamp(g.originX + dx, left - w + 90, screenW - right - 60);
+        let ty = clamp(g.originY + dy, top, screenH - 24);
+        if (Math.abs(tx - left) < SNAP) tx = left;
+        else if (Math.abs(tx + w - (screenW - right)) < SNAP) tx = screenW - right - w;
+        if (Math.abs(ty - top) < SNAP) ty = top;
         else if (Math.abs(ty + h - screenH) < SNAP) ty = screenH - h;
         g.tx = tx;
         g.ty = ty;
@@ -192,16 +199,16 @@ export function Window({
        * edge is the one handle that could bring the window back.
        */
       let { originX: x, originY: y, originW: w, originH: h } = g;
-      if (g.corner.includes("e")) w = clamp(g.originW + dx, MIN_W, screenW - x);
+      if (g.corner.includes("e")) w = clamp(g.originW + dx, MIN_W, screenW - right - x);
       if (g.corner.includes("s")) h = clamp(g.originH + dy, MIN_H, screenH - y);
       if (g.corner.includes("w")) {
-        const right = g.originX + g.originW;
-        x = clamp(g.originX + dx, 0, right - MIN_W);
-        w = right - x;
+        const edge = g.originX + g.originW;
+        x = clamp(g.originX + dx, left, edge - MIN_W);
+        w = edge - x;
       }
       if (g.corner.includes("n")) {
         const bottom = g.originY + g.originH;
-        y = clamp(g.originY + dy, 0, bottom - MIN_H);
+        y = clamp(g.originY + dy, top, bottom - MIN_H);
         h = bottom - y;
       }
       el.style.left = `${x}px`;
@@ -228,6 +235,7 @@ export function Window({
     onFocus();
     const el = ref.current;
     if (!el) return;
+    safe.current = readSafeArea();
     el.style.willChange = "transform";
     gesture.current = {
       kind: "move",
@@ -246,6 +254,7 @@ export function Window({
     onFocus();
     const el = ref.current;
     if (!el) return;
+    safe.current = readSafeArea();
     gesture.current = {
       kind: "resize",
       corner,
@@ -336,23 +345,36 @@ export function Window({
         {children}
       </div>
 
-      {!win.maximized &&
-        CORNERS.map(({ corner, className }) => (
+      {!win.maximized && (
+        <>
+          {/*
+            Only the south-east corner draws a grip, and the grip takes the press
+            itself. It is the one resize handle anybody can see, so it is where a
+            visitor aims, and the corner over it keeps only the 7px of frame
+            inside the window: on its own it left the middle of the grip dead.
+          */}
           <div
-            key={corner}
-            onPointerDown={startResize(corner)}
             aria-hidden
-            className={`absolute h-3 w-3 ${className}`}
+            onPointerDown={startResize("se")}
+            className="absolute bottom-0 right-0 h-3 w-3 cursor-nwse-resize"
             style={{
               touchAction: "none",
-              // Only the south-east corner draws a grip; the others are silent
               background:
-                corner === "se"
-                  ? "linear-gradient(135deg, transparent 0 40%, hsl(var(--bevel-dark)) 40% 52%, hsl(var(--bevel-light)) 52% 60%, transparent 60% 72%, hsl(var(--bevel-dark)) 72% 84%, hsl(var(--bevel-light)) 84% 92%, transparent 92%)"
-                  : undefined,
+                "linear-gradient(135deg, transparent 0 40%, hsl(var(--bevel-dark)) 40% 52%, hsl(var(--bevel-light)) 52% 60%, transparent 60% 72%, hsl(var(--bevel-dark)) 72% 84%, hsl(var(--bevel-light)) 84% 92%, transparent 92%)",
             }}
           />
-        ))}
+          {CORNERS.map(({ corner, cursor }) => (
+            <div
+              key={corner}
+              data-corner={corner}
+              data-reach={reach[corner] || undefined}
+              onPointerDown={startResize(corner)}
+              aria-hidden
+              className={`resize-corner ${cursor}`}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 }

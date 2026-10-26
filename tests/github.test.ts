@@ -51,4 +51,12 @@ describe("github snapshot", () => {
     expect(cols.every((c) => c.week >= 0 && c.week < 53)).toBe(true);
     expect(monthColumns(null, 53)).toEqual([]);
   });
+
+  it("leaves a month too short for its label unlabelled at either end", () => {
+    // Sep 28 is one column of September before October begins
+    const cols = monthColumns("2025-09-28", 53);
+    expect(cols[0]).toEqual({ label: "Oct", week: 1 });
+    for (let i = 1; i < cols.length; i++) expect(cols[i].week - cols[i - 1].week).toBeGreaterThanOrEqual(3);
+    expect(53 - cols.at(-1)!.week).toBeGreaterThanOrEqual(3);
+  });
 });

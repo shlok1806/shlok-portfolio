@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useRemix } from "@/hooks/useRemix";
+import { useSafeArea } from "@/hooks/useSafeArea";
 import { SMALL_W, useWindowManager, type OpenOptions, type Transition } from "@/hooks/useWindowManager";
 import { zoom, type Rect } from "@/lib/os/zoom";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
@@ -12,6 +13,7 @@ import { PROFILE, PROJECTS } from "@/lib/content";
 import { GAMES } from "@/lib/games/registry";
 import { PRESETS } from "@/lib/theme/presets";
 import { notify } from "@/lib/os/notify";
+import { NO_REACH, cornerReach } from "@/lib/os/cornerReach";
 import { event } from "@/lib/analytics";
 import { spotlightItems, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
@@ -189,8 +191,14 @@ export function Desktop() {
     if (!el) return;
     const measure = () => setPanelH(el.getBoundingClientRect().height);
     measure();
+    /*
+     * The border box, not the default content box. The home-indicator strip is
+     * padding, so when it changes - every rotation of a phone, 34px to 21px -
+     * the height and the padding move together and the content box does not
+     * change at all; observing that, the windows kept sizing against the old bar.
+     */
     const ro = new ResizeObserver(measure);
-    ro.observe(el);
+    ro.observe(el, { box: "border-box" });
     return () => ro.disconnect();
   }, [booted, touch]);
 
@@ -339,7 +347,12 @@ export function Desktop() {
     }
   }, []);
 
-  const wm = useWindowManager(panelH, onTransition);
+  /*
+   * The notch, the status bar and the home indicator of an installed phone
+   * copy, by the same arrangement as the panel: CSS decides, this measures.
+   */
+  const safe = useSafeArea();
+  const wm = useWindowManager(panelH, onTransition, safe);
   const { open: wmOpen, windows, focusedId, PANEL_H } = wm;
 
   /*
@@ -384,7 +397,7 @@ export function Desktop() {
        * between them gives 5 and 5 instead of 9 and 1.
        */
       const fit = viewport
-        ? Math.max(1, Math.floor((viewport.h - PANEL_H - 12) / ICON_PITCH))
+        ? Math.max(1, Math.floor((viewport.h - PANEL_H - safe.top - 12) / ICON_PITCH))
         : 6;
       // A phone gets two short columns rather than one that runs the full height
       const columns = Math.max(
@@ -393,17 +406,18 @@ export function Desktop() {
       );
       const perColumn = Math.ceil(DESKTOP_APPS.length / columns);
       const fallback = {
-        x: 12 + Math.floor(i / perColumn) * (ICON_W + 8),
-        y: 12 + (i % perColumn) * ICON_PITCH,
+        x: safe.left + 12 + Math.floor(i / perColumn) * (ICON_W + 8),
+        y: safe.top + 12 + (i % perColumn) * ICON_PITCH,
       };
       const pos = iconPos[id] ?? fallback;
       if (!viewport) return pos;
+      // Inside the safe area as well as the screen: an icon under the notch cannot be tapped
       return {
-        x: Math.max(0, Math.min(pos.x, Math.max(0, viewport.w - ICON_W))),
-        y: Math.max(0, Math.min(pos.y, Math.max(0, viewport.h - PANEL_H - ICON_H))),
+        x: Math.max(safe.left, Math.min(pos.x, Math.max(safe.left, viewport.w - safe.right - ICON_W))),
+        y: Math.max(safe.top, Math.min(pos.y, Math.max(safe.top, viewport.h - PANEL_H - ICON_H))),
       };
     },
-    [iconPos, viewport, PANEL_H],
+    [iconPos, viewport, PANEL_H, safe],
   );
 
   /*
@@ -703,7 +717,7 @@ export function Desktop() {
         {/* Machine label, bottom right of the root window */}
         <p
           aria-hidden
-          className="pointer-events-none absolute right-4 font-[family-name:var(--font-ui)] text-[11px] leading-relaxed"
+          className="pointer-events-none absolute right-[calc(var(--safe-right)+16px)] font-[family-name:var(--font-ui)] text-[11px] leading-relaxed"
           style={{ bottom: PANEL_H + 12, ...labelStyle, opacity: 0.85 }}
         >
           {PROFILE.name}
@@ -745,6 +759,7 @@ export function Desktop() {
               key={win.id}
               win={win}
               focused={win.id === focusedId}
+              reach={win.id === focusedId ? cornerReach(win, windows, touch) : NO_REACH}
               hidden={!!arriving[win.id]}
               panelHeight={PANEL_H}
               touch={touch}
