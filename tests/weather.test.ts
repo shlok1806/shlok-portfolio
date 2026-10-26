@@ -42,8 +42,9 @@ describe("weather", () => {
     expect(freshness(READING, AT + WEATHER_MAX_AGE_MS)).toBe("expired");
   });
 
-  it("asks again about a reading stamped in the future", () => {
+  it("asks again about a reading stamped a little in the future, and drops one stamped far ahead", () => {
     expect(freshness(READING, AT - 60_000)).toBe("stale");
+    expect(freshness(READING, AT - 24 * 60 * 60_000)).toBe("expired");
   });
 
   it("hands back a fresh or stale reading from the cache, never an expired one", () => {
