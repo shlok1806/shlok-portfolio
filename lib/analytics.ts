@@ -105,11 +105,26 @@ export function whenShown(fn: () => void): void {
   fn();
 }
 
+/*
+ * Vercel's script is mounted a render after the desktop's first events
+ * (VisitAnalytics waits for the page to be shown), and track() drops anything
+ * sent before window.va exists: a boot skipped at mount - reduced motion, a
+ * link opened in a background tab - never reached Vercel. This is the queue the
+ * script's own loader sets up, set up first, so the script drains it on load.
+ */
+function vercelQueue(): void {
+  if (window.va) return;
+  window.va = (...params) => {
+    (window.vaq ??= []).push(params);
+  };
+}
+
 /** Records one event. Safe to call anywhere; a no-op on the server. */
 export function event(name: EventName, props: EventProps = {}): void {
   if (typeof window === "undefined") return;
   const data = clean(props);
   whenShown(() => {
+    vercelQueue();
     try {
       track(name, data);
     } catch {
