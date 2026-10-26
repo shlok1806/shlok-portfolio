@@ -581,11 +581,17 @@ export function Desktop() {
         .reduce<WindowState | null>((top, w) => (!top || w.z > top.z ? w : top), null),
     [windows],
   );
+  /*
+   * Whether a panel menu is open, as the panel reports it. Read off the DOM
+   * instead, a menu closed by picking an item still looked open to the render
+   * that item caused, and Back was left armed for a menu that was gone.
+   */
+  const [panelMenu, setPanelMenu] = useState(false);
   useBackDismiss(touch && booted, [
     { open: spotlight, dismiss: () => setSpotlight(false) },
-    // The panel's menus keep their own state; Escape is how they are asked to close
+    // The menu keeps its own state; Escape is how it is asked to close
     {
-      open: () => document.querySelector("[role='menu'][data-state='open']") !== null,
+      open: panelMenu,
       dismiss: () =>
         document
           .querySelector("[role='menu'][data-state='open']")
@@ -638,13 +644,22 @@ export function Desktop() {
         return;
       }
       if (e.key !== "Escape" || e.defaultPrevented) return;
+      /*
+       * An Escape that did something is spent. Chrome reads an Escape that
+       * nothing cancelled as a close request, and a phone with a keyboard
+       * plugged in has a close watcher armed for Back: the same key would
+       * close a second thing.
+       */
       if (rootMenuRef.current) {
+        e.preventDefault();
         setRootMenu(null);
         return;
       }
       if (document.querySelector("[role='menu'][data-state='open']")) return;
       const id = focusedRef.current;
-      if (id) wm.close(id);
+      if (!id) return;
+      e.preventDefault();
+      wm.close(id);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -838,6 +853,7 @@ export function Desktop() {
           }}
           onChooseWallpaper={chooseWallpaper}
           onToggleSound={toggleSound}
+          onMenuOpenChange={setPanelMenu}
         />
       </div>
 

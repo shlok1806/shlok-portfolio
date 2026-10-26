@@ -31,8 +31,15 @@ otherwise:
   does nothing: the window is invisible behind its zoom outline at that point.
 - **Back on touch** is `hooks/useBackDismiss.ts`. A new thing that sits over
   the desktop and should close on Back is added to the layer list in
-  `Desktop.tsx`, top-most first. Nothing else on `/` should push history
-  entries; the hook assumes it owns the one on top.
+  `Desktop.tsx`, top-most first, and its `open` is React state the desktop
+  holds - lift it up (as the panel's menus report theirs through
+  `onMenuOpenChange`) rather than querying the DOM, which lags the render and
+  leaves Back armed for something already gone. Chrome gets a `CloseWatcher`
+  (a history entry pushed after a Back is one Chrome's own Back skips);
+  other browsers get one sentinel history entry. Nothing else on `/` should
+  push history entries; the hook assumes it owns the one on top. An Escape
+  the desktop acts on is `preventDefault`ed, or Chrome also reads it as a
+  close request and the watcher closes a second layer.
 - **Throw-away gestures** (the full-screen sheet, a notice) share
   `lib/os/swipe.ts`: follow the finger with a transform, decide on release
   by distance or speed, step back to rest, and pick up from the live

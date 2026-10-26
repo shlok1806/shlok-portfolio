@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface BackLayer {
   /**
-   * On screen right now. A function for something the desktop does not hold
-   * in state, such as a panel menu; it is asked again whenever it matters.
+   * On screen right now. Desktop state, never a DOM query: the hook acts
+   * when this changes, and a query that only settles after the render that
+   * asked it never tells the hook the layer went away.
    */
-  open: boolean | (() => boolean);
+  open: boolean;
   /** takes it off the screen; called for the top-most open layer when Back is pressed */
   dismiss: () => void;
 }
@@ -18,13 +19,23 @@ const MARK = "shlokosBack";
 const isMark = (state: unknown): boolean =>
   typeof state === "object" && state !== null && (state as Record<string, unknown>)[MARK] === true;
 
-const isOpen = (l: BackLayer): boolean => (typeof l.open === "function" ? l.open() : l.open);
+/*
+ * Not in TypeScript's DOM lib yet. Chrome 120 and later, Android included,
+ * where the system Back is a close request before it is a navigation.
+ */
+interface CloseWatcherLike {
+  addEventListener(type: "close", fn: () => void): void;
+  destroy(): void;
+}
+type CloseWatcherCtor = new () => CloseWatcherLike;
+const closeWatcher = (): CloseWatcherCtor | undefined =>
+  (window as Window & { CloseWatcher?: CloseWatcherCtor }).CloseWatcher;
 
 /*
- * Chrome skips, on Back, a history entry a page added before anyone touched
- * it - which is exactly what an entry pushed for the shell that opens at
- * login would be. So nothing is pushed until the page has been used; where
- * the browser cannot say, it is assumed it has.
+ * Nothing is armed until the page has been used. Someone who lands here and
+ * presses Back without touching anything wants to leave, and gets to with
+ * one press. Chrome also skips, on Back, a history entry a page added before
+ * anyone touched it. Where the browser cannot say, it is assumed it has.
  */
 const hasBeenActive = (): boolean =>
   (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
@@ -37,27 +48,62 @@ const hasBeenActive = (): boolean =>
  *
  * `layers` is ordered top-most first and passed fresh on every render.
  *
- * While anything is open, exactly one extra history entry sits on top of the
- * page. Back pops it; the top layer is dismissed, and the entry is pushed
- * again only if something is still open. When the visitor closes everything
- * themselves, the entry is taken back off quietly, so the next Back leaves
- * the site as it would have anyway. A press of Back therefore always either
- * closes something or leaves: it never does nothing, and it never holds
- * anyone on the site.
+ * Where the browser has CloseWatcher, one watcher is held while anything is
+ * open. Back closes it instead of navigating; the top layer is dismissed and
+ * a new watcher made only if something is still open. History is not
+ * touched. That matters on Chrome, which marks a history entry pushed after
+ * a Back, with no tap since, as one for its own Back to skip: the history
+ * version below would close one layer and then leave the site with the rest
+ * still showing.
+ *
+ * Elsewhere (Safari, Firefox) exactly one extra history entry sits on top of
+ * the page while anything is open. Back pops it; the top layer is
+ * dismissed, and the entry is pushed again only if something is still open.
+ * When the visitor closes everything themselves, the entry is taken back off
+ * quietly, so the next Back leaves the site as it would have anyway.
+ *
+ * Either way a press of Back always closes something or leaves: it never
+ * does nothing, and it never holds anyone on the site.
  */
 export function useBackDismiss(enabled: boolean, layers: readonly BackLayer[]): void {
   const latest = useRef({ enabled, layers });
   latest.current = { enabled, layers };
+  /** the watcher standing in for the next Back, where there is CloseWatcher */
+  const watcher = useRef<CloseWatcherLike | null>(null);
   /** our entry is the current one */
   const armed = useRef(false);
   /** our entry is being taken back off, and the Back that does it is ours, not the visitor's */
   const consuming = useRef(false);
   const [pops, setPops] = useState(0);
-  const wanted = enabled && layers.some(isOpen);
+  const wanted = enabled && layers.some((l) => l.open);
+
+  /** Back was pressed: close the top layer, and re-arm, if anything is left, once that has rendered */
+  const pressed = useCallback(() => {
+    latest.current.layers.find((l) => l.open)?.dismiss();
+    setPops((n) => n + 1);
+  }, []);
 
   const sync = useCallback(() => {
+    const want = latest.current.enabled && latest.current.layers.some((l) => l.open);
+    const Watcher = closeWatcher();
+    if (Watcher) {
+      if (want && !watcher.current && hasBeenActive()) {
+        const w = new Watcher();
+        w.addEventListener("close", () => {
+          // A watcher that has closed is spent; the next press needs a new one
+          if (watcher.current !== w) return;
+          watcher.current = null;
+          pressed();
+        });
+        watcher.current = w;
+      } else if (!want && watcher.current) {
+        watcher.current.destroy();
+        watcher.current = null;
+      }
+      return;
+    }
+
     if (consuming.current) return;
-    const want = latest.current.enabled && latest.current.layers.some(isOpen);
     if (want && !armed.current && hasBeenActive()) {
       /*
        * The router's own state is carried over: Next reloads the page when it
@@ -71,7 +117,7 @@ export function useBackDismiss(enabled: boolean, layers: readonly BackLayer[]): 
       consuming.current = true;
       window.history.back();
     }
-  }, []);
+  }, [pressed]);
 
   useEffect(() => {
     /*
@@ -80,17 +126,17 @@ export function useBackDismiss(enabled: boolean, layers: readonly BackLayer[]): 
      * popping it is a popstate here and not a fresh load. Pushing another on
      * top would leave this one behind as a Back that does nothing.
      */
-    if (isMark(window.history.state)) armed.current = true;
+    if (!closeWatcher() && isMark(window.history.state)) armed.current = true;
 
     const onPop = (e: PopStateEvent) => {
-      const pressed = armed.current && !consuming.current;
+      if (closeWatcher()) return;
+      const visitor = armed.current && !consuming.current;
       consuming.current = false;
       armed.current = isMark(e.state);
-      if (pressed) latest.current.layers.find(isOpen)?.dismiss();
-      // Re-arm, if anything is left, once that dismissal has rendered
-      setPops((n) => n + 1);
+      if (visitor) pressed();
+      else setPops((n) => n + 1);
     };
-    // The first press on the page is what allows the first entry
+    // The first press on the page is what allows the first one to be armed
     const onUse = () => sync();
     window.addEventListener("popstate", onPop);
     window.addEventListener("pointerup", onUse, true);
@@ -99,8 +145,10 @@ export function useBackDismiss(enabled: boolean, layers: readonly BackLayer[]): 
       window.removeEventListener("popstate", onPop);
       window.removeEventListener("pointerup", onUse, true);
       window.removeEventListener("keydown", onUse, true);
+      watcher.current?.destroy();
+      watcher.current = null;
     };
-  }, [sync]);
+  }, [sync, pressed]);
 
   useEffect(sync, [wanted, pops, sync]);
 }

@@ -53,6 +53,8 @@ interface Props {
   onSelectPreset: (id: string) => void;
   onChooseWallpaper: (id: string) => void;
   onToggleSound: () => void;
+  /** a menu on the bar opened or closed; on a phone, Back closes an open one */
+  onMenuOpenChange?: (open: boolean) => void;
 }
 
 export function Panel({
@@ -69,6 +71,7 @@ export function Panel({
   onSelectPreset,
   onChooseWallpaper,
   onToggleSound,
+  onMenuOpenChange,
 }: Props) {
   /*
    * The speaker reports whether this machine is making a noise, which is not the
@@ -88,7 +91,10 @@ export function Panel({
   const item = `gap-3 rounded-none leading-none focus:bg-primary focus:text-primary-foreground ${
     touch ? "min-h-11 px-3 py-2" : "px-2 py-[5px]"
   }`;
-  const tickOpen = (open: boolean) => open && playSfx("tick");
+  const tickOpen = (open: boolean) => {
+    onMenuOpenChange?.(open);
+    if (open) playSfx("tick");
+  };
   const tickRow = () => playSfx("tick");
 
   // Silence means silence: whatever is currently making the noise stops

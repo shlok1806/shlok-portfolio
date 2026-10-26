@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 /** Two layers, `top` over `under`, each closed by its own dismiss */
@@ -102,6 +102,78 @@ describe("useBackDismiss", () => {
     expect(window.history.length).toBe(base);
     await pressBack();
     expect(h.result.current.open).toEqual({ top: false, under: false });
+    h.unmount();
+  });
+});
+
+/*
+ * What Chrome does with Back while a close watcher is armed: the newest one
+ * closes, and the page stays where it is. jsdom has no CloseWatcher.
+ */
+class FakeCloseWatcher extends EventTarget {
+  static armed: FakeCloseWatcher[] = [];
+  constructor() {
+    super();
+    FakeCloseWatcher.armed.push(this);
+  }
+  destroy() {
+    FakeCloseWatcher.armed = FakeCloseWatcher.armed.filter((w) => w !== this);
+  }
+}
+
+/** Back in Chrome. False when no watcher took it, which is Back leaving the page. */
+function closeRequest(): boolean {
+  const w = FakeCloseWatcher.armed.pop();
+  if (!w) return false;
+  act(() => {
+    w.dispatchEvent(new Event("close"));
+  });
+  return true;
+}
+
+describe("useBackDismiss where the browser has CloseWatcher", () => {
+  const host = window as Window & { CloseWatcher?: unknown };
+  beforeEach(() => {
+    FakeCloseWatcher.armed = [];
+    host.CloseWatcher = FakeCloseWatcher;
+  });
+  afterEach(() => {
+    delete host.CloseWatcher;
+  });
+
+  it("closes one layer per Back, top-most first, then lets Back leave, all without history", () => {
+    const base = window.history.length;
+    const h = renderHook(() => useLayers(true, { top: true, under: true }));
+    expect(FakeCloseWatcher.armed).toHaveLength(1);
+
+    expect(closeRequest()).toBe(true);
+    expect(h.result.current.open).toEqual({ top: false, under: true });
+    // A fresh watcher for the layer still showing; never more than one
+    expect(FakeCloseWatcher.armed).toHaveLength(1);
+
+    expect(closeRequest()).toBe(true);
+    expect(h.result.current.open).toEqual({ top: false, under: false });
+    // Nothing left to close, so the next Back is the browser's
+    expect(closeRequest()).toBe(false);
+    expect(window.history.length).toBe(base);
+    expect(window.history.state?.shlokosBack).toBeUndefined();
+    h.unmount();
+  });
+
+  it("stands down when the visitor closes everything themselves, and re-arms when something opens", () => {
+    const h = renderHook(() => useLayers(true, { top: false, under: true }));
+    act(() => h.result.current.setOpen({ top: false, under: false }));
+    expect(FakeCloseWatcher.armed).toHaveLength(0);
+    act(() => h.result.current.setOpen({ top: true, under: false }));
+    expect(FakeCloseWatcher.armed).toHaveLength(1);
+    h.unmount();
+    // Gone with the desktop, so it can never swallow a Back on another page
+    expect(FakeCloseWatcher.armed).toHaveLength(0);
+  });
+
+  it("arms nothing when it is not enabled", () => {
+    const h = renderHook(() => useLayers(false, { top: true, under: true }));
+    expect(FakeCloseWatcher.armed).toHaveLength(0);
     h.unmount();
   });
 });
