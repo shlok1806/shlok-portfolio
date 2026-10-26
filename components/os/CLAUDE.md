@@ -22,6 +22,14 @@ Menus, hints and commands:
   `KeyHint`, `ariaShortcut`), so a hint cannot name a key the desktop does not
   answer to. `"Mod"` is Ctrl or ⌘; `useApplePlatform` decides which, and the
   server always says Ctrl. A new handler in `Desktop.tsx` gets its row there.
+- **Spotlight commands go through the real control.** A command is a
+  `CommandId` in `lib/os/spotlight.ts` plus a case in Desktop's `runCommand`
+  that calls whatever the visible control calls (the window manager's close,
+  `useSpeaker`'s silence), never a second implementation. A command with
+  nothing to act on is left out of the list, not offered and inert.
+- **Open a dialog from a Radix menu in `onCloseAutoFocus`, not `onSelect`.**
+  The menu's focus trap is still up during `onSelect` and pulls focus back out
+  of the dialog's field (see the Spotlight row in `Panel.tsx`).
 
 Anything adapted from opensourceui.in follows
 `docs/adr/0001-vendor-opensourceui-through-the-token-layer.md` and carries the
