@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { tapToOpen } from "@/lib/os/tapToOpen";
 import { PROJECTS, type Project } from "@/lib/content";
@@ -11,6 +11,7 @@ import { BuildLog } from "./BuildLog";
 import { RepoFacts } from "./RepoFacts";
 import { ScreenFrame } from "./ScreenFrame";
 import { buildTranscript } from "@/lib/os/buildLog";
+import { prefetchScreenshots, warmScreenshots } from "@/lib/os/screenshots";
 import type { AppProps } from "@/lib/os/types";
 
 /*
@@ -80,6 +81,13 @@ export function ProjectsApp({ open }: AppProps) {
     setSlug(p.slug);
   };
 
+  /*
+   * Whatever is selected, or about to be, is what opens next, so its
+   * screenshots are decoded now and its window paints them in its first frame.
+   */
+  useEffect(() => prefetchScreenshots(PROJECTS), []);
+  useEffect(() => warmScreenshots(selected), [selected]);
+
   return (
     <DocShell status={`/home/shlok/projects  ${PROJECTS.length} items  ·  ${selected.name} selected`}>
       <div className="flex h-full flex-col gap-3 sm:flex-row">
@@ -96,6 +104,8 @@ export function ProjectsApp({ open }: AppProps) {
                   onClick={() => !touch && pick(p)}
                   onDoubleClick={() => launch(p)}
                   onKeyDown={(e) => e.key === "Enter" && launch(p)}
+                  onPointerEnter={() => warmScreenshots(p)}
+                  onFocus={() => warmScreenshots(p)}
                   aria-label={`${p.name}`}
                   aria-current={active || undefined}
                   className={`flex w-full items-baseline gap-3 px-1 text-left focus:outline-none ${rowPad} ${

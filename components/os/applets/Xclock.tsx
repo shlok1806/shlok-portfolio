@@ -41,18 +41,19 @@ export function useClock(intervalMs: number): Date | null {
 /**
  * An analog face that takes the colour of whatever it sits in. crispEdges on
  * purpose: xclock was one bit deep and its hands had jaggies, and a smooth
- * antialiased hand is the one thing that would give this away.
+ * antialiased hand is the one thing that would give this away. Without a time
+ * it is the dial alone, which is what the server can draw.
  */
 export function ClockFace({
   now,
   seconds = true,
   className = "",
 }: {
-  now: Date;
+  now: Date | null;
   seconds?: boolean;
   className?: string;
 }) {
-  const a = handAngles(now);
+  const a = now ? handAngles(now) : null;
   return (
     <svg
       viewBox="0 0 100 100"
@@ -74,43 +75,50 @@ export function ClockFace({
           strokeWidth={t.hour % 3 === 0 ? 3 : 2}
         />
       ))}
-      <line
-        x1="50"
-        y1="52"
-        x2="50"
-        y2="26"
-        stroke="currentColor"
-        strokeWidth="5"
-        transform={`rotate(${a.hour} 50 50)`}
-      />
-      <line
-        x1="50"
-        y1="54"
-        x2="50"
-        y2="14"
-        stroke="currentColor"
-        strokeWidth="3"
-        transform={`rotate(${a.minute} 50 50)`}
-      />
-      {seconds && (
-        <line
-          x1="50"
-          y1="58"
-          x2="50"
-          y2="10"
-          className="stroke-accent-ink"
-          strokeWidth="1.5"
-          transform={`rotate(${a.second} 50 50)`}
-        />
+      {a && (
+        <>
+          <line
+            x1="50"
+            y1="52"
+            x2="50"
+            y2="26"
+            stroke="currentColor"
+            strokeWidth="5"
+            transform={`rotate(${a.hour} 50 50)`}
+          />
+          <line
+            x1="50"
+            y1="54"
+            x2="50"
+            y2="14"
+            stroke="currentColor"
+            strokeWidth="3"
+            transform={`rotate(${a.minute} 50 50)`}
+          />
+          {seconds && (
+            <line
+              x1="50"
+              y1="58"
+              x2="50"
+              y2="10"
+              className="stroke-accent-ink"
+              strokeWidth="1.5"
+              transform={`rotate(${a.second} 50 50)`}
+            />
+          )}
+          <rect x="47" y="47" width="6" height="6" fill="currentColor" />
+        </>
       )}
-      <rect x="47" y="47" width="6" height="6" fill="currentColor" />
     </svg>
   );
 }
 
 /**
  * The panel's clock: a small face beside the digits. Pressing it opens xclock
- * in a window, which is the only reason it is a button.
+ * in a window, which is the only reason it is a button. The dial is drawn
+ * before the time is known so the button never changes width on mount; when
+ * the face only appeared then, it pushed the whole right of the panel 26px
+ * to the left.
  */
 export function PanelClock({ onOpen }: { onOpen: () => void }) {
   // Every ten seconds is enough for minutes; the panel face has no second hand
@@ -124,7 +132,7 @@ export function PanelClock({ onOpen }: { onOpen: () => void }) {
       data-slot="panel-clock"
       className="bevel-in my-[3px] mx-[3px] flex items-center gap-2 bg-muted px-2.5 leading-none text-secondary-foreground hover:bg-secondary"
     >
-      {now && <ClockFace now={now} seconds={false} className="h-[18px] w-[18px]" />}
+      <ClockFace now={now} seconds={false} className="h-[18px] w-[18px]" />
       <span suppressHydrationWarning className="tabular-nums">
         {now ? clockText(now) : "--:--"}
       </span>

@@ -166,7 +166,9 @@ export interface Project {
    * window. Taken by hand with chrome-devtools-axi at 1440x900 and 390x844,
    * then resized to 960 and 360 wide and encoded with `cwebp -q 80`; retake
    * them when the demo changes. The pixel size travels with the path so the
-   * frame can reserve its box before the image arrives.
+   * frame can reserve its box before the image arrives. After adding or
+   * retaking one, run `npm run placeholders` for the mosaic the frame shows
+   * while it loads; see lib/placeholders/CLAUDE.md.
    */
   screenshots?: { desktop?: Screenshot; phone?: Screenshot };
 }

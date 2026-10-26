@@ -20,6 +20,17 @@ describe("event", () => {
     expect(track).toHaveBeenCalledWith("command", { ok: 1 });
   });
 
+  it("holds what a prerendered page records until it is shown, and sends nothing if it never is", () => {
+    Object.defineProperty(document, "prerendering", { configurable: true, value: true });
+    event("open", { app: "resume" });
+    expect(track).not.toHaveBeenCalled();
+    Object.defineProperty(document, "prerendering", { configurable: true, value: false });
+    document.dispatchEvent(new Event("prerenderingchange"));
+    expect(track).toHaveBeenCalledOnce();
+    expect(track).toHaveBeenCalledWith("open", { app: "resume" });
+    delete (document as { prerendering?: boolean }).prerendering;
+  });
+
   it("does not throw when the analytics script refuses", () => {
     track.mockImplementationOnce(() => {
       throw new Error("blocked");

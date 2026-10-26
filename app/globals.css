@@ -520,3 +520,88 @@ html:has([data-pal-perch]) {
     display: none !important;
   }
 }
+
+/*
+ * Loading. Everything below is how a thing that is not here yet shows that it
+ * is coming, and how it arrives.
+ *
+ * A project screenshot lands the way a window does, in two frames, over the
+ * mosaic that stood in for it (components/os/apps/ScreenFrame.tsx). The
+ * reduced-motion block above already cuts this to nothing.
+ */
+.shot-in {
+  animation: win-in 80ms steps(2, end) both;
+}
+
+/*
+ * /resume is paper, not a tube. Its white sheet ends where the text does, and
+ * whatever lies past it (the rest of the last printed page when background
+ * graphics are on, the overscroll above and below the sheet) was the body's
+ * colour from whichever tube the desktop last used, so a printout ended in a
+ * band of desktop under the skills. Past the sheet is paper too.
+ */
+body:has(> [data-paper]) {
+  background-color: white;
+}
+
+/*
+ * Going between the desktop and /resume, the tube changes channel: the old
+ * picture squeezes to a bright line in three frames and goes dark, then the
+ * new one lands in two, the way a window maps. 200ms in all, stepped, never
+ * tweened. Only the root is captured, so nothing is morphed between two pages
+ * that share no chrome.
+ *
+ * Into the desktop, the new picture is the boot screen's black, so the line
+ * collapses onto black and the Macintosh comes up out of it; the boot is
+ * already running underneath and is not delayed.
+ *
+ * Screen only, and only without reduced motion: a visitor who asked for less
+ * motion gets the plain cut they always had, and print has no navigations to
+ * animate. Inside the desktop there are no view transitions on purpose. The
+ * twm zoom outline is how this machine animates a window, and a cross-faded
+ * snapshot would be a second, newer language on top of it.
+ */
+@media screen and (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+
+  /* The glass behind the picture; the same black in every tube */
+  ::view-transition {
+    background-color: #000;
+  }
+
+  ::view-transition-group(root) {
+    animation: none;
+  }
+
+  ::view-transition-old(root) {
+    animation: tube-off 120ms both;
+  }
+
+  ::view-transition-new(root) {
+    animation: win-in 80ms steps(2, end) 120ms both;
+  }
+
+  /* Each keyframe holds until the next: three frames, no in-betweens */
+  @keyframes tube-off {
+    0% {
+      transform: scaleY(1);
+      animation-timing-function: steps(1, end);
+    }
+    33.333% {
+      transform: scaleY(0.45);
+      filter: brightness(1.4);
+      animation-timing-function: steps(1, end);
+    }
+    66.667% {
+      transform: scaleY(0.005);
+      filter: brightness(3);
+      animation-timing-function: steps(1, end);
+    }
+    100% {
+      transform: scaleY(0.005);
+      opacity: 0;
+    }
+  }
+}

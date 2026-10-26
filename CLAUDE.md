@@ -30,6 +30,25 @@ Every interaction event goes through `event()` in `lib/analytics.ts`; nothing ca
 never anything a visitor typed. Pageviews alone cannot see inside the desktop, which
 is why these exist.
 
+## Prerendering
+
+A page can run before anyone opens it: `/` prerenders `/resume` when the pointer
+settles on the resume window's link (Speculation Rules, `components/site/SpeculationRules.tsx`).
+A prerender runs every script and shares localStorage with the page still open, so
+anything that records a visit or writes storage at load waits until the page is
+shown. `event()` already holds events, `<VisitAnalytics />` mounts Vercel's script
+late, and an inline script checks `document.prerendering` itself (see
+`RotatePresetScript`). Never prerender `/`: the desktop boots, arms audio and opens a
+shell the moment it runs, so `/resume` only prefetches it.
+
+Chrome refuses to prerender while any DevTools client is attached, even a bare
+CDP socket that only sends input (`PrerenderingDisabledByDevTools`), so
+chrome-devtools-axi and puppeteer can only show that a rule fired, never what ran
+inside the prerender. Check that from a plain headless Chrome started with no
+remote debugging, and have the page report `activationStart`,
+`document.prerendering` and its resource timings itself: a local proxy in front of
+`next start` that appends a script posting them back is enough.
+
 ## Search and crawlers
 
 `/` is a client-rendered desktop, so what a crawler reads there is

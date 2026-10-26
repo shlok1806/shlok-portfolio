@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  WEATHER_MAX_AGE_MS,
   WEATHER_TTL_MS,
   describeCode,
+  freshness,
   parseWeather,
   readCachedWeather,
   writeCachedWeather,
 } from "@/lib/os/weather";
+
+const AT = 50_000_000;
+const READING = { tempF: 70, code: 0, windMph: 3, at: AT };
 
 describe("weather", () => {
   beforeEach(() => localStorage.clear());
@@ -29,14 +34,30 @@ describe("weather", () => {
     expect(parseWeather({ current: { temperature_2m: "warm" } })).toBeNull();
   });
 
-  it("keeps a reading for half an hour and no longer", () => {
-    writeCachedWeather({ tempF: 70, code: 0, windMph: 3, at: 10_000 });
-    expect(readCachedWeather(10_000 + WEATHER_TTL_MS - 1)?.tempF).toBe(70);
-    expect(readCachedWeather(10_000 + WEATHER_TTL_MS)).toBeNull();
+  it("calls a reading fresh for half an hour, stale for three, then expired", () => {
+    expect(freshness(READING, AT)).toBe("fresh");
+    expect(freshness(READING, AT + WEATHER_TTL_MS - 1)).toBe("fresh");
+    expect(freshness(READING, AT + WEATHER_TTL_MS)).toBe("stale");
+    expect(freshness(READING, AT + WEATHER_MAX_AGE_MS - 1)).toBe("stale");
+    expect(freshness(READING, AT + WEATHER_MAX_AGE_MS)).toBe("expired");
+  });
+
+  it("asks again about a reading stamped a little in the future, and drops one stamped far ahead", () => {
+    expect(freshness(READING, AT - 60_000)).toBe("stale");
+    expect(freshness(READING, AT - 24 * 60 * 60_000)).toBe("expired");
+  });
+
+  it("hands back a fresh or stale reading from the cache, never an expired one", () => {
+    writeCachedWeather(READING);
+    expect(readCachedWeather(AT + 60_000)?.tempF).toBe(70);
+    expect(readCachedWeather(AT + WEATHER_TTL_MS + 60_000)?.tempF).toBe(70);
+    expect(readCachedWeather(AT + WEATHER_MAX_AGE_MS)).toBeNull();
   });
 
   it("shrugs at a corrupt cache", () => {
-    localStorage.setItem("os-weather", "{not json");
-    expect(readCachedWeather()).toBeNull();
+    for (const raw of ["{not json", "null", "[]", '{"at":5}', '{"tempF":"warm","code":0,"windMph":1,"at":5}']) {
+      localStorage.setItem("os-weather", raw);
+      expect(readCachedWeather(AT), raw).toBeNull();
+    }
   });
 });

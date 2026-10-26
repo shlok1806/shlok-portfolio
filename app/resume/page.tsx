@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PROFILE, LINKS, EXPERIENCE, FELLOWSHIPS, PROJECTS, SKILLS, EDUCATION } from "@/lib/content";
 import { JsonLd } from "@/components/site/JsonLd";
+import { SpeculationRules } from "@/components/site/SpeculationRules";
 import { resumeJsonLd } from "@/lib/seo";
 import { PiixPal } from "piixpal/react";
 
@@ -20,10 +21,24 @@ export const metadata: Metadata = {
   alternates: { canonical: "/resume" },
 };
 
+/*
+ * The way back to the desktop, fetched when someone points at it. Prefetched,
+ * not prerendered: the desktop boots a Macintosh, arms its audio and opens a
+ * shell the moment it runs, and none of that should happen to a page nobody
+ * has opened yet.
+ */
+const NEXT = { prefetch: [{ where: { href_matches: "/" }, eagerness: "moderate" }] };
+
+/*
+ * On paper an entry stays whole (each article avoids a break) and a heading
+ * stays with what follows it, but a section may run across pages. Holding
+ * whole sections together left half of page one blank once Experience grew
+ * longer than what was left of it, and most of another page before Projects.
+ */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-10 break-inside-avoid-page">
-      <h2 className="border-b border-neutral-300 pb-1 text-[13px] font-bold uppercase tracking-[0.18em] text-neutral-900">
+    <section className="mt-10">
+      <h2 className="break-after-avoid border-b border-neutral-300 pb-1 text-[13px] font-bold uppercase tracking-[0.18em] text-neutral-900">
         {title}
       </h2>
       <div className="mt-4 space-y-6">{children}</div>
@@ -33,8 +48,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function ResumePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div data-paper className="min-h-screen bg-white">
       <JsonLd data={resumeJsonLd()} />
+      <SpeculationRules rules={NEXT} />
       {/*
         Deliberately not themed off the desktop's tokens. This route exists for
         crawlers, ATS parsers, screen readers and printers, and all four want a

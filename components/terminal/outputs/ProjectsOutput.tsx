@@ -1,6 +1,7 @@
 "use client";
 
 import { PROJECTS } from "@/lib/content";
+import { warmScreenshots } from "@/lib/os/screenshots";
 import { useTerminalOpen } from "../TerminalOpenContext";
 
 const ROW = "group flex w-full items-baseline gap-x-3 px-1 -mx-1 text-left";
@@ -37,6 +38,9 @@ export function ProjectsOutput() {
           <button
             key={p.slug}
             onClick={() => open("project", p.slug)}
+            // Its window is probably next; see lib/os/screenshots.ts
+            onPointerEnter={() => warmScreenshots(p)}
+            onFocus={() => warmScreenshots(p)}
             className={`${ROW} hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none`}
           >
             {cells}
