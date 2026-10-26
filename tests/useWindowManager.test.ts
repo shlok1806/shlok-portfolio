@@ -444,4 +444,41 @@ describe("closing with undo", () => {
     expect(getNotices()).toEqual([]);
     expect(h.result.current.undoClose()).toBe(false);
   });
+
+  it("closing several at once is one offer that brings them all back, stacked as they were", () => {
+    const { h, a, b } = openTwo();
+    let c = "";
+    act(() => {
+      c = h.result.current.open(app("experience"));
+    });
+    const before = h.result.current.windows.map((w) => w.id);
+    act(() => {
+      h.result.current.closeMany([c, a, b]);
+    });
+    expect(h.result.current.windows).toEqual([]);
+    expect(getNotices().map((n) => [n.title, n.action?.label])).toEqual([["Closed 3 windows", "Undo"]]);
+    act(() => {
+      runAction(getNotices()[0].id);
+    });
+    const back = [...h.result.current.windows].sort((x, y) => x.z - y.z).map((w) => w.id);
+    expect(back).toEqual(before);
+    expect(h.result.current.focusedId).toBe(c);
+    expect(getNotices()).toEqual([]);
+  });
+
+  it("reopening one app from a group closed together leaves the rest on offer", () => {
+    const { h, a, b } = openTwo();
+    act(() => {
+      h.result.current.closeMany([a, b]);
+    });
+    act(() => {
+      h.result.current.open(app("xterm"));
+    });
+    expect(h.result.current.mounted.some((w) => w.id === a)).toBe(false);
+    expect(getNotices()).toHaveLength(1);
+    act(() => {
+      h.result.current.undoClose();
+    });
+    expect(h.result.current.windows.map((w) => w.id)).toContain(b);
+  });
 });

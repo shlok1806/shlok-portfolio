@@ -223,7 +223,8 @@ export function useWindowManager(
     const notice = undoRef.current.get(id);
     undoRef.current.delete(id);
     closedRef.current = closedRef.current.filter((c) => c !== id);
-    if (notice !== undefined) dismiss(notice);
+    // Close all puts several windows behind one Undo; the offer stands while any of them is still behind it
+    if (notice !== undefined && !Array.from(undoRef.current.values()).includes(notice)) dismiss(notice);
     setWindows((ws) => ws.filter((win) => !(win.id === id && win.parked)));
   }, []);
 
@@ -347,24 +348,43 @@ export function useWindowManager(
     [nextZ, emit],
   );
 
-  const close = useCallback(
-    (id: string) => {
-      const w = windowsRef.current.find((win) => win.id === id);
-      if (!w || w.parked || closedRef.current.includes(id)) return;
-      setWindows((ws) => ws.map((win) => (win.id === id ? { ...win, parked: true } : win)));
-      setFocusedId((cur) => (cur === id ? null : cur));
-      if (!w.minimized) emit({ type: "close", id, appId: w.appId, from: rectOf(w) });
-      closedRef.current = [...closedRef.current, id];
-      undoRef.current.set(
-        id,
-        notify("info", `Closed ${w.title}`, undefined, {
-          action: { label: "Undo", run: () => reopen(id) },
-          onLapse: () => finalize(id),
-        }),
+  /*
+   * Parks windows and offers them back. Closing several at once (Spotlight's
+   * "Close all windows") is one offer for all of them, not one per window: the
+   * tray holds four notices, so the fifth window's offer pushed the first
+   * one's out, and that window was thrown away before anyone could take it
+   * back. Undo hands them back bottom of the stack first, so they come back
+   * stacked the way they were.
+   */
+  const closeMany = useCallback(
+    (ids: string[]) => {
+      const gone = ids
+        .map((id) => windowsRef.current.find((win) => win.id === id))
+        .filter((w): w is WindowState => !!w && !w.parked && !closedRef.current.includes(w.id));
+      if (gone.length === 0) return;
+      const set = new Set(gone.map((w) => w.id));
+      setWindows((ws) => ws.map((win) => (set.has(win.id) ? { ...win, parked: true } : win)));
+      setFocusedId((cur) => (cur !== null && set.has(cur) ? null : cur));
+      for (const w of gone) {
+        if (!w.minimized) emit({ type: "close", id: w.id, appId: w.appId, from: rectOf(w) });
+      }
+      const order = [...gone].sort((a, b) => a.z - b.z).map((w) => w.id);
+      closedRef.current = [...closedRef.current, ...order];
+      const notice = notify(
+        "info",
+        gone.length === 1 ? `Closed ${gone[0].title}` : `Closed ${gone.length} windows`,
+        undefined,
+        {
+          action: { label: "Undo", run: () => order.forEach(reopen), shortcut: "undo-close" },
+          onLapse: () => order.forEach(finalize),
+        },
       );
+      for (const id of order) undoRef.current.set(id, notice);
     },
     [emit, reopen, finalize],
   );
+
+  const close = useCallback((id: string) => closeMany([id]), [closeMany]);
 
   /**
    * Takes back the most recent close (Ctrl+Z), or a given one. False when
@@ -583,6 +603,7 @@ export function useWindowManager(
     focusedId,
     open,
     close,
+    closeMany,
     undoClose,
     focus,
     minimize,

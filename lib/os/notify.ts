@@ -9,12 +9,16 @@
  * a short queue and expires it.
  */
 
+import type { ShortcutAction } from "./shortcuts";
+
 export type NoticeKind = "info" | "ok" | "warn";
 
 /** The one button a notice can carry besides its close box, e.g. Undo. */
 export interface NoticeAction {
   label: string;
   run: () => void;
+  /** a key that does the same, so the button can say so */
+  shortcut?: ShortcutAction;
 }
 
 export interface Notice {

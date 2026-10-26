@@ -519,7 +519,7 @@ export function Desktop() {
     [windows.length, visible, audible],
   );
 
-  const { close: closeWindow, minimize: minimizeWindow } = wm;
+  const { closeMany, minimize: minimizeWindow } = wm;
   const runCommand = useCallback(
     (id: CommandId) => {
       switch (id) {
@@ -539,7 +539,7 @@ export function Desktop() {
           window.location.assign("/resume");
           return;
         case "close-all":
-          windows.forEach((w) => closeWindow(w.id));
+          closeMany(windows.map((w) => w.id));
           return;
         case "minimize-all":
           windows.filter((w) => !w.minimized).forEach((w) => minimizeWindow(w.id));
@@ -550,7 +550,7 @@ export function Desktop() {
           return;
       }
     },
-    [windows, closeWindow, minimizeWindow, silence],
+    [windows, closeMany, minimizeWindow, silence],
   );
 
   const runSpotlight = useCallback(
@@ -891,7 +891,7 @@ export function Desktop() {
           />
         )}
 
-        <NotificationTray />
+        <NotificationTray touch={touch} />
 
         {/* Windows, including closed ones still waiting on their Undo */}
         {wm.mounted.map((win) => {

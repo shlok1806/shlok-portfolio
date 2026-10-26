@@ -2,9 +2,11 @@
 // Adapted from opensourceui.in components/notifications/system-alert-banner.tsx and toast-notification-banner.tsx (MIT). See THIRD_PARTY_NOTICES.md.
 
 import { useEffect, useRef, useState } from "react";
+import { useApplePlatform } from "@/hooks/useApplePlatform";
 import { useNotifications } from "@/hooks/useNotifications";
 import { PixelIcon, type IconName } from "@/lib/os/icons";
 import type { Notice } from "@/lib/os/notify";
+import { ariaShortcut, keyLabel, shortcutFor } from "@/lib/os/shortcuts";
 import { addSample, catchReturn, flung, offsetTransform, returnToRest, speed, type Sample } from "@/lib/os/swipe";
 import { playSfx } from "@/lib/sfx";
 
@@ -29,15 +31,20 @@ function NoticeCard({
   onAction,
   onHold,
   onRelease,
+  touch,
 }: {
   notice: Notice;
   onDismiss: () => void;
   onAction: () => void;
   onHold: () => void;
   onRelease: () => void;
+  touch: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<Drag | null>(null);
+  // Undo answers to a key as well; a keyboard is told which, the way a title button is
+  const apple = useApplePlatform();
+  const keys = notice.action?.shortcut && !touch ? shortcutFor(notice.action.shortcut)?.keys : undefined;
   const returning = useRef<Animation | null>(null);
 
   /*
@@ -147,12 +154,16 @@ function NoticeCard({
             onAction();
           }}
           aria-label={`${notice.action.label}: ${notice.title}`}
+          title={keys ? `${notice.action.label} (${keyLabel(keys, apple)})` : undefined}
+          aria-keyshortcuts={keys ? ariaShortcut(keys, apple) : undefined}
           /*
            * Drawn the height of the close box beside it, so the two read as a
-           * pair; under a finger the press area reaches 44px tall around it
-           * without making the card any taller.
+           * pair; the press area reaches a full target's height around it
+           * without making the card any taller. Only up and down: sideways it
+           * would meet the close box's, and a tap on the edge of Undo that
+           * dismissed instead would throw the window away.
            */
-          className="bevel-out relative grid h-5 shrink-0 place-items-center bg-secondary px-2 text-[12px] font-bold leading-none text-accent-ink active:bevel-in coarse:before:absolute coarse:before:-inset-x-1 coarse:before:-inset-y-3 coarse:before:content-['']"
+          className="hit-slop-y bevel-out grid h-5 shrink-0 place-items-center bg-secondary px-2 text-[12px] font-bold leading-none text-accent-ink active:bevel-in"
         >
           {notice.action.label}
         </button>
@@ -164,8 +175,12 @@ function NoticeCard({
           onDismiss();
         }}
         aria-label={`Dismiss: ${notice.title}`}
-        // 20px drawn, slopped to the full target; nothing else in the card is pressable
-        className="hit-slop bevel-thin -mr-0.5 grid h-5 w-5 shrink-0 place-items-center bg-secondary active:bevel-in"
+        /*
+         * 20px drawn, slopped to the full target. Under a finger that slop
+         * reaches 12px to the left, so the box stands 16px clear of an Undo
+         * beside it rather than 8px, or the two targets would overlap.
+         */
+        className="hit-slop bevel-thin -mr-0.5 grid h-5 w-5 shrink-0 place-items-center bg-secondary active:bevel-in coarse:ml-2"
       >
         <PixelIcon name="close" size={12} />
       </button>
@@ -190,7 +205,7 @@ function NoticeCard({
  * sum Panel.tsx pads itself with. Either way it keeps inside the safe area, so
  * an installed copy never slides a notice under the status bar or the notch.
  */
-export function NotificationTray() {
+export function NotificationTray({ touch = false }: { touch?: boolean }) {
   const { notices, dismiss, runAction, hold, release } = useNotifications();
 
   /*
@@ -226,6 +241,7 @@ export function NotificationTray() {
               onAction={() => runAction(n.id)}
               onHold={() => hold(n.id)}
               onRelease={() => release(n.id)}
+              touch={touch}
             />
           ))}
         </div>

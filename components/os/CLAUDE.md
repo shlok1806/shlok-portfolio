@@ -75,7 +75,9 @@ Window lifecycle:
 - **Closing parks a window; it is not unmounted.** `close()` hides it
   (display:none, inert, aria-hidden), drops it from `wm.windows` and posts a
   "Closed x" notice with Undo. It only unmounts when that notice lapses
-  (expires, is dismissed, or is pushed out by newer ones). So: count visible
+  (expires, is dismissed, or is pushed out by newer ones). Closing several
+  at once goes through `closeMany`, which puts them all behind one notice:
+  the tray holds four, and one notice each threw the oldest windows away. So: count visible
   windows from `wm.windows` or `[data-window]:not([aria-hidden])`, never from
   `wm.mounted`; and an app's unmount cleanup runs seconds after the close, not
   at it. An app that does something on its own (a loop, a timer that matters)
