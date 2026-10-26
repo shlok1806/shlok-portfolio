@@ -30,6 +30,14 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
+/*
+ * The preview's buttons: 25px under a mouse, a full 44 under a finger. They
+ * wrap onto a second row in a narrow pane, 8px apart, so slop would overlap;
+ * the button itself grows instead.
+ */
+const BUTTON =
+  "bevel-out inline-flex items-center bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] leading-none text-secondary-foreground active:bevel-in coarse:min-h-11";
+
 /* A link as a bevelled button; Motif never drew a bare underline in chrome */
 function LinkButton({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -41,7 +49,7 @@ function LinkButton({ href, children }: { href: string; children: React.ReactNod
         playSfx("button");
         event("outbound", { href });
       }}
-      className="bevel-out inline-block bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] leading-none text-secondary-foreground active:bevel-in"
+      className={BUTTON}
     >
       {children}
     </a>
@@ -67,7 +75,8 @@ export function ProjectsApp({ open }: AppProps) {
   const touch = useCoarsePointer();
   const [slug, setSlug] = useState(PROJECTS[0]?.slug ?? "");
   const selected = PROJECTS.find((p) => p.slug === slug) ?? PROJECTS[0];
-  const rowPad = touch ? "py-2.5" : "py-[3px]";
+  // A 40px row was close to a thumb and still under it; 44 is the target
+  const rowPad = touch ? "py-3" : "py-[3px]";
 
   const launch = useCallback(
     (p: Project) => {
@@ -163,7 +172,7 @@ export function ProjectsApp({ open }: AppProps) {
             <button
               {...tapToOpen(() => launch(selected), touch)}
               onClick={touch ? undefined : () => launch(selected)}
-              className="bevel-out bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] leading-none text-secondary-foreground active:bevel-in"
+              className={BUTTON}
             >
               Open {selected.name}
             </button>

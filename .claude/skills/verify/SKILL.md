@@ -88,3 +88,20 @@ npx -y chrome-devtools-axi eval "() => [...document.querySelectorAll('[data-wind
 
 Good probes: stale off-screen `os-icons` (must clamp inside the viewport), short
 viewports (window auto-layout must fall back), and non-integer icon scales.
+
+**Safe-area insets** cannot be emulated by a viewport alone; override the
+properties the layout reads, then tell the desktop:
+
+```sh
+npx -y chrome-devtools-axi eval "() => { const s = document.documentElement.style;
+  s.setProperty('--safe-top', '47px'); s.setProperty('--safe-bottom', '34px');
+  window.dispatchEvent(new Event('resize')) }"
+```
+
+Landscape on a notched phone is `0 47 21 47` (top right bottom left).
+
+**Target size**: hit-test, do not trust the drawn box - `.hit-slop` grows a
+target with an invisible `::after`, and the resize corners are clipped to an L.
+Scan `document.elementFromPoint` around each control. Chrome answers for a
+box up to a pixel before its top and left edges, so a scan reads every target
+one pixel larger than it is; compare before and after with the same scan.

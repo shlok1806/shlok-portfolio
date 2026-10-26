@@ -69,7 +69,7 @@ export function SysInfoApp() {
           <p className="font-[family-name:var(--font-ui)] text-[22px] leading-none text-accent-ink glow">
             {PROFILE.name}
           </p>
-          <p className="mb-3 text-faint">{"-".repeat(28)}</p>
+          <p className="verbatim mb-3 text-faint">{"-".repeat(28)}</p>
           <dl className="space-y-[3px]">
             {person.map(([k, v]) => (
               <div key={k} className="flex gap-2">
@@ -78,7 +78,7 @@ export function SysInfoApp() {
               </div>
             ))}
           </dl>
-          <p className="my-3 text-faint">{"-".repeat(28)}</p>
+          <p className="verbatim my-3 text-faint">{"-".repeat(28)}</p>
           <dl className="space-y-[3px]">
             {machine.map(([k, v]) => (
               <div key={k} className="flex gap-2">

@@ -166,6 +166,46 @@
   --section-gap: 2rem;
 }
 
+/*
+ * The strips an installed copy has to keep clear of. Opened from the home
+ * screen the page runs edge to edge (viewportFit: cover, display: standalone),
+ * so on an iPhone it draws under the status bar and the Dynamic Island, and in
+ * landscape the notch and the rounded corners cut into both sides.
+ *
+ * Everything reads these four rather than env() directly, for two reasons.
+ * Script cannot read env() at all, but it can read a registered custom
+ * property, which computes to a plain length - the window manager needs the
+ * numbers to size a full-screen window. And a laptop has no notch: overriding
+ * these on <html> is how the whole layout gets tested without a phone.
+ */
+@property --safe-top {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --safe-right {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --safe-bottom {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+@property --safe-left {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -192,6 +232,34 @@
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
+  }
+
+  /*
+   * Headings balance their lines, so a project name that wraps in a phone
+   * window breaks into two even halves rather than a full line and an orphan.
+   * Prose gets pretty, which only reconsiders the last few lines of a paragraph
+   * so that it does not end on one word.
+   *
+   * The text-wrap-style longhand, never the text-wrap shorthand: the shorthand
+   * also resets text-wrap-mode, the same longhand white-space: nowrap sets, so
+   * on a truncate or whitespace-pre element it would quietly turn wrapping back
+   * on. All of it at zero specificity, so a utility on the element still wins.
+   *
+   * Where the column a character lands in is the layout - the shell's output,
+   * top's table, an ASCII rule, anything preformatted - reflowing a line
+   * breaks the alignment, so pre and .verbatim take a whole subtree back out.
+   * Equal specificity throughout, so the order below is the precedence: a
+   * title that is a <p> is still a title.
+   */
+  :where(p, li, dd, blockquote, figcaption) {
+    text-wrap-style: pretty;
+  }
+  :where(h1, h2, h3, h4, h5, h6, [data-slot$="-title"]) {
+    text-wrap-style: balance;
+  }
+  :where(pre, .verbatim),
+  :where(pre, .verbatim) :where(*) {
+    text-wrap-style: auto;
   }
 }
 
@@ -307,6 +375,156 @@
   .titlebar-idle {
     background: hsl(var(--secondary));
     color: hsl(var(--muted-foreground));
+  }
+
+  /*
+   * A press target bigger than the control draws: 24px under a mouse, the
+   * WCAG 2.2 minimum, and 44px under a finger. The bevel stays the size Motif
+   * proportions want; an invisible ::after around it takes the press, and a
+   * press on a pseudo-element lands on its element.
+   *
+   * The slop is centred and only ever grows a box, so a control already big
+   * enough is left alone. It is transparent but it is still on top, so two
+   * slopped controls must never sit close enough to overlap: -x and -y slop in
+   * one direction only, for a control whose neighbours leave room on just one
+   * axis. Where there is no room either way, make the control itself bigger.
+   * overflow:hidden on the element (truncate) clips the slop away.
+   */
+  .hit-slop,
+  .hit-slop-x,
+  .hit-slop-y {
+    --hit-w: 24px;
+    --hit-h: 24px;
+    position: relative;
+  }
+  .hit-slop-x {
+    --hit-h: 0px;
+  }
+  .hit-slop-y {
+    --hit-w: 0px;
+  }
+  @media (pointer: coarse) {
+    .hit-slop {
+      --hit-w: 44px;
+      --hit-h: 44px;
+    }
+    .hit-slop-x {
+      --hit-w: 44px;
+    }
+    .hit-slop-y {
+      --hit-h: 44px;
+    }
+  }
+  .hit-slop::after,
+  .hit-slop-x::after,
+  .hit-slop-y::after {
+    content: "";
+    position: absolute;
+    top: min(0px, (100% - var(--hit-h)) / 2);
+    bottom: min(0px, (100% - var(--hit-h)) / 2);
+    left: min(0px, (100% - var(--hit-w)) / 2);
+    right: min(0px, (100% - var(--hit-w)) / 2);
+  }
+
+  /*
+   * A window's resize corners. With a mouse they are the only way to resize,
+   * and they were 12px squares - half the minimum target - laid inside the
+   * frame, where the north-east one covered the top corner of the close button
+   * and the south-east one the bottom of the scrollbar.
+   *
+   * Each is now a full target centred on the corner of the frame, so most of
+   * it lies outside the window, the way a modern window manager's invisible
+   * border does. Inside the window it keeps only what belongs to the frame:
+   * the 7px of bevel, margin and inset border before the content and its
+   * scrollbar begin, cut to an L with clip-path (which clips the hit test as
+   * well as the paint). The north-west corner keeps its whole inner quarter,
+   * which is only title bar; the north-east one gives the close button back
+   * everything but the outermost pixels of the frame. The south-east grip is
+   * the exception: it is drawn there and takes its own press (Window.tsx),
+   * so a press anywhere on what the visitor can see resizes, as it did when
+   * the grip was the corner.
+   *
+   * Only the focused window reaches out, and only where it would not land on
+   * another window's title bar (data-reach, from lib/os/cornerReach.ts).
+   * Outside the frame is whatever lies under it, and in a cascade that is the
+   * title bar and buttons of the window below: with every window reaching
+   * out, one in the middle of the stack took more than a third of the close
+   * button of the one beneath it. A background window keeps the inside of its
+   * corners, and the first press on it raises it. --near and --far are where
+   * the clip starts and ends on the outer side of each axis: the whole outer
+   * half (0% and 100%) or none of it.
+   */
+  .resize-corner {
+    --hit: 24px;
+    /* left/top are measured inside the window's 2px bevel; the corner is outside it */
+    --offset: calc(var(--hit) / -2 - 2px);
+    --frame: 7px;
+    /* how much frame the close button leaves to its right and above it */
+    --close-x: 3px;
+    --close-y: 3px;
+    --near: 0%;
+    --far: 100%;
+    position: absolute;
+    width: var(--hit);
+    height: var(--hit);
+    touch-action: none;
+  }
+  .resize-corner:not([data-reach]) {
+    --near: 50%;
+    --far: 50%;
+  }
+  @media (pointer: coarse) {
+    .resize-corner {
+      --hit: 44px;
+      --close-x: 0px;
+      --close-y: 2px;
+    }
+  }
+  .resize-corner[data-corner="nw"] {
+    left: var(--offset);
+    top: var(--offset);
+    clip-path: polygon(
+      var(--near) var(--near),
+      100% var(--near),
+      100% 100%,
+      var(--near) 100%
+    );
+  }
+  .resize-corner[data-corner="ne"] {
+    right: var(--offset);
+    top: var(--offset);
+    clip-path: polygon(
+      0 var(--near),
+      var(--far) var(--near),
+      var(--far) 100%,
+      calc(50% - var(--close-x)) 100%,
+      calc(50% - var(--close-x)) calc(50% + var(--close-y)),
+      0 calc(50% + var(--close-y))
+    );
+  }
+  .resize-corner[data-corner="sw"] {
+    left: var(--offset);
+    bottom: var(--offset);
+    clip-path: polygon(
+      var(--near) 0,
+      calc(50% + var(--frame)) 0,
+      calc(50% + var(--frame)) calc(50% - var(--frame)),
+      100% calc(50% - var(--frame)),
+      100% var(--far),
+      var(--near) var(--far)
+    );
+  }
+  .resize-corner[data-corner="se"] {
+    right: var(--offset);
+    bottom: var(--offset);
+    clip-path: polygon(
+      calc(50% - var(--frame)) 0,
+      var(--far) 0,
+      var(--far) var(--far),
+      0 var(--far),
+      0 calc(50% - var(--frame)),
+      calc(50% - var(--frame)) calc(50% - var(--frame))
+    );
   }
 }
 

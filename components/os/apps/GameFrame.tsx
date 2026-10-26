@@ -50,6 +50,11 @@ function PadKey({
   );
 }
 
+/*
+ * 32px drawn and slopped to a thumb's 44. The status line is the last thing in
+ * the window, whose scrollport would clip slop hanging below it, so on touch the
+ * line is padded out to hold the whole target.
+ */
 function Chip({ label, onPress }: { label: string; onPress: () => void }) {
   return (
     <button
@@ -57,7 +62,7 @@ function Chip({ label, onPress }: { label: string; onPress: () => void }) {
         e.preventDefault();
         onPress();
       }}
-      className="bevel-out grid h-8 select-none place-items-center bg-secondary px-3 text-[12px] leading-none text-secondary-foreground active:bevel-in"
+      className="hit-slop-y bevel-out grid h-8 select-none place-items-center bg-secondary px-3 text-[12px] leading-none text-secondary-foreground active:bevel-in"
     >
       {label}
     </button>
@@ -159,7 +164,7 @@ export function GameFrame({ def }: { def: GameDef }) {
               <button
                 onPointerDown={(e) => e.preventDefault()}
                 onClick={advance}
-                className="bevel-out mt-3 bg-secondary px-4 py-1 text-[13px] leading-none text-secondary-foreground active:bevel-in"
+                className="hit-slop bevel-out mt-3 bg-secondary px-4 py-1 text-[13px] leading-none text-secondary-foreground active:bevel-in"
               >
                 {state === "paused" ? "Resume" : state === "over" ? "Play again" : "Start"}
               </button>
@@ -213,15 +218,12 @@ export function GameFrame({ def }: { def: GameDef }) {
         </div>
       )}
 
-      <div className="flex shrink-0 items-center gap-3 border-t border-border bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] text-muted-foreground">
+      {/* Tabular throughout: the score, and the HUD beside it, change every few frames */}
+      <div className="flex shrink-0 items-center gap-3 border-t border-border bg-secondary px-3 py-1 font-[family-name:var(--font-ui)] text-[13px] tabular-nums text-muted-foreground coarse:py-1.5">
         <span className="shrink-0 text-secondary-foreground">
-          SCORE <b className="tabular-nums">{digits(score)}</b>
+          SCORE <b>{digits(score)}</b>
         </span>
-        {!touch && (
-          <span className="shrink-0">
-            HI <span className="tabular-nums">{digits(best)}</span>
-          </span>
-        )}
+        {!touch && <span className="shrink-0">HI {digits(best)}</span>}
         <span className="truncate">{hud}</span>
         {touch ? (
           /*

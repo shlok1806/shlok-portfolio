@@ -20,21 +20,20 @@ export function ResumeApp() {
 
   /*
    * The link reads as part of the sentence, so the inline exception in WCAG's
-   * target-size rule covers it - but 18px of link is still a poor thing to ask
-   * a thumb to hit. The padding is cancelled by an equal negative margin so
-   * the status bar keeps its height. The PDF is a button now, which is why it
-   * gets none of this: it is already a target.
+   * target-size rule covers it - but 12px of link is still a poor thing to ask
+   * a thumb or a mouse to hit. Both it and the PDF button are slopped to the
+   * full height of a target. The status bar is the bottom of the window, whose
+   * scrollport clips anything hanging below it, so under a finger the button is
+   * drawn 38px tall: with the bar's 3px either side that is the whole 44.
    */
-  const link = `text-accent-ink underline underline-offset-2 ${
-    touch ? "inline-block py-[13px] -my-[13px]" : ""
-  }`;
+  const link = "hit-slop-y text-accent-ink underline underline-offset-2";
 
   return (
     <DocShell
       status={
         <>
           resume.txt ·{" "}
-          <DownloadButton href="/resume.pdf" className={touch ? "min-h-8" : ""} /> ·{" "}
+          <DownloadButton href="/resume.pdf" className={`hit-slop-y ${touch ? "min-h-[38px]" : ""}`} /> ·{" "}
           <a href="/resume" className={link}>
             text version
           </a>

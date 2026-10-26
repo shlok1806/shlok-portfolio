@@ -21,8 +21,9 @@ export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => v
   const empty = !track;
 
   /*
-   * 18x20 is a panel button under a mouse. A finger gets the full height of the
-   * widget and 44 across, which is the whole reason the bar is 50 tall on touch.
+   * 18x20 is a panel button under a mouse, slopped out to 24 so it still makes
+   * the minimum. A finger gets the full height of the widget and 44 across,
+   * which is the whole reason the bar is 50 tall on touch.
    */
   const key = touch ? "h-full w-11 text-[13px]" : "h-[18px] w-[20px] text-[10px]";
 
@@ -45,7 +46,7 @@ export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => v
         onClick={() => toggle()}
         disabled={empty}
         aria-label={playing ? "Pause music" : "Play music"}
-        className={`bevel-thin flex items-center justify-center bg-secondary leading-none active:bevel-in disabled:opacity-40 ${key}`}
+        className={`hit-slop bevel-thin flex items-center justify-center bg-secondary leading-none active:bevel-in disabled:opacity-40 ${key}`}
       >
         <span aria-hidden>{playing ? "❚❚" : "▶"}</span>
       </button>
@@ -54,7 +55,7 @@ export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => v
         onClick={() => next()}
         disabled={empty}
         aria-label="Next track"
-        className={`bevel-thin hidden items-center justify-center bg-secondary leading-none active:bevel-in disabled:opacity-40 sm:flex ${key}`}
+        className={`hit-slop bevel-thin hidden items-center justify-center bg-secondary leading-none active:bevel-in disabled:opacity-40 sm:flex ${key}`}
       >
         <span aria-hidden>▶▶</span>
       </button>
@@ -62,13 +63,15 @@ export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => v
       {/*
         The title doubles as the way into the window. A button rather than a
         click handler on the text, so it is reachable from the keyboard like
-        every other control on the panel.
+        every other control on the panel. At least 44 across for a finger rather
+        than exactly 44: a phone on its side is wider than sm, the title comes
+        back, and a fixed 44 squeezed it to "F..".
       */}
       <button
         onClick={onOpen}
         title="Open audio player"
-        className={`flex max-w-[150px] items-center gap-2 leading-none hover:underline ${
-          touch ? "h-full w-11 justify-center" : ""
+        className={`hit-slop-y flex max-w-[150px] items-center gap-2 leading-none hover:underline ${
+          touch ? "h-full min-w-11 justify-center sm:pr-1" : ""
         }`}
       >
         {/* The record doubles as the state light: if it is turning, sound is coming out */}

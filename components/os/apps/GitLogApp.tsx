@@ -84,15 +84,22 @@ export function GitLogApp() {
             <th className="pr-3 font-normal">pushed</th>
           </tr>
         </thead>
+        {/*
+          A table of links, not links in a sentence, so each name has to be a
+          full target on its own: the rows were 20px apart, a neighbour either
+          side of every press. A row grows to a target (24px under a mouse, 44
+          under a finger) and its link is slopped to fill it, so the hover
+          stays the size of the name.
+        */}
         <tbody>
           {repoRows.map(([full, r]) => (
-            <tr key={full}>
+            <tr key={full} className="h-6 coarse:h-11">
               <td className="pr-3 text-foreground">
                 <a
                   href={`https://github.com/${full}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
+                  className="text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline hit-slop-y"
                 >
                   {full.split("/")[1]}
                 </a>

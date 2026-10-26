@@ -157,7 +157,8 @@ export function TerminalPage({ onExit, onPlay, onOpen }: TerminalPageProps = {})
 
   return (
     <TerminalOpenContext.Provider value={onOpen ?? null}>
-    <div className="h-full flex flex-col" onClick={focusInput}>
+    {/* verbatim: the shell's output is laid out in columns that reflowing would break */}
+    <div className="verbatim h-full flex flex-col" onClick={focusInput}>
       <div className="w-full h-full flex flex-col min-h-0" ref={shellRef}>
         <div ref={bodyRef} className="bg-card flex flex-col flex-1 min-h-0 overflow-y-auto px-4 py-3">
           <div className="flex flex-col flex-1">

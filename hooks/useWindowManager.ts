@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { NO_INSETS, type Insets } from "@/lib/os/safeArea";
 
 export interface WindowState {
   id: string;
@@ -88,6 +89,21 @@ const Z_CEILING = 60;
 
 const isSmallScreen = () => typeof window !== "undefined" && window.innerWidth < SMALL_W;
 
+/*
+ * The rectangle windows live in: the screen above the panel, less what a phone
+ * keeps for itself - the status bar and the island on top, the notch and the
+ * rounded corners at the sides in landscape. The bottom inset is not taken off
+ * again: the panel already grows down into it, and panelH is what it measured.
+ * With no insets this is exactly the screen above the panel.
+ */
+const desktopArea = (panelH: number, safe: Insets): Rect => {
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  return { x: safe.left, y: safe.top, w: vw - safe.left - safe.right, h: vh - panelH - safe.top };
+};
+
+const sameRect = (a: Rect, b: Rect) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
+
 /**
  * A small stacking window manager. Geometry lives in React state; the drag
  * itself is done with pointer events against a ref so a move does not push a
@@ -96,6 +112,7 @@ const isSmallScreen = () => typeof window !== "undefined" && window.innerWidth <
 export function useWindowManager(
   panelH: number = PANEL_H,
   onTransition?: (t: Transition) => void,
+  safe: Insets = NO_INSETS,
 ) {
   const [windows, setWindows] = useState<WindowState[]>([]);
   // Held in a ref so a new callback identity never invalidates open/close
@@ -119,8 +136,14 @@ export function useWindowManager(
     panelRef.current = panelH;
   }, [panelH]);
 
+  // The safe-area insets, through a ref for the same reason
+  const safeRef = useRef(safe);
+  useEffect(() => {
+    safeRef.current = safe;
+  }, [safe]);
+
   /** last geometry refit already applied, so a no-op resize stays a no-op */
-  const fitRef = useRef<{ vw: number; vh: number } | null>(null);
+  const fitRef = useRef<Rect | null>(null);
 
   const zRef = useRef(Z_BASE);
   const seqRef = useRef(0);
@@ -201,39 +224,45 @@ export function useWindowManager(
 
       seqRef.current += 1;
       const id = `win-${seqRef.current}`;
-      const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
-      const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+      const area = desktopArea(panelRef.current, safeRef.current);
 
       // On a phone every app is full-screen; floating chrome there is a toy
       const base = isSmallScreen()
         ? {
-            x: 0,
-            y: 0,
-            w: vw,
-            h: vh - panelRef.current,
+            ...area,
             maximized: true,
             forcedFullScreen: true,
             restore: {
-              x: 12,
-              y: 12,
-              w: Math.min(w, vw - 24),
-              h: Math.min(h, vh - panelRef.current - 24),
+              x: area.x + 12,
+              y: area.y + 12,
+              w: Math.min(w, area.w - 24),
+              h: Math.min(h, area.h - 24),
             },
           }
         : (() => {
-            const width = Math.min(w, vw - 40);
-            const height = Math.min(h, vh - panelRef.current - 60);
+            const width = Math.min(w, area.w - 40);
+            const height = Math.min(h, area.h - 60);
             // Cascade like a real WM instead of stacking everything at one point
             const step = (cascadeRef.current % 6) * 26;
             if (!at) cascadeRef.current += 1;
+            const left = area.x + 8;
+            const top = area.y + 8;
+            const right = Math.max(left, area.x + area.w - width - 8);
+            const bottom = Math.max(top, area.y + area.h - height - 8);
+            /*
+             * The cascade is clamped like an explicit spot. Stepping down 26px a
+             * window, a tall one on a short screen used to open with its bottom
+             * edge under the panel - the fifth 700px window on an 800px screen
+             * lost 29px of itself, status line and resize grip included.
+             */
             const placed = at
               ? {
-                  x: Math.min(Math.max(8, at.x), Math.max(8, vw - width - 8)),
-                  y: Math.min(Math.max(8, at.y), Math.max(8, vh - panelRef.current - height - 8)),
+                  x: Math.min(Math.max(left, at.x), right),
+                  y: Math.min(Math.max(top, at.y), bottom),
                 }
               : {
-                  x: Math.max(8, Math.round((vw - width) / 2) - 60 + step),
-                  y: Math.max(8, Math.round((vh - panelRef.current - height) / 2) - 40 + step),
+                  x: Math.min(Math.max(left, area.x + Math.round((area.w - width) / 2) - 60 + step), right),
+                  y: Math.min(Math.max(top, area.y + Math.round((area.h - height) / 2) - 40 + step), bottom),
                 };
             return {
               x: placed.x,
@@ -279,8 +308,8 @@ export function useWindowManager(
 
   const toggleMaximize = useCallback((id: string) => {
     const w = windowsRef.current.find((win) => win.id === id);
+    const full = desktopArea(panelRef.current, safeRef.current);
     if (w) {
-      const full = { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight - panelRef.current };
       emit({
         type: "maximize",
         id,
@@ -300,10 +329,7 @@ export function useWindowManager(
           // Asked for by hand, so a later resize must not undo it
           forcedFullScreen: false,
           restore: { x: w.x, y: w.y, w: w.w, h: w.h },
-          x: 0,
-          y: 0,
-          w: window.innerWidth,
-          h: window.innerHeight - panelRef.current,
+          ...full,
         };
       }),
     );
@@ -365,16 +391,16 @@ export function useWindowManager(
    * Also runs when the panel changes height, which on a phone it does after the
    * first paint: the bar is taller for a finger and taller again once the
    * home-indicator strip is measured, and a maximized window sized against the
-   * old number hides its own bottom edge behind the taskbar.
+   * old number hides its own bottom edge behind the taskbar. And when the safe
+   * area moves, which on a phone is every rotation: the notch changes sides.
    */
   const refit = useCallback(() => {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight - panelRef.current;
+      const area = desktopArea(panelRef.current, safeRef.current);
       const small = isSmallScreen();
 
       // Nothing moved, so do not push a render through every window
-      if (fitRef.current && fitRef.current.vw === vw && fitRef.current.vh === vh) return;
-      fitRef.current = { vw, vh };
+      if (fitRef.current && sameRect(fitRef.current, area)) return;
+      fitRef.current = area;
 
       setWindows((ws) =>
         ws.map((win) => {
@@ -385,18 +411,15 @@ export function useWindowManager(
               // Remember it was our doing, unless the visitor had already maximized it
               forcedFullScreen: win.forcedFullScreen || !win.maximized,
               restore: win.restore ?? { x: win.x, y: win.y, w: win.w, h: win.h },
-              x: 0,
-              y: 0,
-              w: vw,
-              h: vh,
+              ...area,
             };
           }
 
           // Back on a real screen: hand back the windows we took full-screen
           if (win.forcedFullScreen) {
             const r = win.restore;
-            const width = Math.min(r?.w ?? win.w, vw);
-            const height = Math.min(r?.h ?? win.h, vh);
+            const width = Math.min(r?.w ?? win.w, area.w);
+            const height = Math.min(r?.h ?? win.h, area.h);
             return {
               ...win,
               maximized: false,
@@ -404,23 +427,23 @@ export function useWindowManager(
               restore: undefined,
               w: width,
               h: height,
-              x: Math.max(0, Math.min(r?.x ?? win.x, vw - width)),
-              y: Math.max(0, Math.min(r?.y ?? win.y, vh - height)),
+              x: Math.max(area.x, Math.min(r?.x ?? win.x, area.x + area.w - width)),
+              y: Math.max(area.y, Math.min(r?.y ?? win.y, area.y + area.h - height)),
             };
           }
 
-          if (win.maximized) return { ...win, x: 0, y: 0, w: vw, h: vh };
+          if (win.maximized) return { ...win, ...area };
 
           // Shrink to fit, then pull fully inside - clamping the corner alone
           // leaves the far edge hanging off the screen with content unreachable
-          const width = Math.min(win.w, vw);
-          const height = Math.min(win.h, vh);
+          const width = Math.min(win.w, area.w);
+          const height = Math.min(win.h, area.h);
           return {
             ...win,
             w: width,
             h: height,
-            x: Math.max(0, Math.min(win.x, vw - width)),
-            y: Math.max(0, Math.min(win.y, vh - height)),
+            x: Math.max(area.x, Math.min(win.x, area.x + area.w - width)),
+            y: Math.max(area.y, Math.min(win.y, area.y + area.h - height)),
           };
         }),
       );
@@ -435,7 +458,8 @@ export function useWindowManager(
     // The height genuinely changed, so the short-circuit in refit must not eat it
     fitRef.current = null;
     refit();
-  }, [panelH, refit]);
+    // The four numbers rather than the object, so a caller passing a fresh one each render costs nothing
+  }, [panelH, safe.top, safe.right, safe.bottom, safe.left, refit]);
 
   /**
    * Alt+Tab: raise the window furthest down the stack.

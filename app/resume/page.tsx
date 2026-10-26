@@ -30,6 +30,20 @@ export const metadata: Metadata = {
 const NEXT = { prefetch: [{ where: { href_matches: "/" }, eagerness: "moderate" }] };
 
 /*
+ * The contact links in the header, and the two under the bio, are lists of
+ * links rather than links in a sentence, and on a phone they wrapped into rows
+ * 9px apart with one address over another. Each is drawn as tall as a target -
+ * 24px under a mouse, 44 under a finger - so its row is, too.
+ *
+ * A link inside a line of text - a project's name in its heading, a demo at the
+ * end of its stack, the address in the footer - keeps its line and is slopped
+ * to a target instead: nothing else to press sits within a target's reach of
+ * one. nowrap, because slop hangs off one box and a wrapped link is two.
+ */
+const TARGET = "inline-flex min-h-6 items-center coarse:min-h-11";
+const INLINE = "hit-slop whitespace-nowrap";
+
+/*
  * On paper an entry stays whole (each article avoids a break) and a heading
  * stays with what follows it, but a section may run across pages. Holding
  * whole sections together left half of page one blank once Experience grew
@@ -85,7 +99,7 @@ export default function ResumePage() {
           {LINKS.map((l) => (
             <li key={l.label}>
               <a
-                className="text-blue-800 underline underline-offset-2"
+                className={`${TARGET} text-blue-800 underline underline-offset-2`}
                 href={l.href}
                 rel={l.href.startsWith("http") ? "noopener noreferrer me" : undefined}
               >
@@ -97,14 +111,14 @@ export default function ResumePage() {
         <p className="mt-4 max-w-[54ch] text-neutral-700">{PROFILE.bio}</p>
         <p className="mt-4 text-[13px] print:hidden">
           <a
-            className="font-medium text-blue-800 underline underline-offset-2"
+            className={`${TARGET} font-medium text-blue-800 underline underline-offset-2`}
             href="/resume.pdf"
             download
           >
             Download PDF
           </a>
           <span className="text-neutral-400"> · </span>
-          <a className="text-blue-800 underline underline-offset-2" href="/">
+          <a className={`${TARGET} text-blue-800 underline underline-offset-2`} href="/">
             Open the desktop version
           </a>
         </p>
@@ -138,8 +152,9 @@ export default function ResumePage() {
       <Section title="Experience">
         {EXPERIENCE.map((role) => (
           <article key={`${role.org}-${role.period}`} className="break-inside-avoid">
+            {/* The no-break space keeps a balanced heading from opening its second line on the dash */}
             <h3 className="font-semibold text-neutral-950">
-              {role.role} - {role.org}
+              {role.role}&nbsp;- {role.org}
             </h3>
             <p className="font-mono text-[13px] tabular-nums text-neutral-600">
               {role.period}
@@ -160,7 +175,7 @@ export default function ResumePage() {
             <h3 className="font-semibold text-neutral-950">
               {p.href ? (
                 <a
-                  className="text-blue-800 underline underline-offset-2"
+                  className={`${INLINE} text-blue-800 underline underline-offset-2`}
                   href={p.href}
                   rel="noopener noreferrer"
                 >
@@ -169,7 +184,7 @@ export default function ResumePage() {
               ) : (
                 p.name.replace("/", "")
               )}
-              <span className="font-normal text-neutral-600"> - {p.tagline}</span>
+              <span className="font-normal text-neutral-600">&nbsp;- {p.tagline}</span>
               {p.note && <span className="font-normal text-neutral-500"> ({p.note})</span>}
             </h3>
             <p className="font-mono text-[13px] text-neutral-600">
@@ -178,7 +193,7 @@ export default function ResumePage() {
                 <>
                   {" · "}
                   <a
-                    className="text-blue-800 underline underline-offset-2"
+                    className={`${INLINE} text-blue-800 underline underline-offset-2`}
                     href={p.demo.href}
                     rel="noopener noreferrer"
                   >
@@ -209,7 +224,7 @@ export default function ResumePage() {
 
       <footer className="mt-12 border-t border-neutral-300 pt-4 text-[13px] text-neutral-500">
         {PROFILE.status}.{" "}
-        <a className="text-blue-800 underline underline-offset-2" href={LINKS[0].href}>
+        <a className={`${INLINE} text-blue-800 underline underline-offset-2`} href={LINKS[0].href}>
           {LINKS[0].value}
         </a>
       </footer>
