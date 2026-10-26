@@ -18,22 +18,32 @@ otherwise:
 Menus, hints and commands:
 
 - **A key hint is looked up, never typed.** A control that does what a key
-  does shows it through `lib/os/shortcuts.ts` (`shortcutFor`, `appShortcut`,
-  `KeyHint`, `ariaShortcut`), so a hint cannot name a key the desktop does not
-  answer to. `"Mod"` is Ctrl or ⌘; `useApplePlatform` decides which, and the
-  server always says Ctrl. A new handler in `Desktop.tsx` gets its row there.
+  does finds its binding in `lib/os/shortcuts.ts` (`shortcutFor`,
+  `appShortcut`, `ariaShortcut`) and draws it with `KeyHint.tsx`, so a hint
+  cannot name a key the desktop does not answer to. `"Mod"` is Ctrl or ⌘;
+  `useApplePlatform` decides which, and the server always says Ctrl. A new
+  handler in `Desktop.tsx` gets its row there.
 - **Spotlight commands go through the real control.** A command is a
   `CommandId` in `lib/os/spotlight.ts` plus a case in Desktop's `runCommand`
   that calls whatever the visible control calls (the window manager's close,
-  `useSpeaker`'s silence), never a second implementation. A command with
-  nothing to act on is left out of the list, not offered and inert.
+  `useSpeaker`'s silence, `lib/os/clipboard.ts`'s `copyText`), never a second
+  implementation. A command with nothing to act on is left out of the list,
+  not offered and inert.
 - **The root menu's highlight follows focus.** It has no `hover:` styles: the
   mouse moves focus, so a row the pointer only crossed on its way into a
-  submenu (`lib/os/menuAim.ts`) is never lit. Below `SMALL_W`, or when a
-  cascade fits on neither side, a submenu drills in instead.
-- **Open a dialog from a Radix menu in `onCloseAutoFocus`, not `onSelect`.**
-  The menu's focus trap is still up during `onSelect` and pulls focus back out
-  of the dialog's field (see the Spotlight row in `Panel.tsx`).
+  submenu (`lib/os/menuAim.ts`) is never lit. On a phone (touch, below
+  `SMALL_W`), or when a cascade fits on neither side, a submenu drills in
+  instead, and only when it is asked for by a click, a tap or a key. A hover
+  only ever cascades: drilling in replaces the whole menu, and a mouse that
+  merely crossed a ▸ row lost every app.
+- **A tube's colour on a menu row is a `Swatch`.** The current tube's colour is
+  the highlight's colour, so a bare filled square vanishes on its own lit row.
+- **Open a dialog from a Radix menu in `onCloseAutoFocus`, not `onSelect`, and
+  do not prevent its default.** The menu's focus trap is still up during
+  `onSelect` and pulls focus back out of the dialog's field. Left alone, Radix
+  returns focus to the trigger before the dialog renders, so the dialog has a
+  live element to hand focus back to when it closes (see the Spotlight row in
+  `Panel.tsx`).
 
 Anything adapted from opensourceui.in follows
 `docs/adr/0001-vendor-opensourceui-through-the-token-layer.md` and carries the
