@@ -11,7 +11,7 @@ import { APPS, DESKTOP_APPS, MENU_APPS, appById } from "@/lib/os/registry";
 import { PROFILE, PROJECTS } from "@/lib/content";
 import { GAMES } from "@/lib/games/registry";
 import { PRESETS } from "@/lib/theme/presets";
-import { notify } from "@/lib/os/notify";
+import { saveFile } from "@/lib/os/download";
 import { event } from "@/lib/analytics";
 import { spotlightItems, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
@@ -266,8 +266,14 @@ export function Desktop() {
     };
   }, []);
 
-  /* Windows whose outline is still zooming; held invisible until it lands */
-  const [arriving, setArriving] = useState<Record<string, true>>({});
+  /*
+   * Windows whose outline is still zooming; held invisible until it lands.
+   * Each hold carries its own token, so the zoom that ends one hold can never
+   * end a later hold on the same window - an outline cut short resolves a
+   * beat after the one that replaced it has already started.
+   */
+  const [arriving, setArriving] = useState<Record<string, number>>({});
+  const holdSeq = useRef(0);
   /* One line for screen readers: what the window manager just did */
   const [announcement, setAnnouncement] = useState("");
   const onTransition = useCallback((t: Transition) => {
@@ -297,18 +303,33 @@ export function Desktop() {
       setAnnouncement(`${what} ${title ?? ""}`.trim());
     };
 
+    const holdUntil = (id: string, landed: Promise<void>) => {
+      holdSeq.current += 1;
+      const token = holdSeq.current;
+      setArriving((a) => ({ ...a, [id]: token }));
+      void landed.then(() =>
+        setArriving((a) => {
+          if (a[id] !== token) return a;
+          const next = { ...a };
+          delete next[id];
+          return next;
+        }),
+      );
+    };
+
     switch (t.type) {
       case "open": {
         playSfx("open");
         setAnnouncement(`opened ${t.appId}`);
-        setArriving((a) => ({ ...a, [t.id]: true }));
-        void zoom(originRef.current ?? iconAnchor(t.appId), t.to).then(() =>
-          setArriving((a) => {
-            const next = { ...a };
-            delete next[t.id];
-            return next;
-          }),
-        );
+        holdUntil(t.id, zoom(originRef.current ?? iconAnchor(t.appId), t.to));
+        return;
+      }
+      case "reopen": {
+        // Undo: back out of the icon the close sent it into, the reverse of that outline
+        playSfx("restore");
+        setAnnouncement(`reopened ${t.title}`);
+        event("undo", { app: t.appId });
+        holdUntil(t.id, zoom(iconAnchor(t.appId), t.to));
         return;
       }
       case "close": {
@@ -346,10 +367,13 @@ export function Desktop() {
    * the stepped colour transition the body already does. Imperative, so it
    * never re-renders the desktop to play.
    */
+  const degaussing = useRef<Animation | null>(null);
   const degauss = useCallback(() => {
     const el = rootRef.current;
     if (!el || prefersReducedMotion() || typeof el.animate !== "function") return;
-    el.animate(
+    // Switched again mid-wobble: start this one clean rather than layering two
+    degaussing.current?.cancel();
+    degaussing.current = el.animate(
       [
         { filter: "brightness(2.4)", transform: "translateX(0)" },
         { filter: "brightness(1.5)", transform: "translateX(3px)" },
@@ -424,18 +448,13 @@ export function Desktop() {
         playSfx("bell");
         return;
       }
-      playSfx("launch");
       // Some entries are documents rather than programs
       if (app.download) {
-        const a = document.createElement("a");
-        a.href = app.download;
-        a.download = "";
-        a.rel = "noopener";
-        a.click();
-        event("download", { file: app.download });
-        notify("ok", app.title, "Saved to your downloads");
+        // A tap opens on a phone, so a double tap was two downloads and two notices
+        if (saveFile(app.download)) playSfx("launch");
         return;
       }
+      playSfx("launch");
       open({ appId: app.id, title: app.title, w: app.w, h: app.h });
     },
     [open],
@@ -540,9 +559,10 @@ export function Desktop() {
   /*
    * Alt+Tab cycles and moves keyboard focus with it. Escape dismisses the root
    * menu if it is up; otherwise it closes the focused window - unless a menu
-   * or something inside the window already used it. `?` opens the shortcuts
-   * list, except while typing, where it is just a character. The list itself
-   * is lib/os/shortcuts.ts; keep the two in step.
+   * or something inside the window already used it. Ctrl+Z takes the last
+   * close back, except while typing, where it belongs to the field. `?` opens
+   * the shortcuts list, except while typing, where it is just a character.
+   * The list itself is lib/os/shortcuts.ts; keep the two in step.
    */
   const rootMenuRef = useRef(rootMenu);
   rootMenuRef.current = rootMenu;
@@ -557,6 +577,10 @@ export function Desktop() {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSpotlight((v) => !v);
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "z" && !typing(e.target)) {
+        if (wm.undoClose()) e.preventDefault();
         return;
       }
       if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e.target)) {
@@ -599,7 +623,7 @@ export function Desktop() {
     if (!booted || touch) return;
     const id = focusedRef.current;
     const win = id ? el.querySelector<HTMLElement>(`[data-win-content="${id}"]`) : null;
-    (win?.querySelector<HTMLElement>("input") ?? win)?.focus({ preventScroll: true });
+    (win?.querySelector<HTMLElement>("[data-autofocus]") ?? win)?.focus({ preventScroll: true });
   }, [booted, touch]);
 
   /* Arrow keys walk the desktop icons, the way an X11 file manager did */
@@ -734,8 +758,8 @@ export function Desktop() {
 
         <NotificationTray />
 
-        {/* Windows */}
-        {windows.map((win) => {
+        {/* Windows, including closed ones still waiting on their Undo */}
+        {wm.mounted.map((win) => {
           const app = APPS.find((a) => a.id === win.appId);
           if (!app) return null;
           const { Component } = app;
@@ -749,7 +773,7 @@ export function Desktop() {
               touch={touch}
               onFocus={() => wm.focus(win.id)}
               onClose={() => wm.close(win.id)}
-              onMinimize={() => wm.minimize(win.id)}
+              onMinimize={(from) => wm.minimize(win.id, from)}
               onToggleMaximize={() => wm.toggleMaximize(win.id)}
               onCommit={(geo) => wm.setGeometry(win.id, geo)}
             >

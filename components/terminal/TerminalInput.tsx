@@ -58,6 +58,7 @@ export function TerminalInput({
         {/* Hidden real input */}
         <input
           ref={inputRef}
+          data-autofocus
           type="text"
           name="command"
           value={value}

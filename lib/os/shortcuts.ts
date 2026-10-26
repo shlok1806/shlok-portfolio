@@ -23,6 +23,7 @@ export const SHORTCUTS: ShortcutGroup[] = [
       { keys: ["Ctrl", "K"], label: "Spotlight: open anything by name (Cmd+K on a Mac)" },
       { keys: ["Alt", "Tab"], label: "Cycle through the open windows" },
       { keys: ["Esc"], label: "Close the focused window, or dismiss the root menu" },
+      { keys: ["Ctrl", "Z"], label: "Reopen the window you just closed (Cmd+Z on a Mac)" },
       { keys: ["?"], label: "Open this list" },
       { keys: ["↑", "↓", "←", "→"], label: "Walk the desktop icons" },
       { keys: ["Enter"], label: "Open the focused icon" },

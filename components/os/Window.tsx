@@ -1,9 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import type { WindowState } from "@/hooks/useWindowManager";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import type { Rect, WindowState } from "@/hooks/useWindowManager";
 import { PixelIcon } from "@/lib/os/icons";
 import { playSfx } from "@/lib/sfx";
+import {
+  addSample,
+  catchReturn,
+  flung,
+  offsetTransform,
+  resist,
+  returnToRest,
+  speed,
+  type Sample,
+} from "@/lib/os/swipe";
+import { landZoom } from "@/lib/os/zoom";
 
 interface Props {
   win: WindowState;
@@ -14,7 +25,8 @@ interface Props {
   touch: boolean;
   onFocus: () => void;
   onClose: () => void;
-  onMinimize: () => void;
+  /** `from` is where the window is drawn, when a gesture has moved it off its geometry */
+  onMinimize: (from?: Rect) => void;
   onToggleMaximize: () => void;
   onCommit: (geo: { x?: number; y?: number; w?: number; h?: number }) => void;
   children: React.ReactNode;
@@ -24,8 +36,12 @@ type Corner = "nw" | "ne" | "sw" | "se";
 
 type Gesture =
   | { kind: "move"; startX: number; startY: number; originX: number; originY: number; tx: number; ty: number }
-  /* a finger pulling a full-screen window's title bar down: minimise */
-  | { kind: "swipe"; startY: number }
+  /*
+   * A finger pulling a full-screen window down by its title bar, the way a
+   * sheet is pulled off a phone screen. `base` is where it was caught, which
+   * is not zero when it was grabbed on its way back up.
+   */
+  | { kind: "sheet"; pointerId: number; startY: number; base: number; at: number; samples: Sample[] }
   | {
       kind: "resize";
       corner: Corner;
@@ -41,8 +57,13 @@ const MIN_W = 260;
 const MIN_H = 140;
 /* A window dragged this close to an edge lands on it */
 const SNAP = 12;
-/* How far a finger pulls a full-screen title bar before the window goes to the panel */
-const SWIPE = 64;
+/* How far a sheet gives when it is pulled the one way it cannot go */
+const SHEET_GIVE = 24;
+/* Down follows the finger exactly; up gives a little and then stops giving */
+const pull = (g: { base: number; startY: number }, y: number) => {
+  const pulled = g.base + y - g.startY;
+  return pulled >= 0 ? pulled : -resist(-pulled, SHEET_GIVE);
+};
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
 
 /*
@@ -100,18 +121,74 @@ export function Window({
   const ref = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
+  /** a sheet on its way back to rest, so a finger can catch it */
+  const returning = useRef<Animation | null>(null);
+  const away = win.minimized || !!win.parked;
 
   /*
    * A window takes keyboard focus once it has actually appeared, so Escape
    * and Tab land in it rather than on whatever launched it. Once only: focus
    * follows the pointer after that.
+   *
+   * An app that wants its first key - the shell's prompt, a game - marks that
+   * element data-autofocus, and it gets focus here rather than in the app's
+   * own mount effect. That one runs while the window is still invisible
+   * behind its outline, where nothing can take focus, so a game opened from
+   * the keyboard ignored Space and a second xterm ignored typing until
+   * someone clicked into it. Not under a finger, where focusing a field
+   * raises the keyboard over the window that just opened.
    */
   const landed = useRef(false);
   useEffect(() => {
     if (hidden || landed.current || !focused) return;
     landed.current = true;
-    contentRef.current?.focus({ preventScroll: true });
-  }, [hidden, focused]);
+    const content = contentRef.current;
+    const wanted = touch ? null : content?.querySelector<HTMLElement>("[data-autofocus]");
+    (wanted ?? content)?.focus({ preventScroll: true });
+  }, [hidden, focused, touch]);
+
+  /*
+   * A window that is off screen - iconified, or closed and waiting on its
+   * Undo - holds nothing. It is inert, so nothing in it can be tabbed to or
+   * take focus, and whatever had focus in it is let go: a game that is
+   * playing pauses itself on blur, which is what stops a hidden one running
+   * on and eating the arrow keys. A sheet half-pulled when that happened is
+   * put back on its spot for when the window returns.
+   */
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.inert = away;
+    if (!away) return;
+    if (gesture.current?.kind === "sheet") gesture.current = null;
+    returning.current?.cancel();
+    returning.current = null;
+    el.style.transform = "";
+    el.style.willChange = "";
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && el.contains(active)) active.blur();
+  }, [away]);
+
+  /*
+   * Undo hands the window back with focus where it was: the shell's prompt,
+   * the game, the field that had it. Only inside the content - the close box
+   * the visitor pressed to get here is not somewhere to return to. On a
+   * phone it is the window itself, since focusing a field there raises the
+   * keyboard over the thing that just came back.
+   */
+  const lastFocus = useRef<HTMLElement | null>(null);
+  const wasParked = useRef(false);
+  useEffect(() => {
+    if (win.parked) {
+      wasParked.current = true;
+      return;
+    }
+    if (!wasParked.current || hidden) return;
+    wasParked.current = false;
+    const prev = lastFocus.current;
+    const target = !touch && prev?.isConnected && contentRef.current?.contains(prev) ? prev : contentRef.current;
+    target?.focus({ preventScroll: true });
+  }, [win.parked, hidden, touch]);
 
   // React owns geometry between gestures; sync back after a commit or maximize
   useEffect(() => {
@@ -123,13 +200,35 @@ export function Window({
     el.style.height = `${win.h}px`;
   }, [win.x, win.y, win.w, win.h]);
 
-  const endGesture = useCallback(() => {
+  const endGesture = useCallback((e: PointerEvent) => {
     const el = ref.current;
     const g = gesture.current;
     if (!el || !g) return;
+    if (g.kind === "sheet") {
+      if (e.pointerId !== g.pointerId) return;
+      gesture.current = null;
+      el.style.willChange = "";
+      /*
+       * Far enough down, or thrown, and the sheet goes to the panel; anything
+       * less and it goes back up. A cancel - the browser taking the pointer
+       * for a gesture of its own - is never a dismissal.
+       */
+      if (e.type === "pointerup") {
+        g.at = pull(g, e.clientY);
+        addSample(g.samples, e.timeStamp, e.clientY);
+        if (flung(g.at, el.offsetHeight, speed(g.samples, e.timeStamp))) {
+          // The outline leaves from where the sheet is, not from where it started
+          const r = el.getBoundingClientRect();
+          el.style.transform = "";
+          onMinimize({ x: r.left, y: r.top, w: r.width, h: r.height });
+          return;
+        }
+      }
+      returning.current = returnToRest(el, "y", g.at);
+      return;
+    }
     gesture.current = null;
     el.style.willChange = "";
-    if (g.kind === "swipe") return;
     if (g.kind === "move") {
       // The drag rode on a transform; hand the final spot back as geometry
       el.style.transform = "";
@@ -144,7 +243,7 @@ export function Window({
         h: parseFloat(el.style.height),
       });
     }
-  }, [onCommit]);
+  }, [onCommit, onMinimize]);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -152,11 +251,11 @@ export function Window({
       const g = gesture.current;
       if (!el || !g) return;
       e.preventDefault();
-      if (g.kind === "swipe") {
-        if (e.clientY - g.startY > SWIPE) {
-          gesture.current = null;
-          onMinimize();
-        }
+      if (g.kind === "sheet") {
+        if (e.pointerId !== g.pointerId) return;
+        g.at = pull(g, e.clientY);
+        addSample(g.samples, e.timeStamp, e.clientY);
+        el.style.transform = offsetTransform("y", g.at);
         return;
       }
       const dx = e.clientX - g.startX;
@@ -217,12 +316,25 @@ export function Window({
       window.removeEventListener("pointerup", endGesture);
       window.removeEventListener("pointercancel", endGesture);
     };
-  }, [endGesture, panelHeight, onMinimize]);
+  }, [endGesture, panelHeight]);
 
   const startMove = (e: React.PointerEvent) => {
     if (win.maximized) {
       // Full-screen on a phone: the title bar cannot move, but it can be pulled down
-      if (e.pointerType !== "mouse") gesture.current = { kind: "swipe", startY: e.clientY };
+      const el = ref.current;
+      if (e.pointerType === "mouse" || !el || gesture.current) return;
+      // Caught on its way back up: carry on from where it is drawn now
+      const base = catchReturn(el, "y", returning.current);
+      returning.current = null;
+      el.style.willChange = "transform";
+      gesture.current = {
+        kind: "sheet",
+        pointerId: e.pointerId,
+        startY: e.clientY,
+        base,
+        at: base,
+        samples: [{ t: e.timeStamp, at: e.clientY }],
+      };
       return;
     }
     onFocus();
@@ -264,11 +376,11 @@ export function Window({
       data-window={win.appId}
       role="region"
       aria-label={win.title}
-      aria-hidden={win.minimized || undefined}
+      aria-hidden={away || undefined}
       onPointerDown={onFocus}
       className="bevel-out absolute flex-col bg-secondary"
       style={{
-        display: win.minimized ? "none" : "flex",
+        display: away ? "none" : "flex",
         visibility: hidden ? "hidden" : undefined,
         // Two frames from nothing to there, once the outline has landed
         animation: hidden ? undefined : "win-in 80ms steps(2) both",
@@ -305,7 +417,7 @@ export function Window({
           {win.title}
         </span>
         <div className={`ml-auto flex items-center ${touch ? "-mr-1.5" : "-mr-[3px]"}`}>
-          <TitleButton onClick={onMinimize} label={`Minimize ${win.title}`}>
+          <TitleButton onClick={() => onMinimize()} label={`Minimize ${win.title}`}>
             <PixelIcon name="minimize" size={16} />
           </TitleButton>
           <TitleButton
@@ -330,6 +442,9 @@ export function Window({
         ref={contentRef}
         tabIndex={-1}
         data-win-content={win.id}
+        onFocus={(e) => {
+          lastFocus.current = e.target;
+        }}
         className="bevel-in m-[3px] mt-0 min-h-0 flex-1 select-text overflow-auto bg-card focus:outline-none"
         style={{ WebkitTouchCallout: "default" }}
       >
@@ -353,6 +468,18 @@ export function Window({
             }}
           />
         ))}
+
+      {/*
+        While the outline is still zooming in, the window is invisible and so
+        is not there to be clicked: a press aimed at it fell through to
+        whatever was underneath, and raised that over the window that was
+        arriving. This catches the press instead - visibility:visible inside a
+        hidden window is hit-testable but draws nothing - and lands the zoom,
+        so the window appears under the finger that asked for it.
+      */}
+      {hidden && (
+        <div aria-hidden className="absolute inset-0" style={{ visibility: "visible" }} onPointerDown={landZoom} />
+      )}
     </div>
   );
 }

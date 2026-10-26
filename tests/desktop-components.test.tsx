@@ -7,6 +7,8 @@ import { PanelClock } from "@/components/os/applets/Xclock";
 import { ShortcutsApp } from "@/components/os/apps/ShortcutsApp";
 import { CopyButton } from "@/components/os/CopyButton";
 import { DownloadButton } from "@/components/os/DownloadButton";
+import { NotificationTray } from "@/components/os/Notifications";
+import { ACTION_TTL_MS, clearNotices, notify } from "@/lib/os/notify";
 import { SHORTCUTS } from "@/lib/os/shortcuts";
 
 vi.mock("@/lib/sfx", () => ({ playSfx: vi.fn() }));
@@ -97,5 +99,38 @@ describe("DownloadButton", () => {
     act(() => vi.advanceTimersByTime(1800));
     expect(button().getAttribute("data-phase")).toBe("idle");
     click.mockRestore();
+  });
+});
+
+describe("NotificationTray", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    act(() => clearNotices());
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it("offers the notice's action as a button, and taking it clears the notice", () => {
+    const run = vi.fn();
+    render(<NotificationTray />);
+    act(() => {
+      notify("info", "Closed xterm", undefined, { action: { label: "Undo", run } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Undo: Closed xterm" }));
+    expect(run).toHaveBeenCalledOnce();
+    expect(screen.queryByText("Closed xterm")).toBeNull();
+  });
+
+  it("holds an offer on screen while keyboard focus is in it", () => {
+    render(<NotificationTray />);
+    act(() => {
+      notify("info", "Closed xterm", undefined, { action: { label: "Undo", run: () => {} } });
+    });
+    const undo = screen.getByRole("button", { name: "Undo: Closed xterm" });
+    act(() => undo.focus());
+    act(() => vi.advanceTimersByTime(ACTION_TTL_MS * 3));
+    expect(screen.getByText("Closed xterm")).toBeTruthy();
+    act(() => undo.blur());
+    act(() => vi.advanceTimersByTime(ACTION_TTL_MS));
+    expect(screen.queryByText("Closed xterm")).toBeNull();
   });
 });

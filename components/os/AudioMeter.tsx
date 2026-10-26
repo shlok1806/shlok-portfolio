@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { levels } from "@/lib/music/player";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import type { Preset } from "@/lib/theme/presets";
@@ -26,8 +26,24 @@ interface Props {
  */
 export function AudioMeter({ bars, height, className, playing, wave }: Props) {
   const refs = useRef<(HTMLSpanElement | null)[]>([]);
+  const meterRef = useRef<HTMLSpanElement>(null);
+
+  /*
+   * Whether anyone can see it. The one in the music window kept drawing sixty
+   * frames a second into a window that was iconified, or closed and waiting
+   * on its Undo - display:none, so every frame was work for nobody.
+   */
+  const [shown, setShown] = useState(true);
+  useEffect(() => {
+    const el = meterRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setShown(entry.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
+    if (!shown) return;
     if (!playing) {
       // Settle to the floor and stop, rather than freezing mid-spectrum
       refs.current.forEach((r) => {
@@ -66,10 +82,11 @@ export function AudioMeter({ bars, height, className, playing, wave }: Props) {
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [bars, height, playing, wave]);
+  }, [bars, height, playing, wave, shown]);
 
   return (
     <span
+      ref={meterRef}
       aria-hidden
       /*
        * The bars share the width they are given rather than each being a pixel

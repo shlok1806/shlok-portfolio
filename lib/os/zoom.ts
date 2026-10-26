@@ -7,9 +7,12 @@ export interface Rect {
   h: number;
 }
 
-type Listener = (from: Rect, to: Rect, done: () => void) => void;
+/** Draws one zoom and calls `done` when it lands; returns a way to land it at once. */
+type Listener = (from: Rect, to: Rect, done: () => void) => () => void;
 
 let listener: Listener | null = null;
+/** Lands the zoom that is on screen right now, if there is one */
+let landing: (() => void) | null = null;
 
 /*
  * twm's Zoom: when a window opened, closed or iconified, the server drew a
@@ -29,5 +32,21 @@ export function subscribeZoom(l: Listener): () => void {
 export function zoom(from: Rect, to: Rect): Promise<void> {
   if (!listener || prefersReducedMotion()) return Promise.resolve();
   const l = listener;
-  return new Promise((resolve) => l(from, to, resolve));
+  return new Promise((resolve) => {
+    let finished = false;
+    const land = l(from, to, () => {
+      finished = true;
+      if (landing === land) landing = null;
+      resolve();
+    });
+    if (!finished) landing = land;
+  });
+}
+
+/**
+ * Finishes the zoom in flight now. A press on a window that is still on its
+ * way in is someone who has already seen enough of the outline.
+ */
+export function landZoom(): void {
+  landing?.();
 }

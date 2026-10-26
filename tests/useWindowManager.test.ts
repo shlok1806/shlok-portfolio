@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
-import { useWindowManager, SMALL_W } from "@/hooks/useWindowManager";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useWindowManager, SMALL_W, type Transition } from "@/hooks/useWindowManager";
+import { ACTION_TTL_MS, clearNotices, dismiss, getNotices, runAction } from "@/lib/os/notify";
 
 const PANEL = 30;
 
@@ -246,5 +247,129 @@ describe("useWindowManager", () => {
     const win = h.result.current.windows[0];
     expect(win.x + win.w).toBeLessThanOrEqual(1000);
     expect(win.y + win.h).toBeLessThanOrEqual(700 - PANEL);
+  });
+});
+
+describe("closing with undo", () => {
+  beforeEach(() => {
+    resize(1280, 800);
+    clearNotices();
+  });
+  afterEach(() => vi.useRealTimers());
+
+  function openTwo() {
+    const seen: Transition[] = [];
+    const h = renderHook(() => useWindowManager(PANEL, (t) => seen.push(t)));
+    let a = "";
+    let b = "";
+    act(() => {
+      a = h.result.current.open(app("xterm"));
+    });
+    act(() => {
+      b = h.result.current.open(app("projects"));
+    });
+    return { h, seen, a, b };
+  }
+
+  it("takes a closed window off every list but keeps it mounted, and offers it back", () => {
+    const { h, a, b } = openTwo();
+    act(() => {
+      h.result.current.close(a);
+    });
+    expect(h.result.current.windows.map((w) => w.id)).toEqual([b]);
+    expect(h.result.current.mounted.find((w) => w.id === a)?.parked).toBe(true);
+    expect(getNotices().map((n) => [n.title, n.action?.label])).toEqual([["Closed xterm", "Undo"]]);
+    // Alt+Tab has only one window left to go to
+    let raised: string | null = "x";
+    act(() => {
+      raised = h.result.current.cycle();
+    });
+    expect(raised).toBeNull();
+  });
+
+  it("undo returns the same window where it was, on top and focused", () => {
+    const { h, seen, a, b } = openTwo();
+    act(() => {
+      h.result.current.setGeometry(a, { x: 40, y: 50, w: 500, h: 300 });
+    });
+    act(() => {
+      h.result.current.close(a);
+    });
+    act(() => {
+      runAction(getNotices()[0].id);
+    });
+    const win = h.result.current.windows.find((w) => w.id === a)!;
+    expect(win).toMatchObject({ x: 40, y: 50, w: 500, h: 300, minimized: false });
+    expect(win.parked).toBeFalsy();
+    expect(win.z).toBeGreaterThan(h.result.current.windows.find((w) => w.id === b)!.z);
+    expect(h.result.current.focusedId).toBe(a);
+    expect(seen.at(-1)).toEqual({
+      type: "reopen",
+      id: a,
+      appId: "xterm",
+      title: "xterm",
+      to: { x: 40, y: 50, w: 500, h: 300 },
+    });
+    expect(getNotices()).toEqual([]);
+  });
+
+  it("lets the window go for good once its notice does", () => {
+    vi.useFakeTimers();
+    const { h, a } = openTwo();
+    act(() => {
+      h.result.current.close(a);
+    });
+    act(() => {
+      vi.advanceTimersByTime(ACTION_TTL_MS);
+    });
+    expect(h.result.current.mounted.some((w) => w.id === a)).toBe(false);
+    expect(h.result.current.undoClose()).toBe(false);
+
+    const b = h.result.current.windows[0].id;
+    act(() => {
+      h.result.current.close(b);
+    });
+    act(() => {
+      dismiss(getNotices()[0].id);
+    });
+    expect(h.result.current.mounted).toEqual([]);
+  });
+
+  it("Ctrl+Z takes back the most recent close first", () => {
+    const { h, a, b } = openTwo();
+    act(() => {
+      h.result.current.close(a);
+    });
+    act(() => {
+      h.result.current.close(b);
+    });
+    let undone = false;
+    act(() => {
+      undone = h.result.current.undoClose();
+    });
+    expect(undone).toBe(true);
+    expect(h.result.current.windows.map((w) => w.id)).toEqual([b]);
+    // Its notice went with it; the other offer is still up
+    expect(getNotices().map((n) => n.title)).toEqual(["Closed xterm"]);
+    act(() => {
+      h.result.current.undoClose();
+    });
+    expect(h.result.current.windows.map((w) => w.id).sort()).toEqual([a, b].sort());
+    expect(h.result.current.undoClose()).toBe(false);
+  });
+
+  it("opening an app whose window is waiting on Undo starts a fresh one and withdraws the offer", () => {
+    const { h, a } = openTwo();
+    act(() => {
+      h.result.current.close(a);
+    });
+    let fresh = "";
+    act(() => {
+      fresh = h.result.current.open(app("xterm"));
+    });
+    expect(fresh).not.toBe(a);
+    expect(h.result.current.mounted.some((w) => w.id === a)).toBe(false);
+    expect(getNotices()).toEqual([]);
+    expect(h.result.current.undoClose()).toBe(false);
   });
 });

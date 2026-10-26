@@ -108,6 +108,7 @@ export function GameFrame({ def }: { def: GameDef }) {
       <div
         ref={hostRef}
         tabIndex={0}
+        data-autofocus
         role="application"
         aria-label={`${def.title} - ${def.blurb}`}
         onKeyDown={onKeyDown}
