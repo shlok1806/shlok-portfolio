@@ -150,8 +150,12 @@ export function Spotlight({ items, touch, onRun, onClose }: Props) {
             aria-autocomplete="list"
             autoComplete="off"
             spellCheck={false}
-            // Short enough to fit a phone at 16px; the list underneath says what there is
-            placeholder="Open anything, or run a command..."
+            /*
+             * Short enough for a 320px phone at 16px, where a field holds about
+             * 27 characters; the list underneath says what there is. The longer
+             * "Open anything, or run a command..." lost its end below 390px.
+             */
+            placeholder="Open or run anything..."
             // 16px on a phone is the size below which Safari zooms the page on focus
             className={`min-w-0 flex-1 bg-transparent py-2 font-[family-name:var(--font-mono-src)] outline-none placeholder:text-faint ${
               touch ? "text-[16px]" : "text-[13px]"
@@ -213,7 +217,13 @@ export function Spotlight({ items, touch, onRun, onClose }: Props) {
                         <PixelIcon name={item.icon} size={16} />
                       )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                    {/*
+                      The name keeps its width and the hint gives way. A 0 basis
+                      here left the name whatever the hint did not take, and on a
+                      phone "Copy email address" came out as "Copy em..." beside
+                      the address in full.
+                    */}
+                    <span className="max-w-full shrink-0 grow truncate">{item.label}</span>
                     {item.keys && !touch ? (
                       <KeyHint keys={item.keys} />
                     ) : (

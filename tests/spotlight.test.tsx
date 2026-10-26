@@ -16,6 +16,7 @@ import { PROJECTS } from "@/lib/content";
 import { GAMES } from "@/lib/games/registry";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
 import { PRESETS } from "@/lib/theme/presets";
+import { appShortcut } from "@/lib/os/shortcuts";
 
 // The registry pulls in the music player, which subscribes to the sound switch at import
 vi.mock("@/lib/sfx", async (importOriginal) => ({
@@ -67,7 +68,9 @@ describe("spotlightItems", () => {
   });
 
   it("carries the key that opens the shortcuts window on its row", () => {
-    expect(items.find((i) => i.kind === "app" && i.id === "shortcuts")?.keys).toEqual(["?"]);
+    const keys = items.find((i) => i.kind === "app" && i.id === "shortcuts")?.keys;
+    expect(keys).toBeDefined();
+    expect(keys).toBe(appShortcut("shortcuts")?.keys);
   });
 });
 
@@ -123,9 +126,20 @@ describe("spotlightSections", () => {
 });
 
 describe("remember", () => {
-  it("moves the item to the front, once, and keeps three", () => {
+  it("moves the item to the front, once", () => {
     expect(remember(["a", "b", "c"], "b")).toEqual(["b", "a", "c"]);
-    expect(remember(["a", "b", "c"], "d")).toEqual(["d", "a", "b"]);
+  });
+
+  it("does not let entries with nothing to act on push out ones that could still show", () => {
+    let recent: string[] = [];
+    for (const key of ["app:xterm", "command:minimize-all", "command:close-all", "wallpaper:contour"]) {
+      recent = remember(recent, key);
+    }
+    const quiet = build({ windows: 0, visible: 0 });
+    expect(ids(spotlightSections(quiet, "", recent)[0].items)).toEqual(["contour", "xterm"]);
+    // Kept is not shown: the list still leads with three at most
+    const busy = ["app:xterm", "app:projects", "app:contact", "app:skills"].reduce(remember, [] as string[]);
+    expect(spotlightSections(items, "", busy)[0].items).toHaveLength(3);
   });
 
   it("survives junk in storage", () => {

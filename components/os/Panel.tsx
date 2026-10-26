@@ -134,10 +134,16 @@ export function Panel({
           side="top"
           align="start"
           sideOffset={2}
-          onCloseAutoFocus={(e) => {
+          /*
+           * Not prevented: Radix puts focus back on the trigger straight after
+           * this, before Spotlight has rendered, so the dialog finds it there
+           * and hands it back there when it closes. Prevented, focus was left
+           * on the menu item that had just been removed, and a keyboard went
+           * back to the top of the document.
+           */
+          onCloseAutoFocus={() => {
             if (!toSpotlight.current) return;
             toSpotlight.current = false;
-            e.preventDefault();
             onSpotlight();
           }}
           className="bevel-out max-h-[min(70dvh,var(--radix-dropdown-menu-content-available-height))] min-w-[200px] overflow-y-auto rounded-none bg-secondary p-0.5 font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"

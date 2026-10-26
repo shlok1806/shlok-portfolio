@@ -223,6 +223,12 @@ export const itemKey = (item: SpotlightItem) => `${item.kind}:${item.id}`;
 
 /** How many recently run items lead the list */
 export const MAX_RECENT = 3;
+/*
+ * More are kept than are shown. A command with nothing to act on drops out of
+ * the list, and while it still held one of only three slots it pushed out an
+ * older entry that could have shown in its place.
+ */
+const KEEP_RECENT = 10;
 
 /**
  * What the list shows.
@@ -262,7 +268,7 @@ export function spotlightSections(items: SpotlightItem[], query: string, recent:
 
 /** The recent list with `key` moved to the front. */
 export function remember(recent: string[], key: string): string[] {
-  return [key, ...recent.filter((k) => k !== key)].slice(0, MAX_RECENT);
+  return [key, ...recent.filter((k) => k !== key)].slice(0, KEEP_RECENT);
 }
 
 const RECENT_KEY = "os-spotlight-recent";
@@ -271,7 +277,7 @@ const RECENT_KEY = "os-spotlight-recent";
 export function loadRecent(): string[] {
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
-    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === "string").slice(0, MAX_RECENT) : [];
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === "string").slice(0, KEEP_RECENT) : [];
   } catch {
     // Storage blocked or corrupt: no recents, which is how a first visit looks anyway
     return [];
