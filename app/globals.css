@@ -233,6 +233,34 @@
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
   }
+
+  /*
+   * Headings balance their lines, so a project name that wraps in a phone
+   * window breaks into two even halves rather than a full line and an orphan.
+   * Prose gets pretty, which only reconsiders the last few lines of a paragraph
+   * so that it does not end on one word.
+   *
+   * The text-wrap-style longhand, never the text-wrap shorthand: the shorthand
+   * also resets text-wrap-mode, the same longhand white-space: nowrap sets, so
+   * on a truncate or whitespace-pre element it would quietly turn wrapping back
+   * on. All of it at zero specificity, so a utility on the element still wins.
+   *
+   * Where the column a character lands in is the layout - the shell's output,
+   * top's table, an ASCII rule, anything preformatted - reflowing a line
+   * breaks the alignment, so pre and .verbatim take a whole subtree back out.
+   * Equal specificity throughout, so the order below is the precedence: a
+   * title that is a <p> is still a title.
+   */
+  :where(p, li, dd, blockquote, figcaption) {
+    text-wrap-style: pretty;
+  }
+  :where(h1, h2, h3, h4, h5, h6, [data-slot$="-title"]) {
+    text-wrap-style: balance;
+  }
+  :where(pre, .verbatim),
+  :where(pre, .verbatim) :where(*) {
+    text-wrap-style: auto;
+  }
 }
 
 @layer components {

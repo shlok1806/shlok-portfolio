@@ -118,8 +118,9 @@ export default function ResumePage() {
       <Section title="Experience">
         {EXPERIENCE.map((role) => (
           <article key={`${role.org}-${role.period}`} className="break-inside-avoid">
+            {/* The no-break space keeps a balanced heading from opening its second line on the dash */}
             <h3 className="font-semibold text-neutral-950">
-              {role.role} - {role.org}
+              {role.role}&nbsp;- {role.org}
             </h3>
             <p className="font-mono text-[13px] tabular-nums text-neutral-600">
               {role.period}
@@ -149,7 +150,7 @@ export default function ResumePage() {
               ) : (
                 p.name.replace("/", "")
               )}
-              <span className="font-normal text-neutral-600"> - {p.tagline}</span>
+              <span className="font-normal text-neutral-600">&nbsp;- {p.tagline}</span>
               {p.note && <span className="font-normal text-neutral-500"> ({p.note})</span>}
             </h3>
             <p className="font-mono text-[13px] text-neutral-600">

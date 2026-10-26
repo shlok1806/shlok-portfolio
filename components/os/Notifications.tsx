@@ -24,7 +24,9 @@ function NoticeCard({ notice, onDismiss }: { notice: Notice; onDismiss: () => vo
         <PixelIcon name={ICON[notice.kind]} size={16} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-bold leading-tight">{notice.title}</p>
+        <p data-slot="notice-title" className="text-[13px] font-bold leading-tight">
+          {notice.title}
+        </p>
         {notice.text && <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{notice.text}</p>}
       </div>
       <button

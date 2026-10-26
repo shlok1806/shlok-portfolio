@@ -10,21 +10,24 @@ import { DocShell, DocTitle, Rule } from "./DocShell";
 export function SkillsApp() {
   return (
     <DocShell status={`skills.json  ${SKILLS.length} keys`}>
-      <p className="text-faint">{"{"}</p>
-      {SKILLS.map((row, i) => (
-        <p key={row.key} className="pl-4">
-          <span className="text-accent-ink">&quot;{row.key}&quot;</span>
-          <span className="text-faint">: [</span>
-          {row.values.map((v, vi) => (
-            <span key={v}>
-              <span className="text-foreground">&quot;{v}&quot;</span>
-              {vi < row.values.length - 1 && <span className="text-faint">, </span>}
-            </span>
-          ))}
-          <span className="text-faint">]{i < SKILLS.length - 1 ? "," : ""}</span>
-        </p>
-      ))}
-      <p className="text-faint">{"}"}</p>
+      {/* JSON, so it wraps the way an editor would rather than as prose */}
+      <div className="verbatim">
+        <p className="text-faint">{"{"}</p>
+        {SKILLS.map((row, i) => (
+          <p key={row.key} className="pl-4">
+            <span className="text-accent-ink">&quot;{row.key}&quot;</span>
+            <span className="text-faint">: [</span>
+            {row.values.map((v, vi) => (
+              <span key={v}>
+                <span className="text-foreground">&quot;{v}&quot;</span>
+                {vi < row.values.length - 1 && <span className="text-faint">, </span>}
+              </span>
+            ))}
+            <span className="text-faint">]{i < SKILLS.length - 1 ? "," : ""}</span>
+          </p>
+        ))}
+        <p className="text-faint">{"}"}</p>
+      </div>
     </DocShell>
   );
 }
