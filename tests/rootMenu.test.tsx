@@ -13,6 +13,7 @@ const WIDE = window.innerWidth;
 afterEach(() => {
   cleanup();
   window.innerWidth = WIDE;
+  vi.restoreAllMocks();
 });
 
 function setup(touch = false) {
@@ -36,6 +37,10 @@ function setup(touch = false) {
   );
   return props;
 }
+
+/** A mouse moving over an element; jsdom has no PointerEvent, and the menu only needs the coordinates */
+const hover = (el: Element, x: number, y: number) =>
+  fireEvent(el, new MouseEvent("pointermove", { bubbles: true, clientX: x, clientY: y }));
 
 /** Presses a key where focus is, and says whether anything consumed it */
 const press = (key: string) => !fireEvent.keyDown(document.activeElement!, { key });
@@ -112,6 +117,45 @@ describe("RootMenu", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Back" }));
     expect(screen.getByRole("menu", { name: "ShlokOS" })).toBeTruthy();
     expect(focused()).toBe(screen.getByRole("menuitem", { name: "Background" }));
+  });
+
+  it("cascades under a mouse in a narrow window, leaving the apps in reach", () => {
+    window.innerWidth = 700;
+    setup();
+    const background = screen.getByRole("menuitem", { name: "Background" });
+    hover(background, 60, 60);
+    expect(background.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("menu")).toHaveLength(2);
+    expect(screen.getByRole("menuitem", { name: "xterm" })).toBeTruthy();
+  });
+
+  it("never drills in on a hover: a submenu with no room beside it waits to be asked", () => {
+    // A 190px menu in a 300px window: a cascade fits on neither side
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      x: 4,
+      y: 4,
+      left: 4,
+      top: 4,
+      right: 194,
+      bottom: 304,
+      width: 190,
+      height: 300,
+      toJSON: () => ({}),
+    });
+    window.innerWidth = 300;
+    setup();
+    const background = screen.getByRole("menuitem", { name: "Background" });
+    hover(background, 60, 60);
+    hover(background, 70, 62);
+    expect(screen.getByRole("menu", { name: "ShlokOS" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "xterm" })).toBeTruthy();
+    expect(screen.queryByRole("menuitemradio")).toBeNull();
+
+    // A click is asking. The row it drilled through is gone, and focus stays in the menu for the arrows
+    fireEvent.click(background);
+    expect(screen.getByRole("menu", { name: "Background" }).contains(focused())).toBe(true);
+    press("ArrowDown");
+    expect(focused().textContent).toContain("Back");
   });
 
   it("gives focus back to whatever had it when it closes", () => {

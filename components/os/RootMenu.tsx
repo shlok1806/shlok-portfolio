@@ -83,6 +83,16 @@ export function RootMenu({
   const [placement, setPlacement] = useState<Placement | null>(null);
   /** where focus goes once the submenu (or its absence) has been laid out */
   const pending = useRef<"first" | SubId | null>(null);
+  /*
+   * A hover may only cascade. Drilling in replaces the whole menu, so a mouse
+   * on its way down to the apps that crossed a ▸ row in a window with no room
+   * beside the menu swapped every app for a list of backgrounds, and did it
+   * again on the next try. A submenu that cannot sit beside its row waits for
+   * a click, a tap or a key; `refused` is the row a hover already tried, so
+   * the next move over it does not open and close it all over again.
+   */
+  const byHover = useRef(false);
+  const refused = useRef<SubId | null>(null);
   /** the submenu that has taken over the menu, when it drilled in */
   const drilled = drill ? open : null;
 
@@ -118,7 +128,12 @@ export function RootMenu({
     setPos({ left: Math.max(GAP, Math.min(x, window.innerWidth - width - GAP)), top });
   }, [x, y, panelHeight, drilled]);
 
-  // The cascade measures itself the same way, then sits beside its row or drills in
+  /*
+   * The cascade measures itself the same way, then sits beside its row or
+   * drills in. A phone always drills: the finger that opened it is not on its
+   * way anywhere, and the rows are 44px tall. A mouse in a narrow window still
+   * cascades wherever there is room.
+   */
   useLayoutEffect(() => {
     if (!open || drill) return;
     const menu = menuRef.current;
@@ -129,7 +144,7 @@ export function RootMenu({
     const first = sub.querySelector("[data-row]");
     const inset = first ? first.getBoundingClientRect().top - box.top : 0;
     const placed =
-      window.innerWidth < SMALL_W
+      touch && window.innerWidth < SMALL_W
         ? null
         : placeSubmenu(
             menu.getBoundingClientRect(),
@@ -139,24 +154,33 @@ export function RootMenu({
             { w: window.innerWidth, h: window.innerHeight - panelHeight },
             GAP,
           );
-    if (placed) setPlacement(placed);
-    else setDrill(true);
-  }, [open, drill, pos, panelHeight]);
+    if (placed) {
+      setPlacement(placed);
+    } else if (byHover.current) {
+      refused.current = open;
+      setOpen(null);
+    } else {
+      setDrill(true);
+    }
+  }, [open, drill, pos, panelHeight, touch]);
 
   // Focus moves only once there is something visible to move it to
   useLayoutEffect(() => {
     const want = pending.current;
-    if (!want) return;
     if (want === "first") {
       const box = drill ? menuRef.current : placement ? subRef.current : null;
       const target = rowsIn(box).find((r) => r.dataset.row !== "back");
-      if (!target) return;
-      pending.current = null;
-      target.focus({ preventScroll: true });
-    } else if (!open) {
+      if (target) {
+        pending.current = null;
+        target.focus({ preventScroll: true });
+      }
+    } else if (want && !open) {
       pending.current = null;
       menuRef.current?.querySelector<HTMLElement>(`[data-sub="${want}"]`)?.focus({ preventScroll: true });
     }
+    // Drilling in unmounts the row that had focus, which left it on the body and the arrow keys dead
+    const menu = menuRef.current;
+    if (drill && menu && !menu.contains(document.activeElement)) menu.focus({ preventScroll: true });
   }, [open, drill, placement]);
 
   // Take focus once placed, so the arrow keys work straight away
@@ -195,7 +219,7 @@ export function RootMenu({
   );
   useEffect(() => () => aim.cancel(), [aim]);
 
-  const openSub = (id: SubId, focusFirst: boolean) => {
+  const openSub = (id: SubId, focusFirst: boolean, hover = false) => {
     aim.cancel();
     if (open === id) {
       if (focusFirst) {
@@ -205,6 +229,7 @@ export function RootMenu({
       }
       return;
     }
+    byHover.current = hover;
     pending.current = focusFirst ? "first" : null;
     setPlacement(null);
     setDrill(false);
@@ -225,8 +250,12 @@ export function RootMenu({
       target.focus({ preventScroll: true });
     }
     const sub = target.dataset.sub as SubId | undefined;
-    if (sub) openSub(sub, false);
-    else if (open && !drill) closeSub(false);
+    if (sub) {
+      if (sub !== refused.current) openSub(sub, false, true);
+    } else {
+      refused.current = null;
+      if (open && !drill) closeSub(false);
+    }
   };
   activateRef.current = activate;
 
@@ -245,6 +274,7 @@ export function RootMenu({
   const onLeave = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "touch") return;
     hovered.current = null;
+    refused.current = null;
     aim.reset();
     const box = e.currentTarget;
     if (box.contains(document.activeElement)) box.focus({ preventScroll: true });
