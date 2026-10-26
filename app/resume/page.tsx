@@ -47,7 +47,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function ResumePage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div data-paper className="min-h-screen bg-white">
       <JsonLd data={resumeJsonLd()} />
       <SpeculationRules rules={NEXT} />
       {/*

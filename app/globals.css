@@ -517,6 +517,17 @@
 }
 
 /*
+ * /resume is paper, not a tube. Its white sheet ends where the text does, and
+ * whatever lies past it (the rest of the last printed page when background
+ * graphics are on, the overscroll above and below the sheet) was the body's
+ * colour from whichever tube the desktop last used, so a printout ended in a
+ * band of desktop under the skills. Past the sheet is paper too.
+ */
+body:has(> [data-paper]) {
+  background-color: white;
+}
+
+/*
  * Going between the desktop and /resume, the tube changes channel: the old
  * picture squeezes to a bright line in three frames and goes dark, then the
  * new one lands in two, the way a window maps. 200ms in all, stepped, never
