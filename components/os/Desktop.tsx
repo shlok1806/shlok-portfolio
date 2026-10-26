@@ -38,7 +38,7 @@ import { Panel, PANEL_CHROME_H, PANEL_CHROME_H_TOUCH } from "./Panel";
 import { PlasmaWallpaper } from "./PlasmaWallpaper";
 import { ZoomOutline } from "./ZoomOutline";
 import { CrtPowerOn } from "./CrtPowerOn";
-import { DeskPals } from "./DeskPals";
+import { DeskPals, PAL_REACH } from "./DeskPals";
 
 const EMAIL = LINKS.find((l) => l.label === "email")?.value ?? "";
 
@@ -388,6 +388,16 @@ export function Desktop() {
   const safe = useSafeArea();
   const wm = useWindowManager(panelH, onTransition, safe);
   const { open: wmOpen, windows, focusedId, PANEL_H } = wm;
+
+  /*
+   * The pals stand on the panel and draw over whatever sits against it. On a
+   * phone every window is full-screen, so the cat lay across the status line
+   * of whatever was open. They come out only while no window reaches down to
+   * them.
+   */
+  const palsFit =
+    viewport !== null &&
+    !windows.some((w) => !w.minimized && w.y + w.h > viewport.h - PANEL_H - PAL_REACH);
 
   /*
    * Switching tubes degausses the screen: a flash and a wobble, 180ms, then
@@ -943,7 +953,7 @@ export function Desktop() {
       <ZoomOutline />
       {phase === "boot" && <MacBoot desktop={rootRef} onDone={bootDone} />}
       {phase === "on" && <CrtPowerOn onDone={powerDone} />}
-      {phase === "up" && !idle && <DeskPals />}
+      {phase === "up" && !idle && palsFit && <DeskPals />}
       {idle && <Screensaver label="ShlokOS" onWake={() => setIdle(false)} />}
     </main>
   );
