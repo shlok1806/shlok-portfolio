@@ -119,3 +119,5 @@ creatures are pre-coloured pixel art on their own overlay, not chrome. They
 live on the panel only (`DeskPals.tsx`, `data-pal-perch`), because the
 overlay sits above the panel at `--piix-z: 81` and would draw over any window.
 Keep new pals off windows and icons, and keep `--piix-z` below the root menu (85).
+They stand on the bar's top edge, where a window that reaches the panel ends,
+so the desktop only renders them while no window comes within `PAL_REACH`.
