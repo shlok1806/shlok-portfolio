@@ -350,7 +350,13 @@ export function playSfx(name: Sfx) {
   if (!soundOn()) return;
   try {
     const pattern = HAPTICS[name];
-    if (pattern && gestured && typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern);
+    /*
+     * A key counts as a gesture here, but Shift (which skips the boot) and
+     * Escape (which closes a window) are not user activation, and Chrome
+     * refuses a vibration before any with an error in the console.
+     */
+    const activated = typeof navigator !== "undefined" && navigator.userActivation?.hasBeenActive !== false;
+    if (pattern && gestured && activated && navigator.vibrate) navigator.vibrate(pattern);
 
     const c = audio();
     if (!c || !buses) return;

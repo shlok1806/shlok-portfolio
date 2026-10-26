@@ -21,9 +21,13 @@ export function ZoomOutline() {
         const el = ref.current;
         if (!el) {
           done();
-          return;
+          return () => {};
         }
-        // A zoom that starts mid-zoom lands the previous one first
+        /*
+         * A zoom that starts mid-zoom lands the previous one first, which is
+         * also what releases the window that one was holding back - so a
+         * window can never stay invisible behind an outline that was cut off.
+         */
         active.current?.cancel();
 
         const paint = (t: number) => {
@@ -36,7 +40,10 @@ export function ZoomOutline() {
 
         let step = 0;
         let timer: ReturnType<typeof setTimeout>;
+        let landed = false;
         const finish = () => {
+          if (landed) return;
+          landed = true;
           clearTimeout(timer);
           el.style.visibility = "hidden";
           active.current = null;
@@ -53,6 +60,7 @@ export function ZoomOutline() {
         el.style.visibility = "visible";
         timer = setTimeout(tick, DURATION / STEPS);
         active.current = { cancel: finish };
+        return finish;
       }),
     [],
   );

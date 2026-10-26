@@ -7,6 +7,8 @@ import { PanelClock } from "@/components/os/applets/Xclock";
 import { ShortcutsApp } from "@/components/os/apps/ShortcutsApp";
 import { CopyButton } from "@/components/os/CopyButton";
 import { DownloadButton } from "@/components/os/DownloadButton";
+import { NotificationTray } from "@/components/os/Notifications";
+import { ACTION_TTL_MS, clearNotices, notify } from "@/lib/os/notify";
 import { SHORTCUTS } from "@/lib/os/shortcuts";
 
 vi.mock("@/lib/sfx", () => ({ playSfx: vi.fn() }));
@@ -97,5 +99,75 @@ describe("DownloadButton", () => {
     act(() => vi.advanceTimersByTime(1800));
     expect(button().getAttribute("data-phase")).toBe("idle");
     click.mockRestore();
+  });
+});
+
+describe("NotificationTray", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    act(() => clearNotices());
+  });
+  afterEach(() => vi.useRealTimers());
+
+  const offer = (name = "Closed xterm") => screen.queryByRole("button", { name: `Undo: ${name}` });
+  const postOffer = (name = "Closed xterm") =>
+    act(() => {
+      notify("info", name, undefined, { action: { label: "Undo", run: () => {} } });
+    });
+
+  it("offers the notice's action as a button, and taking it clears the notice", () => {
+    const run = vi.fn();
+    render(<NotificationTray />);
+    act(() => {
+      notify("info", "Closed xterm", undefined, { action: { label: "Undo", run } });
+    });
+    fireEvent.click(offer()!);
+    expect(run).toHaveBeenCalledOnce();
+    expect(offer()).toBeNull();
+  });
+
+  it("holds an offer on screen while keyboard focus is in it", () => {
+    render(<NotificationTray />);
+    postOffer();
+    const undo = offer()!;
+    act(() => undo.focus());
+    act(() => vi.advanceTimersByTime(ACTION_TTL_MS * 3));
+    expect(offer()).not.toBeNull();
+    act(() => undo.blur());
+    act(() => vi.advanceTimersByTime(ACTION_TTL_MS));
+    expect(offer()).toBeNull();
+  });
+
+  it("holds an offer while the pointer moves over it, but not one that appeared under a resting pointer", () => {
+    const { container } = render(<NotificationTray />);
+    postOffer();
+    const card = container.querySelector<HTMLElement>("[data-slot=notice]")!;
+    // It landed under the mouse, which has not moved since
+    fireEvent.pointerEnter(card);
+    act(() => vi.advanceTimersByTime(ACTION_TTL_MS));
+    expect(offer()).toBeNull();
+
+    postOffer();
+    const next = container.querySelector<HTMLElement>("[data-slot=notice]")!;
+    fireEvent.pointerMove(next);
+    act(() => vi.advanceTimersByTime(ACTION_TTL_MS * 3));
+    expect(offer()).not.toBeNull();
+    fireEvent.pointerLeave(next);
+    act(() => vi.advanceTimersByTime(ACTION_TTL_MS));
+    expect(offer()).toBeNull();
+  });
+
+  it("tells a screen reader about each new notice once", () => {
+    const { container } = render(<NotificationTray />);
+    const said = () => container.querySelector("[aria-live]")?.textContent;
+    act(() => {
+      notify("ok", "resume.pdf", "Saved to your downloads");
+    });
+    expect(said()).toBe("resume.pdf. Saved to your downloads");
+    postOffer();
+    expect(said()).toBe("Closed xterm");
+    // The newest going away does not read the one under it out again
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss: Closed xterm" }));
+    expect(said()).toBe("Closed xterm");
   });
 });

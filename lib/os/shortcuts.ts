@@ -23,7 +23,7 @@ export interface Shortcut {
   opens?: string;
 }
 
-export type ShortcutAction = "spotlight" | "close-window";
+export type ShortcutAction = "spotlight" | "close-window" | "undo-close";
 
 export interface ShortcutGroup {
   scope: string;
@@ -37,6 +37,7 @@ export const SHORTCUTS: ShortcutGroup[] = [
       { keys: ["Mod", "K"], label: "Spotlight: open anything or run a command", action: "spotlight" },
       { keys: ["Alt", "Tab"], label: "Cycle through the open windows" },
       { keys: ["Esc"], label: "Close the focused window, or dismiss a menu", action: "close-window" },
+      { keys: ["Mod", "Z"], label: "Reopen the window you just closed", action: "undo-close" },
       { keys: ["?"], label: "Open this list", opens: "shortcuts" },
       { keys: ["↑", "↓", "←", "→"], label: "Walk the desktop icons" },
       { keys: ["Enter"], label: "Open the focused icon" },

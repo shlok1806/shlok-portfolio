@@ -23,6 +23,8 @@ export type EventName =
   | "boot"
   /** a window was asked for, whichever way */
   | "open"
+  /** a closed window was taken back; how often this happens is how often closing was a mistake */
+  | "undo"
   /** a shell command ran; only known names, a typo is "unknown" */
   | "command"
   /** a Spotlight result was run */

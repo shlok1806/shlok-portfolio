@@ -58,6 +58,8 @@ interface Props {
   onChooseWallpaper: (id: string) => void;
   onToggleSound: () => void;
   onSpotlight: () => void;
+  /** a menu on the bar opened or closed; on a phone, Back closes an open one */
+  onMenuOpenChange?: (open: boolean) => void;
 }
 
 export function Panel({
@@ -75,6 +77,7 @@ export function Panel({
   onChooseWallpaper,
   onToggleSound,
   onSpotlight,
+  onMenuOpenChange,
 }: Props) {
   const { audible, silence: onSilence } = useSpeaker(soundOn, onToggleSound);
   const apple = useApplePlatform();
@@ -95,7 +98,10 @@ export function Panel({
   const item = `gap-3 rounded-none leading-none focus:bg-primary focus:text-primary-foreground ${
     touch ? "min-h-11 px-3 py-2" : "px-2 py-[5px]"
   }`;
-  const tickOpen = (open: boolean) => open && playSfx("tick");
+  const tickOpen = (open: boolean) => {
+    onMenuOpenChange?.(open);
+    if (open) playSfx("tick");
+  };
   const tickRow = () => playSfx("tick");
 
   return (
