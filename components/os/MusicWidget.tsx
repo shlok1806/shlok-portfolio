@@ -3,6 +3,7 @@
 import { next, toggle } from "@/lib/music/player";
 import { useMusic } from "@/hooks/useMusic";
 import { useRemix } from "@/hooks/useRemix";
+import { PixelIcon } from "@/lib/os/icons";
 import { AudioMeter } from "./AudioMeter";
 import { Turntable } from "./Turntable";
 
@@ -48,7 +49,7 @@ export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => v
         aria-label={playing ? "Pause music" : "Play music"}
         className={`hit-slop bevel-thin flex items-center justify-center bg-secondary leading-none active:bevel-in disabled:opacity-40 ${key}`}
       >
-        <span aria-hidden>{playing ? "❚❚" : "▶"}</span>
+        <PixelIcon name={playing ? "pause" : "play"} size={16} />
       </button>
 
       <button
@@ -57,7 +58,7 @@ export function MusicWidget({ touch, onOpen }: { touch: boolean; onOpen: () => v
         aria-label="Next track"
         className={`hit-slop bevel-thin hidden items-center justify-center bg-secondary leading-none active:bevel-in disabled:opacity-40 sm:flex ${key}`}
       >
-        <span aria-hidden>▶▶</span>
+        <PixelIcon name="next" size={16} />
       </button>
 
       {/*

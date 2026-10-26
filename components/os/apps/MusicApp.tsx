@@ -5,6 +5,7 @@ import { TRACKS } from "@/lib/music/tracks";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useMusic } from "@/hooks/useMusic";
 import { useRemix } from "@/hooks/useRemix";
+import { PixelIcon } from "@/lib/os/icons";
 import { AudioMeter } from "../AudioMeter";
 import { Turntable } from "../Turntable";
 import { DocShell } from "./DocShell";
@@ -106,7 +107,7 @@ export function MusicApp() {
           aria-label="Previous track"
           className={`bevel-out bg-secondary px-3 font-[family-name:var(--font-ui)] text-[15px] leading-none text-secondary-foreground active:bevel-in disabled:opacity-40 ${transport}`}
         >
-          <span aria-hidden>◀◀</span>
+          <PixelIcon name="prev" size={16} />
         </button>
         <button
           onClick={() => toggle()}
@@ -114,7 +115,7 @@ export function MusicApp() {
           aria-label={playing ? "Pause" : "Play"}
           className={`bevel-out bg-secondary px-4 font-[family-name:var(--font-ui)] text-[15px] leading-none text-secondary-foreground active:bevel-in disabled:opacity-40 ${transport}`}
         >
-          <span aria-hidden>{playing ? "❚❚" : "▶"}</span>
+          <PixelIcon name={playing ? "pause" : "play"} size={16} />
         </button>
         <button
           onClick={() => stop()}
@@ -122,7 +123,7 @@ export function MusicApp() {
           aria-label="Stop"
           className={`bevel-out bg-secondary px-3 font-[family-name:var(--font-ui)] text-[15px] leading-none text-secondary-foreground active:bevel-in disabled:opacity-40 ${transport}`}
         >
-          <span aria-hidden>■</span>
+          <PixelIcon name="stop" size={16} />
         </button>
         <button
           onClick={() => next()}
@@ -130,7 +131,7 @@ export function MusicApp() {
           aria-label="Next track"
           className={`bevel-out bg-secondary px-3 font-[family-name:var(--font-ui)] text-[15px] leading-none text-secondary-foreground active:bevel-in disabled:opacity-40 ${transport}`}
         >
-          <span aria-hidden>▶▶</span>
+          <PixelIcon name="next" size={16} />
         </button>
 
         <label className="ml-auto flex items-center gap-2 font-[family-name:var(--font-ui)] text-[13px] text-muted-foreground">
@@ -185,8 +186,8 @@ export function MusicApp() {
                   i === index ? "bg-muted" : ""
                 }`}
               >
-                <span aria-hidden className="w-4 shrink-0 text-faint group-hover:text-inherit">
-                  {i === index && playing ? "▶" : i === index ? "❚❚" : ""}
+                <span aria-hidden className="w-4 shrink-0 self-center text-faint group-hover:text-inherit">
+                  {i === index && <PixelIcon name={playing ? "play" : "pause"} size={16} />}
                 </span>
                 <span className="w-6 shrink-0 tabular-nums text-faint group-hover:text-inherit">
                   {String(i + 1).padStart(2, "0")}
