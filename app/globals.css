@@ -348,6 +348,131 @@
     background: hsl(var(--secondary));
     color: hsl(var(--muted-foreground));
   }
+
+  /*
+   * A press target bigger than the control draws: 24px under a mouse, the
+   * WCAG 2.2 minimum, and 44px under a finger. The bevel stays the size Motif
+   * proportions want; an invisible ::after around it takes the press, and a
+   * press on a pseudo-element lands on its element.
+   *
+   * The slop is centred and only ever grows a box, so a control already big
+   * enough is left alone. It is transparent but it is still on top, so two
+   * slopped controls must never sit close enough to overlap: -x and -y slop in
+   * one direction only, for a control whose neighbours leave room on just one
+   * axis. Where there is no room either way, make the control itself bigger.
+   * overflow:hidden on the element (truncate) clips the slop away.
+   */
+  .hit-slop,
+  .hit-slop-x,
+  .hit-slop-y {
+    --hit-w: 24px;
+    --hit-h: 24px;
+    position: relative;
+  }
+  .hit-slop-x {
+    --hit-h: 0px;
+  }
+  .hit-slop-y {
+    --hit-w: 0px;
+  }
+  @media (pointer: coarse) {
+    .hit-slop {
+      --hit-w: 44px;
+      --hit-h: 44px;
+    }
+    .hit-slop-x {
+      --hit-w: 44px;
+    }
+    .hit-slop-y {
+      --hit-h: 44px;
+    }
+  }
+  .hit-slop::after,
+  .hit-slop-x::after,
+  .hit-slop-y::after {
+    content: "";
+    position: absolute;
+    top: min(0px, (100% - var(--hit-h)) / 2);
+    bottom: min(0px, (100% - var(--hit-h)) / 2);
+    left: min(0px, (100% - var(--hit-w)) / 2);
+    right: min(0px, (100% - var(--hit-w)) / 2);
+  }
+
+  /*
+   * A window's resize corners. With a mouse they are the only way to resize,
+   * and they were 12px squares - half the minimum target - laid inside the
+   * frame, where the north-east one covered the top corner of the close button
+   * and the south-east one the bottom of the scrollbar.
+   *
+   * Each is now a full target centred on the corner of the frame, so most of
+   * it lies outside the window, the way a modern window manager's invisible
+   * border does. Inside the window it keeps only what belongs to the frame:
+   * the 7px of bevel, margin and inset border before the content and its
+   * scrollbar begin, cut to an L with clip-path (which clips the hit test as
+   * well as the paint). The north-west corner keeps its whole inner quarter,
+   * which is only title bar; the north-east one gives the close button back
+   * everything but the outermost pixels of the frame.
+   */
+  .resize-corner {
+    --hit: 24px;
+    /* left/top are measured inside the window's 2px bevel; the corner is outside it */
+    --offset: calc(var(--hit) / -2 - 2px);
+    --frame: 7px;
+    /* how much frame the close button leaves to its right and above it */
+    --close-x: 3px;
+    --close-y: 3px;
+    position: absolute;
+    width: var(--hit);
+    height: var(--hit);
+    touch-action: none;
+  }
+  @media (pointer: coarse) {
+    .resize-corner {
+      --hit: 44px;
+      --close-x: 0px;
+      --close-y: 2px;
+    }
+  }
+  .resize-corner[data-corner="nw"] {
+    left: var(--offset);
+    top: var(--offset);
+  }
+  .resize-corner[data-corner="ne"] {
+    right: var(--offset);
+    top: var(--offset);
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      100% 100%,
+      calc(50% - var(--close-x)) 100%,
+      calc(50% - var(--close-x)) calc(50% + var(--close-y)),
+      0 calc(50% + var(--close-y))
+    );
+  }
+  .resize-corner[data-corner="sw"] {
+    left: var(--offset);
+    bottom: var(--offset);
+    clip-path: polygon(
+      0 0,
+      calc(50% + var(--frame)) 0,
+      calc(50% + var(--frame)) calc(50% - var(--frame)),
+      100% calc(50% - var(--frame)),
+      100% 100%,
+      0 100%
+    );
+  }
+  .resize-corner[data-corner="se"] {
+    right: var(--offset);
+    bottom: var(--offset);
+    clip-path: polygon(
+      calc(50% - var(--frame)) 0,
+      100% 0,
+      100% 100%,
+      0 100%,
+      0 calc(50% - var(--frame)),
+      calc(50% - var(--frame)) calc(50% - var(--frame))
+    );
+  }
 }
 
 /*

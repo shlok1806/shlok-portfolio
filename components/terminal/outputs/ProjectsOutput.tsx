@@ -3,7 +3,8 @@
 import { PROJECTS } from "@/lib/content";
 import { useTerminalOpen } from "../TerminalOpenContext";
 
-const ROW = "group flex w-full items-baseline gap-x-3 px-1 -mx-1 text-left";
+/* py so a row is a 24px target under a mouse and a 44px one under a finger, with the text still centred in it */
+const ROW = "group flex w-full items-baseline gap-x-3 px-1 -mx-1 py-0.5 text-left coarse:py-3";
 
 export function ProjectsOutput() {
   const open = useTerminalOpen();

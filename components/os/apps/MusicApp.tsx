@@ -39,6 +39,12 @@ export function MusicApp() {
   // A 26px playlist row is a comfortable line and a poor target; a thumb gets 44
   const rowPad = touch ? "py-3" : "py-[3px]";
   const transport = touch ? "min-h-11 min-w-11 py-2" : "py-1";
+  /*
+   * A native slider is 16px tall, under the 24px minimum for a mouse. Taller,
+   * the track stays a thin line drawn through the middle; the negative margin
+   * gives the extra back so nothing around it moves.
+   */
+  const slider = touch ? "h-11" : "-my-1 h-6";
 
   return (
     <DocShell
@@ -136,7 +142,7 @@ export function MusicApp() {
             max={100}
             value={Math.round(volume * 100)}
             onChange={(e) => setVolume(Number(e.target.value) / 100)}
-            className={`w-[104px] accent-[hsl(var(--primary))] ${touch ? "h-11" : ""}`}
+            className={`w-[104px] accent-[hsl(var(--primary))] ${slider}`}
           />
         </label>
       </div>
@@ -152,7 +158,7 @@ export function MusicApp() {
           value={Math.floor(position)}
           disabled={!duration}
           onChange={(e) => seek(Number(e.target.value))}
-          className={`w-full accent-[hsl(var(--primary))] disabled:opacity-40 ${touch ? "h-11" : ""}`}
+          className={`w-full accent-[hsl(var(--primary))] disabled:opacity-40 ${slider}`}
         />
       </label>
 

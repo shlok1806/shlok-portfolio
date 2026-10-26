@@ -49,13 +49,14 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), M
 /*
  * The four resize corners. Motif put a handle on every corner and edge of the
  * frame; corners alone cover every resize a visitor actually makes, and they
- * do it without an edge strip stealing pointer events from the content.
+ * do it without an edge strip stealing pointer events from the content. Their
+ * geometry is .resize-corner in app/globals.css.
  */
-const CORNERS: { corner: Corner; className: string }[] = [
-  { corner: "nw", className: "left-0 top-0 cursor-nwse-resize" },
-  { corner: "ne", className: "right-0 top-0 cursor-nesw-resize" },
-  { corner: "sw", className: "bottom-0 left-0 cursor-nesw-resize" },
-  { corner: "se", className: "bottom-0 right-0 cursor-nwse-resize" },
+const CORNERS: { corner: Corner; cursor: string }[] = [
+  { corner: "nw", cursor: "cursor-nwse-resize" },
+  { corner: "ne", cursor: "cursor-nesw-resize" },
+  { corner: "sw", cursor: "cursor-nesw-resize" },
+  { corner: "se", cursor: "cursor-nwse-resize" },
 ];
 
 function TitleButton({
@@ -342,23 +343,28 @@ export function Window({
         {children}
       </div>
 
-      {!win.maximized &&
-        CORNERS.map(({ corner, className }) => (
+      {!win.maximized && (
+        <>
+          {/* Only the south-east corner draws a grip; the corner over it takes the press */}
           <div
-            key={corner}
-            onPointerDown={startResize(corner)}
             aria-hidden
-            className={`absolute h-3 w-3 ${className}`}
+            className="pointer-events-none absolute bottom-0 right-0 h-3 w-3"
             style={{
-              touchAction: "none",
-              // Only the south-east corner draws a grip; the others are silent
               background:
-                corner === "se"
-                  ? "linear-gradient(135deg, transparent 0 40%, hsl(var(--bevel-dark)) 40% 52%, hsl(var(--bevel-light)) 52% 60%, transparent 60% 72%, hsl(var(--bevel-dark)) 72% 84%, hsl(var(--bevel-light)) 84% 92%, transparent 92%)"
-                  : undefined,
+                "linear-gradient(135deg, transparent 0 40%, hsl(var(--bevel-dark)) 40% 52%, hsl(var(--bevel-light)) 52% 60%, transparent 60% 72%, hsl(var(--bevel-dark)) 72% 84%, hsl(var(--bevel-light)) 84% 92%, transparent 92%)",
             }}
           />
-        ))}
+          {CORNERS.map(({ corner, cursor }) => (
+            <div
+              key={corner}
+              data-corner={corner}
+              onPointerDown={startResize(corner)}
+              aria-hidden
+              className={`resize-corner ${cursor}`}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 }

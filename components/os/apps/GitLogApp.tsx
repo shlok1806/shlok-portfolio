@@ -84,15 +84,21 @@ export function GitLogApp() {
             <th className="pr-3 font-normal">pushed</th>
           </tr>
         </thead>
+        {/*
+          Under a mouse a repository name is a link in a line of text. Under a
+          finger the rows are 19px apart, which is one name with a neighbour
+          either side of the thumb, so a row grows to a full target and its link
+          is slopped to fill it.
+        */}
         <tbody>
           {repoRows.map(([full, r]) => (
-            <tr key={full}>
+            <tr key={full} className="coarse:h-11">
               <td className="pr-3 text-foreground">
                 <a
                   href={`https://github.com/${full}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
+                  className="text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline coarse:hit-slop-y"
                 >
                   {full.split("/")[1]}
                 </a>

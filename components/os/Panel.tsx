@@ -212,7 +212,7 @@ export function Panel({
             key={w.id}
             data-win-id={w.id}
             onClick={() => onSelectWindow(w.id)}
-            className={`my-[3px] flex h-[calc(100%-6px)] min-w-0 shrink-0 items-center gap-1.5 text-left leading-none ${
+            className={`hit-slop-y my-[3px] flex h-[calc(100%-6px)] min-w-0 shrink-0 items-center gap-1.5 text-left leading-none ${
               touch ? "max-w-[160px] px-3" : "max-w-[190px] px-2"
             } ${
               w.id === focusedId && !w.minimized
@@ -238,7 +238,7 @@ export function Panel({
           <DropdownMenuTrigger asChild>
             <button
               title="Change tube"
-              className="bevel-thin my-[3px] flex items-center gap-2 bg-secondary px-2.5 leading-none text-secondary-foreground data-[state=open]:bevel-in"
+              className="hit-slop-y bevel-thin my-[3px] flex items-center gap-2 bg-secondary px-2.5 leading-none text-secondary-foreground data-[state=open]:bevel-in"
             >
               <span
                 aria-hidden
@@ -262,7 +262,8 @@ export function Panel({
                 key={p.id}
                 onFocus={tickRow}
                 onSelect={() => onSelectPreset(p.id)}
-                className="gap-3 rounded-none px-2 py-[5px] leading-none focus:bg-primary focus:text-primary-foreground"
+                // min-h-6: the swatch is shorter than a pixmap and left the row a pixel under 24
+                className="min-h-6 gap-3 rounded-none px-2 py-[5px] leading-none focus:bg-primary focus:text-primary-foreground"
               >
                 <span
                   aria-hidden
@@ -296,7 +297,7 @@ export function Panel({
             }}
             aria-pressed={audible}
             aria-label={audible ? "Mute" : "Unmute"}
-            className="bevel-thin my-[3px] ml-[3px] flex items-center bg-secondary px-2.5 leading-none text-secondary-foreground active:bevel-in"
+            className="hit-slop-y bevel-thin my-[3px] ml-[3px] flex items-center bg-secondary px-2.5 leading-none text-secondary-foreground active:bevel-in"
           >
             {audible ? "♪" : "♪̸"}
           </button>

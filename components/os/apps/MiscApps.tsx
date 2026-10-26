@@ -83,7 +83,13 @@ export function ContactApp() {
         {PROFILE.status}. Interested in {PROFILE.interests.join(", ")}.
       </p>
       <Rule />
-      <ul className="space-y-2">
+      {/*
+        Under a mouse the rows keep their 8px rhythm and the targets grow into
+        it: the link by padding its negative margin gives back, the copy button
+        by slop. A finger gets rows a full target tall instead, with nothing
+        between them - two 44px targets do not fit in a 28px pitch.
+      */}
+      <ul className="space-y-2 coarse:space-y-0">
         {LINKS.map((l) => (
           <li key={l.label} className="flex items-center gap-3">
             <span className="w-[72px] shrink-0 text-faint">{l.label}</span>
@@ -92,13 +98,14 @@ export function ContactApp() {
               target={l.href.startsWith("http") ? "_blank" : undefined}
               rel="noopener noreferrer"
               onClick={() => event("outbound", { label: l.label })}
-              className="min-w-0 flex-1 truncate text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline"
+              className="-my-0.5 min-w-0 flex-1 truncate py-0.5 text-accent-ink underline underline-offset-2 hover:bg-primary hover:text-primary-foreground hover:no-underline coarse:my-0 coarse:py-3"
             >
               {l.value}
             </a>
             <CopyButton
               value={l.value}
               aria-label={`Copy ${l.label}`}
+              className="hit-slop"
               onCopied={(on) => {
                 if (on) event("copy", { label: l.label });
                 setCopied(on ? l.label : null);

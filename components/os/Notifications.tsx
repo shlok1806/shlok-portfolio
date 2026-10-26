@@ -34,7 +34,8 @@ function NoticeCard({ notice, onDismiss }: { notice: Notice; onDismiss: () => vo
           onDismiss();
         }}
         aria-label={`Dismiss: ${notice.title}`}
-        className="bevel-thin -mr-0.5 grid h-5 w-5 shrink-0 place-items-center bg-secondary active:bevel-in"
+        // 20px drawn, slopped to the full target; nothing else in the card is pressable
+        className="hit-slop bevel-thin -mr-0.5 grid h-5 w-5 shrink-0 place-items-center bg-secondary active:bevel-in"
       >
         <PixelIcon name="close" size={12} />
       </button>

@@ -51,10 +51,11 @@ export function RootMenu({
    * hover: with no focus: pair was the only one left in the shell, and on touch
    * it is worse than useless: a tap leaves the row lit up until something else
    * is tapped, so the menu closes with a highlight painted on whatever the
-   * finger last touched.
+   * finger last touched. min-h-6 because a row without a pixmap - every
+   * Background entry - came out 23px, a pixel under the minimum for a mouse.
    */
   const row = `flex w-full items-center gap-3 text-left leading-none hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground focus:outline-none ${
-    touch ? "min-h-11 px-3 py-2" : "px-3 py-[5px]"
+    touch ? "min-h-11 px-3 py-2" : "min-h-6 px-3 py-[5px]"
   }`;
 
   // Layout effect, so the corrected position is in place before the first paint

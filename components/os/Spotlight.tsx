@@ -102,7 +102,7 @@ export function Spotlight({ items, touch, onRun, onClose }: Props) {
             placeholder="Open an app, a project, a game, a background, a tube..."
             // 16px on a phone is the size below which Safari zooms the page on focus
             className={`min-w-0 flex-1 bg-transparent py-2 font-[family-name:var(--font-mono-src)] outline-none placeholder:text-faint ${
-              touch ? "text-[16px]" : "text-[13px]"
+              touch ? "min-h-11 text-[16px]" : "text-[13px]"
             }`}
           />
         </div>

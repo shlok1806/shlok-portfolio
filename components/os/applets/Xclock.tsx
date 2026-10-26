@@ -122,7 +122,7 @@ export function PanelClock({ onOpen }: { onOpen: () => void }) {
       title="xclock"
       aria-label={now ? `Clock, ${clockText(now)}. Open xclock` : "Open xclock"}
       data-slot="panel-clock"
-      className="bevel-in my-[3px] mx-[3px] flex items-center gap-2 bg-muted px-2.5 leading-none text-secondary-foreground hover:bg-secondary"
+      className="hit-slop-y bevel-in my-[3px] mx-[3px] flex items-center gap-2 bg-muted px-2.5 leading-none text-secondary-foreground hover:bg-secondary"
     >
       {now && <ClockFace now={now} seconds={false} className="h-[18px] w-[18px]" />}
       <span suppressHydrationWarning className="tabular-nums">
