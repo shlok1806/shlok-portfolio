@@ -783,8 +783,10 @@ export function Desktop() {
             panelHeight={PANEL_H}
             touch={touch}
             currentWallpaper={wallpaper.id}
+            currentPreset={mounted ? preset.id : null}
             onLaunch={launch}
             onChooseWallpaper={chooseWallpaper}
+            onSelectPreset={choosePreset}
             onSpotlight={() => setSpotlight(true)}
             onDismiss={() => setRootMenu(null)}
           />

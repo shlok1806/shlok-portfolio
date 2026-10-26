@@ -1,8 +1,8 @@
 /**
  * Every key the desktop answers to, as data, so the shortcuts window and any
  * future help text print the same list. When a handler is added or removed in
- * Desktop.tsx, TerminalInput.tsx or useGameRunner.ts, this is the other place
- * to change.
+ * Desktop.tsx, RootMenu.tsx, TerminalInput.tsx or useGameRunner.ts, this is
+ * the other place to change.
  *
  * A control that does what a binding does (the Spotlight row in a menu, the
  * close button on a title bar) shows the binding by looking it up here, so a
@@ -40,6 +40,14 @@ export const SHORTCUTS: ShortcutGroup[] = [
       { keys: ["?"], label: "Open this list", opens: "shortcuts" },
       { keys: ["↑", "↓", "←", "→"], label: "Walk the desktop icons" },
       { keys: ["Enter"], label: "Open the focused icon" },
+    ],
+  },
+  {
+    scope: "menus",
+    shortcuts: [
+      { keys: ["↑", "↓"], label: "Move through the entries" },
+      { keys: ["→", "Enter"], label: "Open a submenu" },
+      { keys: ["←", "Esc"], label: "Close the submenu" },
     ],
   },
   {

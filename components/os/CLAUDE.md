@@ -27,6 +27,10 @@ Menus, hints and commands:
   that calls whatever the visible control calls (the window manager's close,
   `useSpeaker`'s silence), never a second implementation. A command with
   nothing to act on is left out of the list, not offered and inert.
+- **The root menu's highlight follows focus.** It has no `hover:` styles: the
+  mouse moves focus, so a row the pointer only crossed on its way into a
+  submenu (`lib/os/menuAim.ts`) is never lit. Below `SMALL_W`, or when a
+  cascade fits on neither side, a submenu drills in instead.
 - **Open a dialog from a Radix menu in `onCloseAutoFocus`, not `onSelect`.**
   The menu's focus trap is still up during `onSelect` and pulls focus back out
   of the dialog's field (see the Spotlight row in `Panel.tsx`).
