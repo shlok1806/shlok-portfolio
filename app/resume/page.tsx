@@ -28,10 +28,16 @@ export const metadata: Metadata = {
  */
 const NEXT = { prefetch: [{ where: { href_matches: "/" }, eagerness: "moderate" }] };
 
+/*
+ * On paper an entry stays whole (each article avoids a break) and a heading
+ * stays with what follows it, but a section may run across pages. Holding
+ * whole sections together left half of page one blank once Experience grew
+ * longer than what was left of it, and most of another page before Projects.
+ */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-10 break-inside-avoid-page">
-      <h2 className="border-b border-neutral-300 pb-1 text-[13px] font-bold uppercase tracking-[0.18em] text-neutral-900">
+    <section className="mt-10">
+      <h2 className="break-after-avoid border-b border-neutral-300 pb-1 text-[13px] font-bold uppercase tracking-[0.18em] text-neutral-900">
         {title}
       </h2>
       <div className="mt-4 space-y-6">{children}</div>
