@@ -3,7 +3,8 @@ import type { IconName } from "./icons";
 /**
  * The weather applet's data side. Open-Meteo needs no key and answers with
  * WMO weather codes; this maps a code to a word and a pixmap and keeps the
- * last answer in localStorage so a reload does not ask again for a while.
+ * last answer in localStorage, so a returning visitor's panel has a reading
+ * before anything has been asked.
  */
 
 /** Champaign, IL */
@@ -21,8 +22,29 @@ export interface Weather {
   at: number;
 }
 
+/** Younger than this, a reading is current and nobody asks again */
 export const WEATHER_TTL_MS = 30 * 60_000;
+/*
+ * Older than this, a reading is not shown at all. Champaign moves about twenty
+ * degrees between dawn and mid-afternoon, so three hours is roughly the point
+ * where the old number stops being "a little behind" and starts being a
+ * different time of day: a morning low shown at three in the afternoon is not
+ * stale, it is wrong. Inside the window the panel shows the old reading at
+ * once and asks for a new one behind it.
+ */
+export const WEATHER_MAX_AGE_MS = 3 * 60 * 60_000;
 const CACHE_KEY = "os-weather";
+
+/** fresh: show it. stale: show it and ask again. expired: do not show it */
+export type Freshness = "fresh" | "stale" | "expired";
+
+export function freshness(w: Weather, now: number): Freshness {
+  const age = now - w.at;
+  // From the future means the clock was changed; nothing says how old it really is
+  if (age < 0) return "stale";
+  if (age < WEATHER_TTL_MS) return "fresh";
+  return age < WEATHER_MAX_AGE_MS ? "stale" : "expired";
+}
 
 export function describeCode(code: number): { label: string; icon: IconName } {
   if (code === 0) return { label: "Clear", icon: "sun" };
@@ -50,12 +72,19 @@ export function parseWeather(json: unknown, now = Date.now()): Weather | null {
   return { tempF, code, windMph, at: now };
 }
 
+/**
+ * The last reading, unless there is none, it is not one, or it is too old to
+ * show. Whether it is still fresh is `freshness`'s question, not this one's.
+ */
 export function readCachedWeather(now = Date.now()): Weather | null {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
-    const w = JSON.parse(raw) as Weather;
-    return typeof w.at === "number" && now - w.at < WEATHER_TTL_MS ? w : null;
+    const w = JSON.parse(raw) as Partial<Weather> | null;
+    // Every field, because a NaN that gets through renders as "NaN°" in the panel
+    if (![w?.tempF, w?.code, w?.windMph, w?.at].every(Number.isFinite)) return null;
+    const reading = w as Weather;
+    return freshness(reading, now) === "expired" ? null : reading;
   } catch {
     return null;
   }
