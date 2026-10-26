@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { musicState, subscribeMusic, type MusicState } from "@/lib/music/player";
 
 /**
@@ -28,4 +28,18 @@ export function useMusic(): MusicState {
   }, []);
 
   return state;
+}
+
+const playingNow = () => musicState().playing;
+// Nothing plays on the server, and nothing has played yet when the page hydrates
+const playingOnServer = () => false;
+
+/**
+ * Only whether the deck is playing. useMusic hands back a new state on every
+ * timeupdate, a few times a second while a track plays, which a seek bar wants
+ * and the desktop does not: Desktop reads the speaker through this, nothing
+ * under it is memoised, and every open window re-rendered with the clock.
+ */
+export function useMusicPlaying(): boolean {
+  return useSyncExternalStore(subscribeMusic, playingNow, playingOnServer);
 }

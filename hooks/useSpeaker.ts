@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { pause as pauseMusic } from "@/lib/music/player";
-import { useMusic } from "./useMusic";
+import { useMusicPlaying } from "./useMusic";
 
 /**
  * The panel's speaker: whether the machine is making a noise, and the one
@@ -16,7 +16,7 @@ import { useMusic } from "./useMusic";
  * put the muted glyph on a panel that was audibly playing a record.
  */
 export function useSpeaker(soundOn: boolean, toggleSound: () => void) {
-  const { playing } = useMusic();
+  const playing = useMusicPlaying();
   const audible = soundOn || playing;
 
   // Silence means silence: whatever is currently making the noise stops
