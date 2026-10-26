@@ -108,15 +108,13 @@ export function whenShown(fn: () => void): void {
 /** Records one event. Safe to call anywhere; a no-op on the server. */
 export function event(name: EventName, props: EventProps = {}): void {
   if (typeof window === "undefined") return;
-  if ((document as Document & { prerendering?: boolean }).prerendering) {
-    whenShown(() => event(name, props));
-    return;
-  }
   const data = clean(props);
-  try {
-    track(name, data);
-  } catch {
-    /* the analytics script is not loaded in tests or when blocked */
-  }
-  if (POSTHOG_KEY) void posthog().then((ph) => ph?.capture(name, data));
+  whenShown(() => {
+    try {
+      track(name, data);
+    } catch {
+      /* the analytics script is not loaded in tests or when blocked */
+    }
+    if (POSTHOG_KEY) void posthog().then((ph) => ph?.capture(name, data));
+  });
 }
