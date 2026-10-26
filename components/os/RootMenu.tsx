@@ -5,6 +5,7 @@ import { MENU_APPS } from "@/lib/os/registry";
 import { PixelIcon } from "@/lib/os/icons";
 import { playSfx } from "@/lib/sfx";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
+import { readSafeArea } from "@/lib/os/safeArea";
 
 interface Props {
   /** where the pointer was when the menu was summoned */
@@ -62,9 +63,11 @@ export function RootMenu({
     if (!el) return;
     const { width, height } = el.getBoundingClientRect();
     const room = window.innerHeight - panelHeight;
+    // Clear of the notch and the status bar too; a row under either cannot be tapped
+    const safe = readSafeArea();
     setPos({
-      left: Math.max(GAP, Math.min(x, window.innerWidth - width - GAP)),
-      top: Math.max(GAP, Math.min(y, room - height - GAP)),
+      left: Math.max(safe.left + GAP, Math.min(x, window.innerWidth - safe.right - width - GAP)),
+      top: Math.max(safe.top + GAP, Math.min(y, room - height - GAP)),
     });
   }, [x, y, panelHeight]);
 
@@ -83,7 +86,7 @@ export function RootMenu({
          * screen, so the last few entries sat below the fold on a surface that
          * refuses to scroll.
          */
-        maxHeight: `calc(100dvh - ${panelHeight + GAP * 2}px)`,
+        maxHeight: `calc(100dvh - ${panelHeight + GAP * 2}px - var(--safe-top))`,
         // Hidden for the one frame between mount and measurement
         visibility: pos ? "visible" : "hidden",
       }}

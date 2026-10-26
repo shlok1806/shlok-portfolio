@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react";
 import { PixelIcon, type IconName } from "@/lib/os/icons";
+import { readSafeArea, type Insets } from "@/lib/os/safeArea";
 
 export interface IconPos {
   x: number;
@@ -37,6 +38,8 @@ interface Drag {
   ox: number;
   oy: number;
   moved: boolean;
+  /** an icon dropped under the notch could never be picked up again */
+  safe: Insets;
   off: () => void;
 }
 
@@ -73,10 +76,11 @@ export function DesktopIcon({
     el.removeAttribute("data-dragging");
     if (!g.moved) return;
     // Snap to the grid, then let React own the position again
-    const maxX = window.innerWidth - ICON_W;
+    const { top, right, left } = g.safe;
+    const maxX = window.innerWidth - right - ICON_W;
     const maxY = window.innerHeight - panelHeight - ICON_H;
-    const x = Math.min(Math.max(Math.round(parseFloat(el.style.left) / SNAP) * SNAP, 0), Math.max(0, maxX));
-    const y = Math.min(Math.max(Math.round(parseFloat(el.style.top) / SNAP) * SNAP, 0), Math.max(0, maxY));
+    const x = Math.min(Math.max(Math.round(parseFloat(el.style.left) / SNAP) * SNAP, left), Math.max(left, maxX));
+    const y = Math.min(Math.max(Math.round(parseFloat(el.style.top) / SNAP) * SNAP, top), Math.max(top, maxY));
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
     el.style.animation = "icon-settle 80ms steps(2)";
@@ -101,10 +105,11 @@ export function DesktopIcon({
           el.style.animation = "";
         }
         ev.preventDefault();
-        const maxX = window.innerWidth - ICON_W;
+        const { top, right, left } = g.safe;
+        const maxX = window.innerWidth - right - ICON_W;
         const maxY = window.innerHeight - panelHeight - ICON_H;
-        el.style.left = `${Math.min(Math.max(g.ox + dx, 0), Math.max(0, maxX))}px`;
-        el.style.top = `${Math.min(Math.max(g.oy + dy, 0), Math.max(0, maxY))}px`;
+        el.style.left = `${Math.min(Math.max(g.ox + dx, left), Math.max(left, maxX))}px`;
+        el.style.top = `${Math.min(Math.max(g.oy + dy, top), Math.max(top, maxY))}px`;
       };
 
       window.addEventListener("pointermove", onMoveEvt, { passive: false });
@@ -116,6 +121,7 @@ export function DesktopIcon({
         ox: el.offsetLeft,
         oy: el.offsetTop,
         moved: false,
+        safe: readSafeArea(),
         off: () => {
           window.removeEventListener("pointermove", onMoveEvt);
           window.removeEventListener("pointerup", end);

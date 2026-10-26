@@ -71,7 +71,7 @@ export function Spotlight({ items, touch, onRun, onClose }: Props) {
         aria-label="Spotlight"
         data-slot="spotlight"
         onPointerDown={(e) => e.stopPropagation()}
-        className="bevel-out absolute left-1/2 top-[14%] z-[87] w-[min(540px,calc(100vw-24px))] -translate-x-1/2 bg-secondary p-[3px] font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
+        className="bevel-out absolute left-1/2 top-[max(14%,calc(var(--safe-top)+8px))] z-[87] w-[min(540px,calc(100vw-24px-var(--safe-left)-var(--safe-right)))] -translate-x-1/2 bg-secondary p-[3px] font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
       >
         <div className="titlebar-active flex items-center gap-2 px-2 py-[3px] leading-none">
           <PixelIcon name="search" size={16} />

@@ -111,8 +111,10 @@ export function Panel({
        * under the taskbar; sitting in it without the padding put the clock and
        * the window list under the indicator, where a tap does nothing. The
        * height comes from CSS so a finger never sees a mouse-sized bar first.
+       * The sides work the same way in landscape: the bevel runs edge to edge
+       * and the controls are padded out from under the notch and the corners.
        */
-      className="bevel-out absolute inset-x-0 bottom-0 z-[80] flex h-[calc(30px+env(safe-area-inset-bottom))] select-none items-stretch border-b-0 border-l-0 border-r-0 bg-secondary pb-[env(safe-area-inset-bottom)] font-[family-name:var(--font-ui)] text-[13px] coarse:h-[calc(52px+env(safe-area-inset-bottom))]"
+      className="bevel-out absolute inset-x-0 bottom-0 z-[80] flex h-[calc(30px+var(--safe-bottom))] select-none items-stretch border-b-0 border-l-0 border-r-0 bg-secondary pb-[var(--safe-bottom)] pl-[var(--safe-left)] pr-[var(--safe-right)] font-[family-name:var(--font-ui)] text-[13px] coarse:h-[calc(52px+var(--safe-bottom))]"
     >
       {/* Applications menu. Radix supplies roving focus and escape handling;
           the twm look is all ours. */}

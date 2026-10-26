@@ -50,7 +50,8 @@ function NoticeCard({ notice, onDismiss }: { notice: Notice; onDismiss: () => vo
  * On a phone every window is full-screen, so the top right corner is a
  * window's close button; there the stack sits above the panel instead. The
  * offset is the touch panel's height plus the home-indicator strip, the same
- * sum Panel.tsx pads itself with.
+ * sum Panel.tsx pads itself with. Either way it keeps inside the safe area, so
+ * an installed copy never slides a notice under the status bar or the notch.
  */
 export function NotificationTray() {
   const { notices, dismiss } = useNotifications();
@@ -58,7 +59,7 @@ export function NotificationTray() {
   return (
     <div
       data-slot="notification-tray"
-      className="pointer-events-none absolute right-2 top-2 z-[84] flex w-[min(320px,calc(100vw-16px))] flex-col gap-1.5 coarse:top-auto coarse:bottom-[calc(52px+env(safe-area-inset-bottom)+8px)] [&>*]:pointer-events-auto"
+      className="pointer-events-none absolute right-[calc(var(--safe-right)+8px)] top-[calc(var(--safe-top)+8px)] z-[84] flex w-[min(320px,calc(100vw-16px-var(--safe-left)-var(--safe-right)))] flex-col gap-1.5 coarse:top-auto coarse:bottom-[calc(52px+var(--safe-bottom)+8px)] [&>*]:pointer-events-auto"
     >
       {notices.map((n) => (
         <NoticeCard key={n.id} notice={n} onDismiss={() => dismiss(n.id)} />

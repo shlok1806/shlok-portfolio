@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { WindowState } from "@/hooks/useWindowManager";
 import { PixelIcon } from "@/lib/os/icons";
+import { NO_INSETS, readSafeArea } from "@/lib/os/safeArea";
 import { playSfx } from "@/lib/sfx";
 
 interface Props {
@@ -100,6 +101,8 @@ export function Window({
   const ref = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
+  // The safe area as it stood when the gesture began; read once, not per sample
+  const safe = useRef(NO_INSETS);
 
   /*
    * A window takes keyboard focus once it has actually appeared, so Escape
@@ -163,6 +166,7 @@ export function Window({
       const dy = e.clientY - g.startY;
       const screenW = window.innerWidth;
       const screenH = window.innerHeight - panelHeight;
+      const { top, right, left } = safe.current;
 
       if (g.kind === "move") {
         /*
@@ -173,11 +177,11 @@ export function Window({
          */
         const w = el.offsetWidth;
         const h = el.offsetHeight;
-        let tx = clamp(g.originX + dx, -w + 90, screenW - 60);
-        let ty = clamp(g.originY + dy, 0, screenH - 24);
-        if (Math.abs(tx) < SNAP) tx = 0;
-        else if (Math.abs(tx + w - screenW) < SNAP) tx = screenW - w;
-        if (Math.abs(ty) < SNAP) ty = 0;
+        let tx = clamp(g.originX + dx, left - w + 90, screenW - right - 60);
+        let ty = clamp(g.originY + dy, top, screenH - 24);
+        if (Math.abs(tx - left) < SNAP) tx = left;
+        else if (Math.abs(tx + w - (screenW - right)) < SNAP) tx = screenW - right - w;
+        if (Math.abs(ty - top) < SNAP) ty = top;
         else if (Math.abs(ty + h - screenH) < SNAP) ty = screenH - h;
         g.tx = tx;
         g.ty = ty;
@@ -192,16 +196,16 @@ export function Window({
        * edge is the one handle that could bring the window back.
        */
       let { originX: x, originY: y, originW: w, originH: h } = g;
-      if (g.corner.includes("e")) w = clamp(g.originW + dx, MIN_W, screenW - x);
+      if (g.corner.includes("e")) w = clamp(g.originW + dx, MIN_W, screenW - right - x);
       if (g.corner.includes("s")) h = clamp(g.originH + dy, MIN_H, screenH - y);
       if (g.corner.includes("w")) {
-        const right = g.originX + g.originW;
-        x = clamp(g.originX + dx, 0, right - MIN_W);
-        w = right - x;
+        const edge = g.originX + g.originW;
+        x = clamp(g.originX + dx, left, edge - MIN_W);
+        w = edge - x;
       }
       if (g.corner.includes("n")) {
         const bottom = g.originY + g.originH;
-        y = clamp(g.originY + dy, 0, bottom - MIN_H);
+        y = clamp(g.originY + dy, top, bottom - MIN_H);
         h = bottom - y;
       }
       el.style.left = `${x}px`;
@@ -228,6 +232,7 @@ export function Window({
     onFocus();
     const el = ref.current;
     if (!el) return;
+    safe.current = readSafeArea();
     el.style.willChange = "transform";
     gesture.current = {
       kind: "move",
@@ -246,6 +251,7 @@ export function Window({
     onFocus();
     const el = ref.current;
     if (!el) return;
+    safe.current = readSafeArea();
     gesture.current = {
       kind: "resize",
       corner,
