@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { WindowState } from "@/hooks/useWindowManager";
 import { PixelIcon } from "@/lib/os/icons";
+import { NO_REACH, type Corner, type Reach } from "@/lib/os/cornerReach";
 import { NO_INSETS, readSafeArea } from "@/lib/os/safeArea";
 import { playSfx } from "@/lib/sfx";
 
 interface Props {
   win: WindowState;
   focused: boolean;
+  /** which resize corners may reach outside the frame; see lib/os/cornerReach.ts */
+  reach?: Reach;
   /** the outline zoom is still on its way; hold the window back until it lands */
   hidden?: boolean;
   panelHeight: number;
@@ -20,8 +23,6 @@ interface Props {
   onCommit: (geo: { x?: number; y?: number; w?: number; h?: number }) => void;
   children: React.ReactNode;
 }
-
-type Corner = "nw" | "ne" | "sw" | "se";
 
 type Gesture =
   | { kind: "move"; startX: number; startY: number; originX: number; originY: number; tx: number; ty: number }
@@ -89,6 +90,7 @@ function TitleButton({
 export function Window({
   win,
   focused,
+  reach = NO_REACH,
   hidden = false,
   panelHeight,
   touch,
@@ -345,11 +347,18 @@ export function Window({
 
       {!win.maximized && (
         <>
-          {/* Only the south-east corner draws a grip; the corner over it takes the press */}
+          {/*
+            Only the south-east corner draws a grip, and the grip takes the press
+            itself. It is the one resize handle anybody can see, so it is where a
+            visitor aims, and the corner over it keeps only the 7px of frame
+            inside the window: on its own it left the middle of the grip dead.
+          */}
           <div
             aria-hidden
-            className="pointer-events-none absolute bottom-0 right-0 h-3 w-3"
+            onPointerDown={startResize("se")}
+            className="absolute bottom-0 right-0 h-3 w-3 cursor-nwse-resize"
             style={{
+              touchAction: "none",
               background:
                 "linear-gradient(135deg, transparent 0 40%, hsl(var(--bevel-dark)) 40% 52%, hsl(var(--bevel-light)) 52% 60%, transparent 60% 72%, hsl(var(--bevel-dark)) 72% 84%, hsl(var(--bevel-light)) 84% 92%, transparent 92%)",
             }}
@@ -358,6 +367,7 @@ export function Window({
             <div
               key={corner}
               data-corner={corner}
+              data-reach={reach[corner] || undefined}
               onPointerDown={startResize(corner)}
               aria-hidden
               className={`resize-corner ${cursor}`}

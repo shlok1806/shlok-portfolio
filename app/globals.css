@@ -439,7 +439,20 @@
    * scrollbar begin, cut to an L with clip-path (which clips the hit test as
    * well as the paint). The north-west corner keeps its whole inner quarter,
    * which is only title bar; the north-east one gives the close button back
-   * everything but the outermost pixels of the frame.
+   * everything but the outermost pixels of the frame. The south-east grip is
+   * the exception: it is drawn there and takes its own press (Window.tsx),
+   * so a press anywhere on what the visitor can see resizes, as it did when
+   * the grip was the corner.
+   *
+   * Only the focused window reaches out, and only where it would not land on
+   * another window's title bar (data-reach, from lib/os/cornerReach.ts).
+   * Outside the frame is whatever lies under it, and in a cascade that is the
+   * title bar and buttons of the window below: with every window reaching
+   * out, one in the middle of the stack took more than a third of the close
+   * button of the one beneath it. A background window keeps the inside of its
+   * corners, and the first press on it raises it. --near and --far are where
+   * the clip starts and ends on the outer side of each axis: the whole outer
+   * half (0% and 100%) or none of it.
    */
   .resize-corner {
     --hit: 24px;
@@ -449,10 +462,16 @@
     /* how much frame the close button leaves to its right and above it */
     --close-x: 3px;
     --close-y: 3px;
+    --near: 0%;
+    --far: 100%;
     position: absolute;
     width: var(--hit);
     height: var(--hit);
     touch-action: none;
+  }
+  .resize-corner:not([data-reach]) {
+    --near: 50%;
+    --far: 50%;
   }
   @media (pointer: coarse) {
     .resize-corner {
@@ -464,14 +483,20 @@
   .resize-corner[data-corner="nw"] {
     left: var(--offset);
     top: var(--offset);
+    clip-path: polygon(
+      var(--near) var(--near),
+      100% var(--near),
+      100% 100%,
+      var(--near) 100%
+    );
   }
   .resize-corner[data-corner="ne"] {
     right: var(--offset);
     top: var(--offset);
     clip-path: polygon(
-      0 0,
-      100% 0,
-      100% 100%,
+      0 var(--near),
+      var(--far) var(--near),
+      var(--far) 100%,
       calc(50% - var(--close-x)) 100%,
       calc(50% - var(--close-x)) calc(50% + var(--close-y)),
       0 calc(50% + var(--close-y))
@@ -481,12 +506,12 @@
     left: var(--offset);
     bottom: var(--offset);
     clip-path: polygon(
-      0 0,
+      var(--near) 0,
       calc(50% + var(--frame)) 0,
       calc(50% + var(--frame)) calc(50% - var(--frame)),
       100% calc(50% - var(--frame)),
-      100% 100%,
-      0 100%
+      100% var(--far),
+      var(--near) var(--far)
     );
   }
   .resize-corner[data-corner="se"] {
@@ -494,9 +519,9 @@
     bottom: var(--offset);
     clip-path: polygon(
       calc(50% - var(--frame)) 0,
-      100% 0,
-      100% 100%,
-      0 100%,
+      var(--far) 0,
+      var(--far) var(--far),
+      0 var(--far),
       0 calc(50% - var(--frame)),
       calc(50% - var(--frame)) calc(50% - var(--frame))
     );

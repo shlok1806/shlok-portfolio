@@ -13,6 +13,7 @@ import { PROFILE, PROJECTS } from "@/lib/content";
 import { GAMES } from "@/lib/games/registry";
 import { PRESETS } from "@/lib/theme/presets";
 import { notify } from "@/lib/os/notify";
+import { NO_REACH, cornerReach } from "@/lib/os/cornerReach";
 import { event } from "@/lib/analytics";
 import { spotlightItems, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
@@ -757,6 +758,7 @@ export function Desktop() {
               key={win.id}
               win={win}
               focused={win.id === focusedId}
+              reach={win.id === focusedId ? cornerReach(win, windows, touch) : NO_REACH}
               hidden={!!arriving[win.id]}
               panelHeight={PANEL_H}
               touch={touch}

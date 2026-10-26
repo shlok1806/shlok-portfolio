@@ -30,7 +30,10 @@ Three more that keep the desktop usable on every device:
   is invisible but on top, so two slopped controls must never overlap; it is
   clipped by `overflow` on the element (`truncate`) and by an ancestor
   scrollport, so a control on the bottom edge of a window needs room inside
-  it. Where rows touch, the row itself grows under `coarse:`.
+  it. Where rows touch, the row itself grows under `coarse:`. The resize
+  corners are the exception, because half of each lies outside its window:
+  only the focused window's corners reach out, and never onto another
+  window's title bar (`lib/os/cornerReach.ts`, mirroring the CSS sizes).
 - **Wrapping is global.** Base rules balance headings (and any
   `data-slot="...-title"`) and set prose `pretty`. A subtree laid out in
   character columns - the shell's output, an ASCII rule, JSON - opts out with
