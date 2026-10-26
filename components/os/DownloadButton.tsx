@@ -3,8 +3,7 @@
 
 import { forwardRef, useEffect, useRef, useState, type ComponentPropsWithoutRef } from "react";
 import { PixelIcon } from "@/lib/os/icons";
-import { event } from "@/lib/analytics";
-import { notify } from "@/lib/os/notify";
+import { saveFile } from "@/lib/os/download";
 import { playSfx } from "@/lib/sfx";
 import { cn } from "@/lib/utils";
 
@@ -61,16 +60,12 @@ export const DownloadButton = forwardRef<HTMLButtonElement, DownloadButtonProps>
       onClick?.(e);
       if (phase !== "idle") return;
       playSfx("button");
-      // The same synthetic anchor Desktop.launch uses for resume.pdf
-      const a = document.createElement("a");
-      a.href = href;
-      a.download = "";
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      event("download", { file: href });
-      notify("ok", href.split("/").pop() ?? "file", "Saved to your downloads");
+      /*
+       * Through the same once-only save the desktop icon uses. If the icon
+       * started this file a moment ago, the button still walks its phases -
+       * the file is on its way either way - but no second copy is fetched.
+       */
+      saveFile(href);
       setPhase("saving");
       schedule(() => {
         setPhase("done");

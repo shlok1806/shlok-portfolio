@@ -1,9 +1,13 @@
 "use client";
 // Adapted from opensourceui.in components/notifications/system-alert-banner.tsx and toast-notification-banner.tsx (MIT). See THIRD_PARTY_NOTICES.md.
 
+import { useEffect, useRef, useState } from "react";
+import { useApplePlatform } from "@/hooks/useApplePlatform";
 import { useNotifications } from "@/hooks/useNotifications";
 import { PixelIcon, type IconName } from "@/lib/os/icons";
 import type { Notice } from "@/lib/os/notify";
+import { ariaShortcut, keyLabel, shortcutFor } from "@/lib/os/shortcuts";
+import { addSample, catchReturn, flung, offsetTransform, returnToRest, speed, type Sample } from "@/lib/os/swipe";
 import { playSfx } from "@/lib/sfx";
 
 const ICON: Record<Notice["kind"], IconName> = {
@@ -12,12 +16,125 @@ const ICON: Record<Notice["kind"], IconName> = {
   warn: "question",
 };
 
-function NoticeCard({ notice, onDismiss }: { notice: Notice; onDismiss: () => void }) {
+interface Drag {
+  pointerId: number;
+  startX: number;
+  /** where it was caught, which is not zero when it was grabbed on its way back */
+  base: number;
+  at: number;
+  samples: Sample[];
+}
+
+function NoticeCard({
+  notice,
+  onDismiss,
+  onAction,
+  onHold,
+  onRelease,
+  touch,
+}: {
+  notice: Notice;
+  onDismiss: () => void;
+  onAction: () => void;
+  onHold: () => void;
+  onRelease: () => void;
+  touch: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef<Drag | null>(null);
+  // Undo answers to a key as well; a keyboard is told which, the way a title button is
+  const apple = useApplePlatform();
+  const keys = notice.action?.shortcut && !touch ? shortcutFor(notice.action.shortcut)?.keys : undefined;
+  const returning = useRef<Animation | null>(null);
+
+  /*
+   * Its clock stops while it is being read: a pointer moving over it, a
+   * finger on it, or keyboard focus inside it - so an Undo is never snatched
+   * away from someone on their way to it. Movement, not mere arrival: a
+   * notice that appears under a resting mouse is not being read, and holding
+   * it for that kept it up for as long as the mouse stayed still.
+   */
+  const reading = useRef(false);
+  const read = () => {
+    if (reading.current) return;
+    reading.current = true;
+    onHold();
+  };
+  const unread = () => {
+    if (!reading.current) return;
+    reading.current = false;
+    onRelease();
+  };
+
+  /*
+   * A finger can push a notice off to either side, the way a phone clears
+   * one. It follows the finger, goes if pushed far enough or thrown, and
+   * otherwise steps back - from wherever it is, so one caught on its way
+   * back is picked up there. A mouse has the close box; this is for touch.
+   */
+  const grab = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el || e.pointerType === "mouse" || drag.current) return;
+    if ((e.target as Element).closest("button")) return;
+    const base = catchReturn(el, "x", returning.current);
+    returning.current = null;
+    drag.current = { pointerId: e.pointerId, startX: e.clientX, base, at: base, samples: [{ t: e.timeStamp, at: e.clientX }] };
+    try {
+      // Touch is captured to the card anyway; this makes it so for a pen too
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* a pointer the browser no longer tracks; the card's own events still arrive */
+    }
+  };
+  const follow = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    const d = drag.current;
+    if (!el || !d || e.pointerId !== d.pointerId) return;
+    d.at = d.base + e.clientX - d.startX;
+    addSample(d.samples, e.timeStamp, e.clientX);
+    el.style.transform = offsetTransform("x", d.at);
+  };
+  const letGo = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    const d = drag.current;
+    if (!el || !d || e.pointerId !== d.pointerId) return;
+    drag.current = null;
+    if (e.type === "pointerup") {
+      addSample(d.samples, e.timeStamp, e.clientX);
+      const away = Math.sign(d.at);
+      if (flung(Math.abs(d.at), el.offsetWidth, away * speed(d.samples, e.timeStamp))) {
+        // Gone from where it was let go; notices never animated out, only in
+        playSfx("tick");
+        onDismiss();
+        return;
+      }
+    }
+    returning.current = returnToRest(el, "x", d.at);
+  };
+
   return (
     <div
-      role="status"
+      ref={ref}
       data-slot="notice"
       data-kind={notice.kind}
+      onPointerDown={(e) => {
+        read();
+        grab(e);
+      }}
+      onPointerMove={(e) => {
+        read();
+        follow(e);
+      }}
+      onPointerUp={letGo}
+      onPointerCancel={letGo}
+      onPointerLeave={unread}
+      onFocus={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onHold();
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onRelease();
+      }}
+      style={{ touchAction: "none" }}
       className="notice-in bevel-out flex items-start gap-2 bg-secondary px-2 py-1.5 font-[family-name:var(--font-ui)] text-secondary-foreground"
     >
       <span aria-hidden className="mt-[1px] shrink-0 text-accent-ink">
@@ -29,6 +146,28 @@ function NoticeCard({ notice, onDismiss }: { notice: Notice; onDismiss: () => vo
         </p>
         {notice.text && <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{notice.text}</p>}
       </div>
+      {notice.action && (
+        <button
+          type="button"
+          onClick={() => {
+            playSfx("button");
+            onAction();
+          }}
+          aria-label={`${notice.action.label}: ${notice.title}`}
+          title={keys ? `${notice.action.label} (${keyLabel(keys, apple)})` : undefined}
+          aria-keyshortcuts={keys ? ariaShortcut(keys, apple) : undefined}
+          /*
+           * Drawn the height of the close box beside it, so the two read as a
+           * pair; the press area reaches a full target's height around it
+           * without making the card any taller. Only up and down: sideways it
+           * would meet the close box's, and a tap on the edge of Undo that
+           * dismissed instead would throw the window away.
+           */
+          className="hit-slop-y bevel-out grid h-5 shrink-0 place-items-center bg-secondary px-2 text-[12px] font-bold leading-none text-accent-ink active:bevel-in"
+        >
+          {notice.action.label}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => {
@@ -36,8 +175,12 @@ function NoticeCard({ notice, onDismiss }: { notice: Notice; onDismiss: () => vo
           onDismiss();
         }}
         aria-label={`Dismiss: ${notice.title}`}
-        // 20px drawn, slopped to the full target; nothing else in the card is pressable
-        className="hit-slop bevel-thin -mr-0.5 grid h-5 w-5 shrink-0 place-items-center bg-secondary active:bevel-in"
+        /*
+         * 20px drawn, slopped to the full target. Under a finger that slop
+         * reaches 12px to the left, so the box stands 16px clear of an Undo
+         * beside it rather than 8px, or the two targets would overlap.
+         */
+        className="hit-slop bevel-thin -mr-0.5 grid h-5 w-5 shrink-0 place-items-center bg-secondary active:bevel-in coarse:ml-2"
       >
         <PixelIcon name="close" size={12} />
       </button>
@@ -50,23 +193,59 @@ function NoticeCard({ notice, onDismiss }: { notice: Notice; onDismiss: () => vo
  * bevelled card the way a Motif message box was, minus the OK button, since
  * it goes away on its own.
  *
+ * It starts below the band a maximised window's title bar occupies (2px of
+ * frame, 26px of bar, then the same 8px margin as the right edge). Closing
+ * a window posts a notice, and at the top of the screen it landed on the
+ * close box of the window behind, under the pointer that had just clicked
+ * there: the next click hit the notice and closed nothing.
+ *
  * On a phone every window is full-screen, so the top right corner is a
  * window's close button; there the stack sits above the panel instead. The
  * offset is the touch panel's height plus the home-indicator strip, the same
  * sum Panel.tsx pads itself with. Either way it keeps inside the safe area, so
  * an installed copy never slides a notice under the status bar or the notch.
  */
-export function NotificationTray() {
-  const { notices, dismiss } = useNotifications();
-  if (notices.length === 0) return null;
+export function NotificationTray({ touch = false }: { touch?: boolean }) {
+  const { notices, dismiss, runAction, hold, release } = useNotifications();
+
+  /*
+   * Screen readers hear each new notice once, through one live region that
+   * is on the page before anything is posted. A card that arrives already
+   * holding its text is read out by some readers and not by others, which
+   * is the one thing an announcement cannot be.
+   */
+  const [said, setSaid] = useState("");
+  const heard = useRef(0);
+  useEffect(() => {
+    const newest = notices[notices.length - 1];
+    if (!newest || newest.id <= heard.current) return;
+    heard.current = newest.id;
+    setSaid(newest.text ? `${newest.title}. ${newest.text}` : newest.title);
+  }, [notices]);
+
   return (
-    <div
-      data-slot="notification-tray"
-      className="pointer-events-none absolute right-[calc(var(--safe-right)+8px)] top-[calc(var(--safe-top)+8px)] z-[84] flex w-[min(320px,calc(100vw-16px-var(--safe-left)-var(--safe-right)))] flex-col gap-1.5 coarse:top-auto coarse:bottom-[calc(52px+var(--safe-bottom)+8px)] [&>*]:pointer-events-auto"
-    >
-      {notices.map((n) => (
-        <NoticeCard key={n.id} notice={n} onDismiss={() => dismiss(n.id)} />
-      ))}
-    </div>
+    <>
+      <p aria-live="polite" className="sr-only">
+        {said}
+      </p>
+      {notices.length > 0 && (
+        <div
+          data-slot="notification-tray"
+          className="pointer-events-none absolute right-[calc(var(--safe-right)+8px)] top-[calc(var(--safe-top)+36px)] z-[84] flex w-[min(320px,calc(100vw-16px-var(--safe-left)-var(--safe-right)))] flex-col gap-1.5 coarse:top-auto coarse:bottom-[calc(52px+var(--safe-bottom)+8px)] [&>*]:pointer-events-auto"
+        >
+          {notices.map((n) => (
+            <NoticeCard
+              key={n.id}
+              notice={n}
+              onDismiss={() => dismiss(n.id)}
+              onAction={() => runAction(n.id)}
+              onHold={() => hold(n.id)}
+              onRelease={() => release(n.id)}
+              touch={touch}
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 }

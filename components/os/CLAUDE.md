@@ -70,6 +70,45 @@ Menus, hints and commands:
   live element to hand focus back to when it closes (see the Spotlight row in
   `Panel.tsx`).
 
+Window lifecycle:
+
+- **Closing parks a window; it is not unmounted.** `close()` hides it
+  (display:none, inert, aria-hidden), drops it from `wm.windows` and posts a
+  "Closed x" notice with Undo. It only unmounts when that notice lapses
+  (expires, is dismissed, or is pushed out by newer ones). Closing several
+  at once goes through `closeMany`, which puts them all behind one notice:
+  the tray holds four, and one notice each threw the oldest windows away. So: count visible
+  windows from `wm.windows` or `[data-window]:not([aria-hidden])`, never from
+  `wm.mounted`; and an app's unmount cleanup runs seconds after the close, not
+  at it. An app that does something on its own (a loop, a timer that matters)
+  must stop when it loses focus or leaves the screen - `Window` blurs whatever
+  it holds when it is hidden, which is what pauses a game.
+- **`data-autofocus`** marks the element an app wants focused when its window
+  lands (the shell's prompt, a game). A `focus()` in the app's mount effect
+  does nothing: the window is invisible behind its zoom outline at that point.
+- **Back on touch** is `hooks/useBackDismiss.ts`. A new thing that sits over
+  the desktop and should close on Back is added to the layer list in
+  `Desktop.tsx`, top-most first, and its `open` is React state the desktop
+  holds - lift it up (as the panel's menus report theirs through
+  `onMenuOpenChange`) rather than querying the DOM, which lags the render and
+  leaves Back armed for something already gone. Chrome gets a `CloseWatcher`
+  (a history entry pushed after a Back is one Chrome's own Back skips);
+  other browsers get one sentinel history entry. Nothing else on `/` should
+  push history entries; the hook assumes it owns the one on top. An Escape
+  the desktop acts on is `preventDefault`ed, or Chrome also reads it as a
+  close request and the watcher closes a second layer.
+- **Throw-away gestures** (the full-screen sheet, a notice) share
+  `lib/os/swipe.ts`: follow the finger with a transform, decide on release
+  by distance or speed, step back to rest, and pick up from the live
+  transform when caught mid-return. A new one should use it rather than
+  invent thresholds.
+- **Notices** can carry one action and an `onLapse` (`lib/os/notify.ts`). The
+  same message posted twice folds into one. Downloads go through `saveFile`
+  in `lib/os/download.ts`, which is what makes a double tap save once. The
+  tray reads each new notice to screen readers through its one live region,
+  so whatever posts a notice does not also announce it on the desktop's
+  live line (that is why a close is not announced there).
+
 Anything adapted from opensourceui.in follows
 `docs/adr/0001-vendor-opensourceui-through-the-token-layer.md` and carries the
 source header. Nothing here is observable from stdout: verify in a browser

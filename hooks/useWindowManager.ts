@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NO_INSETS, type Insets } from "@/lib/os/safeArea";
+import { dismiss, notify, runAction } from "@/lib/os/notify";
 
 export interface WindowState {
   id: string;
@@ -24,6 +25,12 @@ export interface WindowState {
   forcedFullScreen?: boolean;
   /** geometry to restore when un-maximizing */
   restore?: { x: number; y: number; w: number; h: number };
+  /**
+   * Closed, but still mounted and invisible while its Undo is on offer, so
+   * that taking it back returns the same window - scrollback, a game mid-run,
+   * where the page was scrolled to - rather than a fresh copy of the app.
+   */
+  parked?: boolean;
 }
 
 export interface Rect {
@@ -41,6 +48,8 @@ export interface Rect {
 export type Transition =
   | { type: "open"; id: string; appId: string; to: Rect }
   | { type: "close"; id: string; appId: string; from: Rect }
+  /* a closed window taken back with Undo, at the geometry it closed with */
+  | { type: "reopen"; id: string; appId: string; title: string; to: Rect }
   | { type: "minimize"; id: string; from: Rect }
   | { type: "restore"; id: string; to: Rect }
   | { type: "maximize"; id: string; from: Rect; to: Rect };
@@ -199,11 +208,42 @@ export function useWindowManager(
     windowsRef.current = windows;
   }, [windows]);
 
+  /*
+   * Closing is reversible for as long as its notice is up. The window is
+   * parked - out of the panel, out of Alt+Tab, hidden and inert - and only
+   * really goes when the notice does: expired, dismissed, or pushed out by
+   * newer ones. Undo, from the notice or Ctrl+Z, puts it back exactly.
+   */
+  /** parked window id -> the notice offering to bring it back */
+  const undoRef = useRef(new Map<string, number>());
+  /** parked windows in the order they were closed, newest last, for Ctrl+Z */
+  const closedRef = useRef<string[]>([]);
+
+  const finalize = useCallback((id: string) => {
+    const notice = undoRef.current.get(id);
+    undoRef.current.delete(id);
+    closedRef.current = closedRef.current.filter((c) => c !== id);
+    // Close all puts several windows behind one Undo; the offer stands while any of them is still behind it
+    if (notice !== undefined && !Array.from(undoRef.current.values()).includes(notice)) dismiss(notice);
+    setWindows((ws) => ws.filter((win) => !(win.id === id && win.parked)));
+  }, []);
+
   const open = useCallback(
     ({ appId, title, arg, w, h, singleton = true, at }: OpenOptions) => {
       const existing = singleton
-        ? windowsRef.current.find((win) => win.appId === appId && win.arg === arg)
+        ? windowsRef.current.find((win) => win.appId === appId && win.arg === arg && !win.parked)
         : undefined;
+      /*
+       * Opening an app whose window is waiting on its Undo starts a fresh one,
+       * because that is what was asked for; the old one is closed for good, so
+       * there are never two of a singleton and never an Undo that would make
+       * a second.
+       */
+      if (singleton && !existing) {
+        windowsRef.current
+          .filter((win) => win.appId === appId && win.arg === arg && win.parked)
+          .forEach((win) => finalize(win.id));
+      }
 
       const { z, rank } = nextZ(existing?.id);
 
@@ -283,25 +323,98 @@ export function useWindowManager(
       emit({ type: "open", id, appId, to: rectOf(base) });
       return id;
     },
+    [nextZ, emit, finalize],
+  );
+
+  const reopen = useCallback(
+    (id: string) => {
+      const w = windowsRef.current.find((win) => win.id === id && win.parked);
+      undoRef.current.delete(id);
+      closedRef.current = closedRef.current.filter((c) => c !== id);
+      if (!w) return;
+      const { z, rank } = nextZ(id);
+      setWindows((ws) =>
+        ws.map((win) =>
+          win.id === id
+            ? { ...win, parked: false, minimized: false, z }
+            : rank
+              ? { ...win, z: rank.get(win.id) ?? win.z }
+              : win,
+        ),
+      );
+      setFocusedId(id);
+      emit({ type: "reopen", id, appId: w.appId, title: w.title, to: rectOf(w) });
+    },
     [nextZ, emit],
   );
 
-  const close = useCallback(
-    (id: string) => {
-      const w = windowsRef.current.find((win) => win.id === id);
-      setWindows((ws) => ws.filter((win) => win.id !== id));
-      setFocusedId((cur) => (cur === id ? null : cur));
-      if (w && !w.minimized) emit({ type: "close", id, appId: w.appId, from: rectOf(w) });
+  /*
+   * Parks windows and offers them back. Closing several at once (Spotlight's
+   * "Close all windows") is one offer for all of them, not one per window: the
+   * tray holds four notices, so the fifth window's offer pushed the first
+   * one's out, and that window was thrown away before anyone could take it
+   * back. Undo hands them back bottom of the stack first, so they come back
+   * stacked the way they were.
+   */
+  const closeMany = useCallback(
+    (ids: string[]) => {
+      const gone = ids
+        .map((id) => windowsRef.current.find((win) => win.id === id))
+        .filter((w): w is WindowState => !!w && !w.parked && !closedRef.current.includes(w.id));
+      if (gone.length === 0) return;
+      const set = new Set(gone.map((w) => w.id));
+      setWindows((ws) => ws.map((win) => (set.has(win.id) ? { ...win, parked: true } : win)));
+      setFocusedId((cur) => (cur !== null && set.has(cur) ? null : cur));
+      for (const w of gone) {
+        if (!w.minimized) emit({ type: "close", id: w.id, appId: w.appId, from: rectOf(w) });
+      }
+      const order = [...gone].sort((a, b) => a.z - b.z).map((w) => w.id);
+      closedRef.current = [...closedRef.current, ...order];
+      const notice = notify(
+        "info",
+        gone.length === 1 ? `Closed ${gone[0].title}` : `Closed ${gone.length} windows`,
+        undefined,
+        {
+          action: { label: "Undo", run: () => order.forEach(reopen), shortcut: "undo-close" },
+          onLapse: () => order.forEach(finalize),
+        },
+      );
+      for (const id of order) undoRef.current.set(id, notice);
     },
-    [emit],
+    [emit, reopen, finalize],
   );
 
+  const close = useCallback((id: string) => closeMany([id]), [closeMany]);
+
+  /**
+   * Takes back the most recent close (Ctrl+Z), or a given one. False when
+   * there is nothing left to take back.
+   */
+  const undoClose = useCallback(
+    (id?: string): boolean => {
+      const target = id ?? closedRef.current.at(-1);
+      if (!target) return false;
+      const notice = undoRef.current.get(target);
+      // Through the notice when there is one, so it goes away with the close it offered to undo
+      if (notice !== undefined && runAction(notice)) return true;
+      if (!windowsRef.current.some((win) => win.id === target && win.parked)) return false;
+      reopen(target);
+      return true;
+    },
+    [reopen],
+  );
+
+  /**
+   * Iconifies a window. `from` is where it is drawn when that is not where
+   * its geometry says - a sheet a finger has already pulled halfway down -
+   * so the outline leaves from the window the visitor can see.
+   */
   const minimize = useCallback(
-    (id: string) => {
+    (id: string, from?: Rect) => {
       const w = windowsRef.current.find((win) => win.id === id);
       setWindows((ws) => ws.map((win) => (win.id === id ? { ...win, minimized: true } : win)));
       setFocusedId((cur) => (cur === id ? null : cur));
-      if (w && !w.minimized) emit({ type: "minimize", id, from: rectOf(w) });
+      if (w && !w.minimized && !w.parked) emit({ type: "minimize", id, from: from ?? rectOf(w) });
     },
     [emit],
   );
@@ -469,18 +582,29 @@ export function useWindowManager(
    * a ref and called setFocusedId, so every press advanced the z counter twice.
    */
   const cycle = useCallback((): string | null => {
-    const live = windowsRef.current.filter((w) => !w.minimized);
+    const live = windowsRef.current.filter((w) => !w.minimized && !w.parked);
     if (live.length < 2) return null;
     const lowest = live.reduce((a, b) => (a.z < b.z ? a : b));
     focus(lowest.id);
     return lowest.id;
   }, [focus]);
 
+  /*
+   * What the rest of the desktop sees: the panel, Alt+Tab, Back. Parked
+   * windows are not on that list; only the desktop's own rendering needs
+   * them, so they stay mounted.
+   */
+  const live = useMemo(() => windows.filter((w) => !w.parked), [windows]);
+
   return {
-    windows,
+    windows: live,
+    /** every window still mounted, parked ones included, in a stable order */
+    mounted: windows,
     focusedId,
     open,
     close,
+    closeMany,
+    undoClose,
     focus,
     minimize,
     toggleMinimize,

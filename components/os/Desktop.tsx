@@ -1,11 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useRemix } from "@/hooks/useRemix";
 import { useSafeArea } from "@/hooks/useSafeArea";
 import { useSpeaker } from "@/hooks/useSpeaker";
-import { SMALL_W, useWindowManager, type OpenOptions, type Transition } from "@/hooks/useWindowManager";
+import {
+  SMALL_W,
+  useWindowManager,
+  type OpenOptions,
+  type Transition,
+  type WindowState,
+} from "@/hooks/useWindowManager";
 import { zoom, type Rect } from "@/lib/os/zoom";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import { armAudio, playSfx } from "@/lib/sfx";
@@ -16,6 +23,7 @@ import { PRESETS } from "@/lib/theme/presets";
 import { notify } from "@/lib/os/notify";
 import { NO_REACH, cornerReach } from "@/lib/os/cornerReach";
 import { copyText } from "@/lib/os/clipboard";
+import { saveFile } from "@/lib/os/download";
 import { event } from "@/lib/analytics";
 import { spotlightItems, type CommandId, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
@@ -280,8 +288,14 @@ export function Desktop() {
     };
   }, []);
 
-  /* Windows whose outline is still zooming; held invisible until it lands */
-  const [arriving, setArriving] = useState<Record<string, true>>({});
+  /*
+   * Windows whose outline is still zooming; held invisible until it lands.
+   * Each hold carries its own token, so the zoom that ends one hold can never
+   * end a later hold on the same window - an outline cut short resolves a
+   * beat after the one that replaced it has already started.
+   */
+  const [arriving, setArriving] = useState<Record<string, number>>({});
+  const holdSeq = useRef(0);
   /* One line for screen readers: what the window manager just did */
   const [announcement, setAnnouncement] = useState("");
   const onTransition = useCallback((t: Transition) => {
@@ -311,23 +325,38 @@ export function Desktop() {
       setAnnouncement(`${what} ${title ?? ""}`.trim());
     };
 
+    const holdUntil = (id: string, landed: Promise<void>) => {
+      holdSeq.current += 1;
+      const token = holdSeq.current;
+      setArriving((a) => ({ ...a, [id]: token }));
+      void landed.then(() =>
+        setArriving((a) => {
+          if (a[id] !== token) return a;
+          const next = { ...a };
+          delete next[id];
+          return next;
+        }),
+      );
+    };
+
     switch (t.type) {
       case "open": {
         playSfx("open");
         setAnnouncement(`opened ${t.appId}`);
-        setArriving((a) => ({ ...a, [t.id]: true }));
-        void zoom(originRef.current ?? iconAnchor(t.appId), t.to).then(() =>
-          setArriving((a) => {
-            const next = { ...a };
-            delete next[t.id];
-            return next;
-          }),
-        );
+        holdUntil(t.id, zoom(originRef.current ?? iconAnchor(t.appId), t.to));
+        return;
+      }
+      case "reopen": {
+        // Undo: back out of the icon the close sent it into, the reverse of that outline
+        playSfx("restore");
+        setAnnouncement(`reopened ${t.title}`);
+        event("undo", { app: t.appId });
+        holdUntil(t.id, zoom(iconAnchor(t.appId), t.to));
         return;
       }
       case "close": {
+        // Not announced here: the notice offering Undo says it, once
         playSfx("close");
-        setAnnouncement(`closed ${t.appId}`);
         void zoom(t.from, iconAnchor(t.appId));
         // Hand focus back to where the app lives on the desktop
         const home =
@@ -365,10 +394,13 @@ export function Desktop() {
    * the stepped colour transition the body already does. Imperative, so it
    * never re-renders the desktop to play.
    */
+  const degaussing = useRef<Animation | null>(null);
   const degauss = useCallback(() => {
     const el = rootRef.current;
     if (!el || prefersReducedMotion() || typeof el.animate !== "function") return;
-    el.animate(
+    // Switched again mid-wobble: start this one clean rather than layering two
+    degaussing.current?.cancel();
+    degaussing.current = el.animate(
       [
         { filter: "brightness(2.4)", transform: "translateX(0)" },
         { filter: "brightness(1.5)", transform: "translateX(3px)" },
@@ -453,18 +485,13 @@ export function Desktop() {
         playSfx("bell");
         return;
       }
-      playSfx("launch");
       // Some entries are documents rather than programs
       if (app.download) {
-        const a = document.createElement("a");
-        a.href = app.download;
-        a.download = "";
-        a.rel = "noopener";
-        a.click();
-        event("download", { file: app.download });
-        notify("ok", app.title, "Saved to your downloads");
+        // A tap opens on a phone, so a double tap was two downloads and two notices
+        if (saveFile(app.download)) playSfx("launch");
         return;
       }
+      playSfx("launch");
       open({ appId: app.id, title: app.title, w: app.w, h: app.h });
     },
     [open],
@@ -492,7 +519,7 @@ export function Desktop() {
     [windows.length, visible, audible],
   );
 
-  const { close: closeWindow, minimize: minimizeWindow } = wm;
+  const { closeMany, minimize: minimizeWindow } = wm;
   const runCommand = useCallback(
     (id: CommandId) => {
       switch (id) {
@@ -512,7 +539,7 @@ export function Desktop() {
           window.location.assign("/resume");
           return;
         case "close-all":
-          windows.forEach((w) => closeWindow(w.id));
+          closeMany(windows.map((w) => w.id));
           return;
         case "minimize-all":
           windows.filter((w) => !w.minimized).forEach((w) => minimizeWindow(w.id));
@@ -523,7 +550,7 @@ export function Desktop() {
           return;
       }
     },
-    [windows, closeWindow, minimizeWindow, silence],
+    [windows, closeMany, minimizeWindow, silence],
   );
 
   const runSpotlight = useCallback(
@@ -616,11 +643,50 @@ export function Desktop() {
   }, [booted]);
 
   /*
+   * The system Back closes what is on top before it leaves the site:
+   * Spotlight, an open panel menu, the root menu, then the full-screen
+   * windows one at a time, iconified the way pulling one down does it -
+   * nothing is lost.
+   *
+   * Only for a finger. That is where windows are full-screen, where there is
+   * no Escape key, and where Back is the reflex for "close this" in every
+   * other app on the device. On a desk the Back button is the browser's own
+   * and means "leave this page", and taking that over would be a trap.
+   */
+  const topSheet = useMemo(
+    () =>
+      windows
+        .filter((w) => w.maximized && !w.minimized)
+        .reduce<WindowState | null>((top, w) => (!top || w.z > top.z ? w : top), null),
+    [windows],
+  );
+  /*
+   * Whether a panel menu is open, as the panel reports it. Read off the DOM
+   * instead, a menu closed by picking an item still looked open to the render
+   * that item caused, and Back was left armed for a menu that was gone.
+   */
+  const [panelMenu, setPanelMenu] = useState(false);
+  useBackDismiss(touch && booted, [
+    { open: spotlight, dismiss: () => setSpotlight(false) },
+    // The menu keeps its own state; Escape is how it is asked to close
+    {
+      open: panelMenu,
+      dismiss: () =>
+        document
+          .querySelector("[role='menu'][data-state='open']")
+          ?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+    },
+    { open: rootMenu !== null, dismiss: () => setRootMenu(null) },
+    { open: topSheet !== null, dismiss: () => topSheet && wm.minimize(topSheet.id) },
+  ]);
+
+  /*
    * Alt+Tab cycles and moves keyboard focus with it. Escape dismisses the root
    * menu if it is up; otherwise it closes the focused window - unless a menu
-   * or something inside the window already used it. `?` opens the shortcuts
-   * list, except while typing, where it is just a character. The list itself
-   * is lib/os/shortcuts.ts; keep the two in step.
+   * or something inside the window already used it. Ctrl+Z takes the last
+   * close back, except while typing, where it belongs to the field. `?` opens
+   * the shortcuts list, except while typing, where it is just a character.
+   * The list itself is lib/os/shortcuts.ts; keep the two in step.
    */
   const rootMenuRef = useRef(rootMenu);
   rootMenuRef.current = rootMenu;
@@ -635,6 +701,10 @@ export function Desktop() {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSpotlight((v) => !v);
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "z" && !typing(e.target)) {
+        if (wm.undoClose()) e.preventDefault();
         return;
       }
       if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e.target)) {
@@ -653,13 +723,22 @@ export function Desktop() {
         return;
       }
       if (e.key !== "Escape" || e.defaultPrevented) return;
+      /*
+       * An Escape that did something is spent. Chrome reads an Escape that
+       * nothing cancelled as a close request, and a phone with a keyboard
+       * plugged in has a close watcher armed for Back: the same key would
+       * close a second thing.
+       */
       if (rootMenuRef.current) {
+        e.preventDefault();
         setRootMenu(null);
         return;
       }
       if (document.querySelector("[role='menu'][data-state='open']")) return;
       const id = focusedRef.current;
-      if (id) wm.close(id);
+      if (!id) return;
+      e.preventDefault();
+      wm.close(id);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -677,7 +756,7 @@ export function Desktop() {
     if (!booted || touch) return;
     const id = focusedRef.current;
     const win = id ? el.querySelector<HTMLElement>(`[data-win-content="${id}"]`) : null;
-    (win?.querySelector<HTMLElement>("input") ?? win)?.focus({ preventScroll: true });
+    (win?.querySelector<HTMLElement>("[data-autofocus]") ?? win)?.focus({ preventScroll: true });
   }, [booted, touch]);
 
   /* Arrow keys walk the desktop icons, the way an X11 file manager did */
@@ -812,10 +891,10 @@ export function Desktop() {
           />
         )}
 
-        <NotificationTray />
+        <NotificationTray touch={touch} />
 
-        {/* Windows */}
-        {windows.map((win) => {
+        {/* Windows, including closed ones still waiting on their Undo */}
+        {wm.mounted.map((win) => {
           const app = APPS.find((a) => a.id === win.appId);
           if (!app) return null;
           const { Component } = app;
@@ -830,7 +909,7 @@ export function Desktop() {
               touch={touch}
               onFocus={() => wm.focus(win.id)}
               onClose={() => wm.close(win.id)}
-              onMinimize={() => wm.minimize(win.id)}
+              onMinimize={(from) => wm.minimize(win.id, from)}
               onToggleMaximize={() => wm.toggleMaximize(win.id)}
               onCommit={(geo) => wm.setGeometry(win.id, geo)}
             >
@@ -854,6 +933,7 @@ export function Desktop() {
           onChooseWallpaper={chooseWallpaper}
           onToggleSound={toggleSound}
           onSpotlight={() => setSpotlight(true)}
+          onMenuOpenChange={setPanelMenu}
         />
       </div>
 
