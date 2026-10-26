@@ -68,7 +68,14 @@ function Shot({ shot, alt }: { shot: Screenshot; alt: string }) {
         width={shot.width}
         height={shot.height}
         alt={alt}
-        loading="lazy"
+        /*
+         * Not lazy. A window's content is a scroll box, and a lazy image
+         * clipped by one is not fetched until it is scrolled into view, so the
+         * handheld under the fold only started loading when someone scrolled
+         * down to it, and they watched its mosaic for the whole download. The
+         * window was opened to look at this project, and its two captures
+         * come to 33KB at the most.
+         */
         decoding="async"
         onAnimationEnd={() => setStage("shown")}
         /*
