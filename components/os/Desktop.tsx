@@ -4,18 +4,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "@/hooks/useCoarsePointer";
 import { useRemix } from "@/hooks/useRemix";
 import { useSafeArea } from "@/hooks/useSafeArea";
+import { useSpeaker } from "@/hooks/useSpeaker";
 import { SMALL_W, useWindowManager, type OpenOptions, type Transition } from "@/hooks/useWindowManager";
 import { zoom, type Rect } from "@/lib/os/zoom";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import { armAudio, playSfx } from "@/lib/sfx";
 import { APPS, DESKTOP_APPS, MENU_APPS, appById } from "@/lib/os/registry";
-import { PROFILE, PROJECTS } from "@/lib/content";
+import { LINKS, PROFILE, PROJECTS } from "@/lib/content";
 import { GAMES } from "@/lib/games/registry";
 import { PRESETS } from "@/lib/theme/presets";
 import { notify } from "@/lib/os/notify";
 import { NO_REACH, cornerReach } from "@/lib/os/cornerReach";
+import { copyText } from "@/lib/os/clipboard";
 import { event } from "@/lib/analytics";
-import { spotlightItems, type SpotlightItem } from "@/lib/os/spotlight";
+import { spotlightItems, type CommandId, type SpotlightItem } from "@/lib/os/spotlight";
 import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "@/lib/os/wallpapers";
 import { Spotlight } from "./Spotlight";
 import { NotificationTray } from "./Notifications";
@@ -29,6 +31,8 @@ import { PlasmaWallpaper } from "./PlasmaWallpaper";
 import { ZoomOutline } from "./ZoomOutline";
 import { CrtPowerOn } from "./CrtPowerOn";
 import { DeskPals } from "./DeskPals";
+
+const EMAIL = LINKS.find((l) => l.label === "email")?.value ?? "";
 
 interface RootMenuPos {
   x: number;
@@ -203,6 +207,7 @@ export function Desktop() {
   }, [booted, touch]);
 
   const { preset, mounted, select, soundOn, toggleSound } = useRemix();
+  const { audible, silence } = useSpeaker(soundOn, toggleSound);
   const wallpaper = wallpaperId ? wallpaperById(wallpaperId) : defaultWallpaperFor(preset.id);
 
   /*
@@ -375,6 +380,15 @@ export function Desktop() {
     );
   }, []);
 
+  // Every tube picker - the panel, the root menu, Spotlight - switches through here
+  const choosePreset = useCallback(
+    (id: string) => {
+      select(id);
+      degauss();
+    },
+    [select, degauss],
+  );
+
 
   /*
    * Where an icon actually goes.
@@ -457,20 +471,70 @@ export function Desktop() {
   );
 
   /*
-   * Spotlight: everything that can be opened by name, built once. Running an
-   * item goes through the same paths a click would, so a project window from
-   * here is the same window the file manager opens.
+   * Spotlight: everything that can be opened by name, and the commands. Running
+   * an item goes through the same paths a click would, so a project window from
+   * here is the same window the file manager opens, and closing every window
+   * is the close button pressed on each of them.
    */
   const [spotlight, setSpotlight] = useState(false);
+  const visible = windows.filter((w) => !w.minimized).length;
   const spotlightList = useMemo(
-    () => spotlightItems({ apps: MENU_APPS, projects: PROJECTS, games: GAMES, wallpapers: WALLPAPERS, presets: PRESETS }),
-    [],
+    () =>
+      spotlightItems({
+        apps: MENU_APPS,
+        projects: PROJECTS,
+        games: GAMES,
+        wallpapers: WALLPAPERS,
+        presets: PRESETS,
+        email: EMAIL,
+        desk: { windows: windows.length, visible, audible },
+      }),
+    [windows.length, visible, audible],
   );
+
+  const { close: closeWindow, minimize: minimizeWindow } = wm;
+  const runCommand = useCallback(
+    (id: CommandId) => {
+      switch (id) {
+        case "copy-email":
+          // What the copy button on contact.txt does, plus a notice, since the dialog that ran it is gone
+          void copyText(EMAIL).then((ok) => {
+            if (!ok) {
+              notify("warn", "The clipboard said no", EMAIL);
+              return;
+            }
+            event("copy", { label: "email" });
+            notify("ok", "Email address copied", EMAIL);
+          });
+          return;
+        case "printable-resume":
+          // The same full navigation as the "text version" link on resume.txt
+          window.location.assign("/resume");
+          return;
+        case "close-all":
+          windows.forEach((w) => closeWindow(w.id));
+          return;
+        case "minimize-all":
+          windows.filter((w) => !w.minimized).forEach((w) => minimizeWindow(w.id));
+          return;
+        case "sound":
+          playSfx("button");
+          silence();
+          return;
+      }
+    },
+    [windows, closeWindow, minimizeWindow, silence],
+  );
+
   const runSpotlight = useCallback(
     (item: SpotlightItem) => {
       event("spotlight", { kind: item.kind, id: item.id });
       switch (item.kind) {
+        case "command":
+          runCommand(item.id as CommandId);
+          return;
         case "app":
+        case "download":
           launch(item.id);
           return;
         case "project": {
@@ -494,12 +558,11 @@ export function Desktop() {
           chooseWallpaper(item.id);
           return;
         case "tube":
-          select(item.id);
-          degauss();
+          choosePreset(item.id);
           return;
       }
     },
-    [launch, open, chooseWallpaper, select, degauss],
+    [runCommand, launch, open, chooseWallpaper, choosePreset],
   );
 
   /*
@@ -731,8 +794,10 @@ export function Desktop() {
             panelHeight={PANEL_H}
             touch={touch}
             currentWallpaper={wallpaper.id}
+            currentPreset={mounted ? preset.id : null}
             onLaunch={launch}
             onChooseWallpaper={chooseWallpaper}
+            onSelectPreset={choosePreset}
             onSpotlight={() => setSpotlight(true)}
             onDismiss={() => setRootMenu(null)}
           />
@@ -785,12 +850,10 @@ export function Desktop() {
           currentWallpaper={wallpaper.id}
           onLaunch={launch}
           onSelectWindow={(id) => wm.toggleMinimize(id)}
-          onSelectPreset={(id) => {
-            select(id);
-            degauss();
-          }}
+          onSelectPreset={choosePreset}
           onChooseWallpaper={chooseWallpaper}
           onToggleSound={toggleSound}
+          onSpotlight={() => setSpotlight(true)}
         />
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +14,12 @@ import { PixelIcon } from "@/lib/os/icons";
 import { playSfx } from "@/lib/sfx";
 import { WALLPAPERS } from "@/lib/os/wallpapers";
 import { PRESETS, type Preset } from "@/lib/theme/presets";
-import { pause as pauseMusic } from "@/lib/music/player";
-import { useMusic } from "@/hooks/useMusic";
+import { appShortcut, ariaShortcut, shortcutFor } from "@/lib/os/shortcuts";
+import { useApplePlatform } from "@/hooks/useApplePlatform";
+import { useSpeaker } from "@/hooks/useSpeaker";
 import type { WindowState } from "@/hooks/useWindowManager";
+import { KeyHint } from "./KeyHint";
+import { Swatch } from "./Swatch";
 import { MusicWidget } from "./MusicWidget";
 import { PanelClock } from "./applets/Xclock";
 import { Weather } from "./applets/Weather";
@@ -53,6 +57,7 @@ interface Props {
   onSelectPreset: (id: string) => void;
   onChooseWallpaper: (id: string) => void;
   onToggleSound: () => void;
+  onSpotlight: () => void;
 }
 
 export function Panel({
@@ -69,16 +74,18 @@ export function Panel({
   onSelectPreset,
   onChooseWallpaper,
   onToggleSound,
+  onSpotlight,
 }: Props) {
+  const { audible, silence: onSilence } = useSpeaker(soundOn, onToggleSound);
+  const apple = useApplePlatform();
+  const spotlight = shortcutFor("spotlight");
   /*
-   * The speaker reports whether this machine is making a noise, which is not the
-   * same question as whether the key clicks are enabled: the music is quiet by
-   * default but it is not silent, so a deck that is playing has to light the
-   * speaker even with the effects switched off. Reading it the other way round
-   * put the muted glyph on a panel that was audibly playing a record.
+   * Spotlight opens once the menu has finished closing, not as the row is
+   * picked. Opened straight away, its field took focus while the menu's focus
+   * trap was still up, which pulled focus back into a menu that then vanished:
+   * the dialog came up with nothing to type into.
    */
-  const { playing: musicPlaying } = useMusic();
-  const audible = soundOn || musicPlaying;
+  const toSpotlight = useRef(false);
 
   /*
    * A menu row is 23px tall, which is right under a mouse and is half of what a
@@ -90,16 +97,6 @@ export function Panel({
   }`;
   const tickOpen = (open: boolean) => open && playSfx("tick");
   const tickRow = () => playSfx("tick");
-
-  // Silence means silence: whatever is currently making the noise stops
-  const onSilence = () => {
-    if (!audible) {
-      onToggleSound();
-      return;
-    }
-    if (musicPlaying) pauseMusic();
-    if (soundOn) onToggleSound();
-  };
 
   return (
     <div
@@ -142,17 +139,59 @@ export function Panel({
           side="top"
           align="start"
           sideOffset={2}
+          /*
+           * Not prevented: Radix puts focus back on the trigger straight after
+           * this, before Spotlight has rendered, so the dialog finds it there
+           * and hands it back there when it closes. Prevented, focus was left
+           * on the menu item that had just been removed, and a keyboard went
+           * back to the top of the document.
+           */
+          onCloseAutoFocus={() => {
+            if (!toSpotlight.current) return;
+            toSpotlight.current = false;
+            onSpotlight();
+          }}
           className="bevel-out max-h-[min(70dvh,var(--radix-dropdown-menu-content-available-height))] min-w-[200px] overflow-y-auto rounded-none bg-secondary p-0.5 font-[family-name:var(--font-ui)] text-[13px] text-secondary-foreground"
         >
-          {MENU_APPS.map((app) => (
-            <DropdownMenuItem key={app.id} onFocus={tickRow} onSelect={() => onLaunch(app.id)} className={item}>
-              <span aria-hidden className="grid w-5 shrink-0 place-items-center">
-                {/* 16 is the grid 1:1; 14 lands between pixels and snaps unevenly */}
-                <PixelIcon name={app.icon} size={16} />
-              </span>
-              {app.title}
-            </DropdownMenuItem>
-          ))}
+          {/*
+            The same first entry as the root menu. On a phone every window is
+            full-screen, so the wallpaper a long press opens the root menu on is
+            rarely in sight, and this is the way in to Spotlight that is always
+            there.
+          */}
+          <DropdownMenuItem
+            onFocus={tickRow}
+            onSelect={() => {
+              toSpotlight.current = true;
+            }}
+            aria-keyshortcuts={!touch && spotlight ? ariaShortcut(spotlight.keys, apple) : undefined}
+            className={`${item} border-b border-border`}
+          >
+            <span aria-hidden className="grid w-5 shrink-0 place-items-center">
+              <PixelIcon name="search" size={16} />
+            </span>
+            Spotlight...
+            {!touch && spotlight && <KeyHint keys={spotlight.keys} />}
+          </DropdownMenuItem>
+          {MENU_APPS.map((app) => {
+            const key = appShortcut(app.id);
+            return (
+              <DropdownMenuItem
+                key={app.id}
+                onFocus={tickRow}
+                onSelect={() => onLaunch(app.id)}
+                aria-keyshortcuts={!touch && key ? ariaShortcut(key.keys, apple) : undefined}
+                className={item}
+              >
+                <span aria-hidden className="grid w-5 shrink-0 place-items-center">
+                  {/* 16 is the grid 1:1; 14 lands between pixels and snaps unevenly */}
+                  <PixelIcon name={app.icon} size={16} />
+                </span>
+                {app.title}
+                {!touch && key && <KeyHint keys={key.keys} />}
+              </DropdownMenuItem>
+            );
+          })}
 
           {/*
             On a phone the tube picker and the speaker move in here. Laid out
@@ -169,11 +208,10 @@ export function Panel({
               </DropdownMenuLabel>
               {PRESETS.map((p) => (
                 <DropdownMenuItem key={p.id} onFocus={tickRow} onSelect={() => onSelectPreset(p.id)} className={item}>
-                  <span
-                    aria-hidden
-                    className="h-3 w-3 shrink-0 border border-current"
-                    style={{ background: p.swatch.primary }}
-                  />
+                  {/* In the same slot as the app icons above, so the names line up */}
+                  <span aria-hidden className="grid w-5 shrink-0 place-items-center">
+                    <Swatch color={p.swatch.primary} />
+                  </span>
                   <span className="flex-1">{p.name}</span>
                   {mounted && p.id === preset.id && <span aria-hidden>•</span>}
                 </DropdownMenuItem>
@@ -267,11 +305,7 @@ export function Panel({
                 // min-h-6: the swatch is shorter than a pixmap and left the row a pixel under 24
                 className="min-h-6 gap-3 rounded-none px-2 py-[5px] leading-none focus:bg-primary focus:text-primary-foreground"
               >
-                <span
-                  aria-hidden
-                  className="h-3 w-3 shrink-0 border border-current"
-                  style={{ background: p.swatch.primary }}
-                />
+                <Swatch color={p.swatch.primary} />
                 <span className="flex-1">{p.name}</span>
                 <span className="text-[11px] opacity-70">{p.code}</span>
                 {mounted && p.id === preset.id && <span aria-hidden>•</span>}
