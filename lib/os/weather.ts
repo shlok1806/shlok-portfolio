@@ -38,9 +38,17 @@ const CACHE_KEY = "os-weather";
 /** fresh: show it. stale: show it and ask again. expired: do not show it */
 export type Freshness = "fresh" | "stale" | "expired";
 
+/** how far ahead of the clock a reading may be stamped and still be believed */
+const CLOCK_SKEW_MS = 5 * 60_000;
+
 export function freshness(w: Weather, now: number): Freshness {
   const age = now - w.at;
-  // From the future means the clock was changed; nothing says how old it really is
+  /*
+   * From the future means the clock was changed. A few minutes is drift: show
+   * it and ask again. More than that and nothing says how old it really is, and
+   * on a fast clock put right it would have sat in the panel for days.
+   */
+  if (age < -CLOCK_SKEW_MS) return "expired";
   if (age < 0) return "stale";
   if (age < WEATHER_TTL_MS) return "fresh";
   return age < WEATHER_MAX_AGE_MS ? "stale" : "expired";
