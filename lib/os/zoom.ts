@@ -34,9 +34,11 @@ export function zoom(from: Rect, to: Rect): Promise<void> {
   const l = listener;
   return new Promise((resolve) => {
     let finished = false;
-    const land = l(from, to, () => {
+    // Declared first: a listener with nothing to draw calls done before it returns
+    let land: (() => void) | null = null;
+    land = l(from, to, () => {
       finished = true;
-      if (landing === land) landing = null;
+      if (land && landing === land) landing = null;
       resolve();
     });
     if (!finished) landing = land;
