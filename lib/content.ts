@@ -51,10 +51,15 @@ export const EXPERIENCE: Role[] = [
     org: "Johnson Controls AI Lab (JCAIL)",
     location: "Research Park @ UIUC",
     current: true,
-    /* Started 1 Sep 2026. Numbers go here once there is work worth counting. */
-    metrics: [],
+    metrics: [
+      { value: "68→79%", label: "RAG answer accuracy" },
+      { value: "3 min→250 ms", label: "building-graph queries" },
+      { value: "60+", label: "unit tests" },
+    ],
     bullets: [
-      "Joined JCAIL, Johnson Controls' AI lab in the University of Illinois Research Park",
+      "Improved answer accuracy from 68% to 79% for a LangGraph multi-agent RAG chatbot over building-automation data by prototyping reranking and hybrid search (PostgreSQL full-text search + pgvector)",
+      "Engineered a C#/.NET Model Context Protocol (MCP) server over a 241K-triple building graph, reducing SPARQL join queries from 3+ minutes to about 250 ms with an indexed triple store",
+      "Built a 75-question retrieval eval harness and per-request tracing in PostgreSQL, so every retrieval change ships with a measured result; added 60+ unit tests (pytest, xUnit)",
     ],
   },
   {
@@ -65,11 +70,14 @@ export const EXPERIENCE: Role[] = [
     location: "New York, NY",
     current: false,
     metrics: [
-      { value: "0→1", label: "claims platform, built and shipped" },
+      { value: "350+", label: "users after launch" },
       { value: "75%", label: "research latency cut" },
       { value: "112/113", label: "prompt injections caught" },
     ],
     bullets: [
+      "Launched an agentic flight-compensation claims product from zero as 1 of 3 engineers, reaching #5 Product of the Day on Product Hunt, 350+ users, and about $20K recovered for users",
+      "Designed and operated the full AWS backend (Lambda, Aurora PostgreSQL, Terraform, Inngest), holding a 99.9%+ success rate on real user traffic at under $0.05 per conversation",
+      "Built the React consumer site, operator dashboard, and PostHog analytics that tracked cost per qualified claim and blended CAC across Reddit and Google Ads",
       "Cut claim-research latency from 2-3 min to 30-40 s (~75%) by parallelizing a two-phase LLM research pipeline across 6 concurrent web-search calls",
       "Built a serverless backend across 4 AWS Lambda functions and Aurora PostgreSQL Serverless v2, holding sub-100ms query latency and removing 4 managed services via the RDS Data API",
       "Designed a 12-table PostgreSQL schema with pgvector (1,024-dim embeddings) and full-text search, serving hybrid retrieval through RRF fusion of cosine and BM25 in a single SQL query with no separate vector store",
@@ -95,7 +103,7 @@ export const EXPERIENCE: Role[] = [
   {
     period: "Aug 2025 - Present",
     years: "2025",
-    role: "Software Developer",
+    role: "Tech Lead (previously Software Developer)",
     org: "Disruption Lab @ UIUC",
     current: true,
     metrics: [
@@ -104,6 +112,7 @@ export const EXPERIENCE: Role[] = [
       { value: "40+", label: "users unblocked" },
     ],
     bullets: [
+      "Led 2 twelve-week AI course-intelligence projects for university clients, directing engineers on a RAG pipeline with Pinecone embeddings and a Neo4j concept-prerequisite knowledge graph",
       "Converted a read-only tool into a fully editable platform for 40+ users by building a Flask + Neo4j REST API serving real-time project-resource dependency graphs, cutting query latency 60% with optimized Cypher",
       "Expanded automated tax-schema diff coverage from 7 to 27 states (+286%) for a Fortune 500 financial-services client by building a Python/lxml XSD parser over a 44-jurisdiction pipeline",
       "Safeguarded data integrity ahead of downstream integration by writing 43 unit tests across XSD fixtures and business-rule mappings",
