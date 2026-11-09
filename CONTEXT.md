@@ -17,10 +17,13 @@ every other surface is right.
 that skips the PDF ships a contradiction: the site says one thing and the
 document a recruiter downloads and forwards says another.
 
-This has already happened. As of Sep 2026 the committed PDF (last updated
-2026-08-15) omits the JCAIL, Parallel Programming Lab and Dept. of Finance
-roles, and dates Stealth Startup as "Present" where `lib/content.ts` has it
-ending Aug 2026. See issue #7.
+The PDF is a one-page subset, not a copy: it can leave out roles and projects
+the site shows (as of Nov 2026 it omits Dept. of Finance and IQM, and lists only
+greenroom and Switchboard). What it does state must match `lib/content.ts`.
+
+Last refreshed 2026-11-09 from the startup-focused LaTeX resume. This fixed the
+gap in issue #7, where the Aug 2026 PDF omitted JCAIL and PPL and dated Stealth
+Startup as "Present".
 
 To read the committed PDF's text and compare it against `EXPERIENCE`:
 
