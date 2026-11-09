@@ -23,8 +23,12 @@ export function EducationOutput({ fellowships = false }: { fellowships?: boolean
       <p className="text-faint text-[12px] pl-4">@ {EDUCATION.school}</p>
       <p className="text-faint text-[11px] pl-4"># {EDUCATION.detail}</p>
       <div className="flex gap-2 pl-4 text-[12px] leading-relaxed">
-        <span className="shrink-0 text-faint">└─</span>
+        <span className="shrink-0 text-faint">├─</span>
         <span className="text-faint">{EDUCATION.coursework.join(" · ")}</span>
+      </div>
+      <div className="flex gap-2 pl-4 text-[12px] leading-relaxed">
+        <span className="shrink-0 text-faint">└─</span>
+        <span className="text-foreground">{EDUCATION.awards.join(" · ")}</span>
       </div>
       {fellowships && (
         <div className="space-y-2 pt-3">
