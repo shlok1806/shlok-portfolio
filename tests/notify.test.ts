@@ -34,7 +34,7 @@ describe("notify", () => {
   });
 
   it("expires a notice on its own and can be dismissed sooner", () => {
-    const a = notify("ok", "resume.pdf");
+    const a = notify("ok", "shlok_thakkar_resume.pdf");
     const b = notify("ok", "second");
     dismiss(a);
     expect(getNotices().map((n) => n.id)).toEqual([b]);

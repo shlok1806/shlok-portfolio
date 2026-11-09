@@ -112,7 +112,7 @@ export default function ResumePage() {
         <p className="mt-4 text-[13px] print:hidden">
           <a
             className={`${TARGET} font-medium text-blue-800 underline underline-offset-2`}
-            href="/resume.pdf"
+            href="/shlok_thakkar_resume.pdf"
             download
           >
             Download PDF

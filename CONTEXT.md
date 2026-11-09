@@ -6,14 +6,14 @@
 terminal, the windowed apps and `/resume` all render from it, so they cannot
 drift from each other.
 
-### `public/resume.pdf` is outside that guarantee
+### `public/shlok_thakkar_resume.pdf` is outside that guarantee
 
 The downloadable PDF is a checked-in binary, produced by hand from a LaTeX
 source that does not live in this repo. Nothing generates it, compares it, or
 warns when it falls behind, so it is the one place a fact can be wrong while
 every other surface is right.
 
-**Change `lib/content.ts` and `public/resume.pdf` together.** A content edit
+**Change `lib/content.ts` and `public/shlok_thakkar_resume.pdf` together.** A content edit
 that skips the PDF ships a contradiction: the site says one thing and the
 document a recruiter downloads and forwards says another.
 
@@ -30,7 +30,7 @@ To read the committed PDF's text and compare it against `EXPERIENCE`:
 ```sh
 python3 -c "
 import re,zlib
-d=open('public/resume.pdf','rb').read()
+d=open('public/shlok_thakkar_resume.pdf','rb').read()
 txt=[]
 for m in re.finditer(rb'stream\r?\n(.*?)endstream', d, re.S):
     try: txt.append(zlib.decompress(m.group(1)))

@@ -66,7 +66,7 @@ export const EXPERIENCE: Role[] = [
     period: "Jun - Aug 2026",
     years: "2026",
     role: "Software Engineering Intern",
-    org: "Stealth Startup",
+    org: "Stealth Startup (Seed-Stage Consumer AI)",
     location: "New York, NY",
     current: false,
     metrics: [
@@ -113,7 +113,7 @@ export const EXPERIENCE: Role[] = [
     ],
     bullets: [
       "Led 2 twelve-week AI course-intelligence projects for university clients, directing engineers on a RAG pipeline with Pinecone embeddings and a Neo4j concept-prerequisite knowledge graph",
-      "Converted a read-only tool into a fully editable platform for 40+ users by building a Flask + Neo4j REST API serving real-time project-resource dependency graphs, cutting query latency 60% with optimized Cypher",
+      "Reduced graph query latency 60% (300 ms to 120 ms) for a 40+ user platform by restructuring the Neo4j data model and Cypher queries behind 15+ Flask REST endpoints, turning a read-only tool into a fully editable one serving real-time project-resource dependency graphs",
       "Expanded automated tax-schema diff coverage from 7 to 27 states (+286%) for a Fortune 500 financial-services client by building a Python/lxml XSD parser over a 44-jurisdiction pipeline",
       "Safeguarded data integrity ahead of downstream integration by writing 43 unit tests across XSD fixtures and business-rule mappings",
     ],
@@ -191,12 +191,15 @@ export const PROJECTS: Project[] = [
     stackFull: ["Go", "Swift", "SwiftUI", "MCP", "Tart", "NVIDIA NIM"],
     tagline: "Disposable macOS VMs where coding agents prove their work",
     bullets: [
+      "Gives a coding agent its own ephemeral macOS VM to build a branch, run the app, screenshot it and verify the fix before it opens a PR; 50+ person waitlist",
       "Go daemon that clones a macOS VM per run with Tart, records every command, screenshot and frame as evidence, and serves the machine to any coding agent as 33 MCP tools",
       "Its own verifier agent on NVIDIA NIM drives the guest through the accessibility tree and proposes a verdict per acceptance check, and the daemon refuses to finish a run as verified unless a pass was accepted",
+      "An evidence contract took the verifier's false-pass rate from 15% to 0% on a planted-fault benchmark while cutting p95 verdict time from 9.5 to 3.4 minutes",
       "SwiftUI companion app that streams the guest's screen as hardware-encoded H.264 and lends a person the mouse and keyboard under a control lease",
-      "586 commits across 135 merged PRs and 48 ADRs, with 1,000+ Go tests that run the whole machine lifecycle against a fake tart, no VM needed",
+      "586 commits across 135 merged PRs and 48 ADRs, with 1,600+ Go tests that run the whole machine lifecycle against a fake tart, no VM needed",
     ],
     href: "https://github.com/shlok1806/greenroom",
+    demo: { label: "website", href: "https://greenroom.shlokthakkar.com" },
   },
   {
     slug: "switchboard",
@@ -206,11 +209,11 @@ export const PROJECTS: Project[] = [
     stackFull: ["TypeScript", "Cloudflare Workers", "Durable Objects", "React 19", "MCP", "GitHub App"],
     tagline: "Shared channel and task board for people and their coding agents",
     bullets: [
-      "One command joins a Claude Code, Codex or Gemini CLI session to a per-repo channel, capturing its work three ways: lifecycle hooks, an MCP tool server, and a proxy over the Anthropic, OpenAI Responses and Gemini APIs that masks secrets",
+      "One command joins a Claude Code, Codex or Gemini CLI session to a per-repo channel, capturing its work three ways: lifecycle hooks, an MCP tool server, and a streaming proxy over the Anthropic, OpenAI Responses and Gemini APIs that masks secrets and records every turn at under 2 ms p99 overhead (7,200 of 7,200 turns captured, no leaks)",
       "Cloudflare Worker with one SQLite-backed Durable Object per repo, where every task is a GitHub Issue and each claim gets its own branch, worktree and pull request",
       "Relay that gives every event a verdict per agent (drop, queue for the next turn, or interrupt mid-turn) from a calibrated decision model, downgrading low-confidence interrupts",
       "Only a person's directive carries instruction weight; everything one agent hears from another is information",
-      "CLI, Worker and React dashboard in one TypeScript repo with 339 Vitest cases, built across 46 merged PRs",
+      "CLI, Worker and React dashboard in one TypeScript repo with 298 tests across CLI and Worker, built across 46 merged PRs",
     ],
     href: "https://github.com/shlok1806/switchboard",
   },
@@ -288,6 +291,7 @@ export const PROJECTS: Project[] = [
     stack: "SwiftUI",
     stackFull: ["SwiftUI", "Combine", "AVKit", "Supabase", "PostgreSQL"],
     tagline: "1v1 competitive scrolling iOS app",
+    note: "2nd place, HackIllinois 2026",
     bullets: [
       "Built end to end in 30 hours at HackIllinois 2026 across 31 Swift source files, including a custom design system",
       "10-table Supabase Postgres schema with row-level security, 15 RPC functions, and 5 SQL migrations",
@@ -358,15 +362,15 @@ export const PROJECTS: Project[] = [
 ];
 
 export const SKILLS = [
-  { key: "languages",   values: ["TypeScript", "JavaScript", "Python", "C/C++", "Go", "Swift", "SQL", "Java"] },
-  { key: "ai/agents",   values: ["agentic workflows", "tool calling", "Anthropic API", "OpenAI API", "NVIDIA NIM", "AWS Bedrock", "LangChain"] },
-  { key: "retrieval",   values: ["pgvector", "RRF fusion", "BM25", "full-text search", "prompt-injection defense"] },
+  { key: "languages",   values: ["TypeScript", "JavaScript", "Python", "Go", "C/C++", "C#", "Swift", "SQL", "Java"] },
+  { key: "ai/agents",   values: ["LLM agents", "tool calling", "LangGraph", "MCP", "LLM evals", "Anthropic API", "OpenAI API", "NVIDIA NIM", "AWS Bedrock", "LangChain"] },
+  { key: "retrieval",   values: ["RAG", "hybrid search", "pgvector", "Pinecone", "RRF fusion", "BM25", "full-text search", "prompt-injection defense"] },
   { key: "frontend",    values: ["React", "Next.js", "Tailwind CSS", "shadcn/ui", "SvelteKit", "SwiftUI", "Framer Motion"] },
-  { key: "backend",     values: ["FastAPI", "Flask", "Express", "Node.js", "REST APIs", "microservices", "caching"] },
+  { key: "backend",     values: ["FastAPI", "Flask", ".NET", "Express", "Node.js", "Cloudflare Workers", "REST APIs", "microservices", "caching"] },
   { key: "databases",   values: ["PostgreSQL", "Aurora", "Supabase", "Redis", "Neo4j", "Inngest"] },
-  { key: "distributed", values: ["Raft consensus", "Charm++", "concurrency", "low-latency services", "large-scale data pipelines"] },
+  { key: "distributed", values: ["Raft consensus", "Charm++", "parallel computing", "concurrency", "low-latency services", "large-scale data pipelines"] },
   { key: "cloud",       values: ["AWS (Lambda, Aurora, Bedrock, EC2, S3)", "Terraform", "Docker", "Vercel"] },
-  { key: "tooling",     values: ["Git", "GitHub Actions", "CI/CD", "Vitest", "Catch2", "pytest", "CMake"] },
+  { key: "tooling",     values: ["Git", "GitHub Actions", "CI/CD", "PostHog", "Vitest", "pytest", "xUnit", "Catch2", "CMake"] },
 ];
 
 /**
@@ -403,6 +407,8 @@ export const EDUCATION = {
   coursework: [
     "Algorithms & Models of Computation (CS/ECE 374)",
     "Computer Architecture (CS 233)",
+    "System Programming (CS 341)",
+    "GPU Programming (CUDA)",
     "Data Structures",
     "Discrete Structures",
     "Linear Algebra",
