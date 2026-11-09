@@ -57,6 +57,15 @@ export function EducationApp() {
           </li>
         ))}
       </ul>
+      <p className="mt-4 text-accent-ink">awards</p>
+      <ul className="mt-1 space-y-1">
+        {EDUCATION.awards.map((a) => (
+          <li key={a} className="flex gap-2">
+            <span aria-hidden className="text-faint">-</span>
+            <span className="text-foreground">{a}</span>
+          </li>
+        ))}
+      </ul>
       <Rule />
       <p className="text-accent-ink">fellowships</p>
       <ul className="mt-1 space-y-2">

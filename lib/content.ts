@@ -414,4 +414,11 @@ export const EDUCATION = {
     "Linear Algebra",
     "Statistical Analysis",
   ],
+  /** the resume's Awards line, in its order */
+  awards: [
+    "#5 Product of the Day, Product Hunt",
+    "2nd Place, HackIllinois 2026",
+    "2nd Place, HERE Chicago Hackathon 2026",
+    "Finalist, Builders Cup by Ramp 2026",
+  ],
 };

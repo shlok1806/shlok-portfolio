@@ -55,6 +55,7 @@ export function ResumeApp() {
       </p>
       <p className="text-faint">{EDUCATION.detail}</p>
       <p className="mt-2 text-faint">{EDUCATION.coursework.join("  ·  ")}</p>
+      <p className="mt-2 text-foreground">{EDUCATION.awards.join("  ·  ")}</p>
 
       <Rule />
       <Head>FELLOWSHIPS</Head>

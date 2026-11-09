@@ -28,6 +28,7 @@ function person() {
       (l) => l.href,
     ),
     alumniOf: { "@type": "CollegeOrUniversity", name: EDUCATION.school },
+    award: EDUCATION.awards,
     worksFor: current.map((r) => ({ "@type": "Organization", name: r.org })),
     knowsAbout: [...PROFILE.interests, ...(SKILLS.find((s) => s.key === "languages")?.values ?? [])],
   };

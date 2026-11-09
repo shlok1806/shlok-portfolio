@@ -135,6 +135,10 @@ export default function ResumePage() {
             <span className="font-medium">Coursework: </span>
             {EDUCATION.coursework.join(", ")}
           </p>
+          <p className="mt-1 text-[13px] text-neutral-600">
+            <span className="font-medium">Awards: </span>
+            {EDUCATION.awards.join(" · ")}
+          </p>
         </div>
       </Section>
 
