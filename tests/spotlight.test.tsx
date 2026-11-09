@@ -53,7 +53,7 @@ describe("spotlightItems", () => {
 
   it("offers a file that downloads as a verb, not as an app to open", () => {
     const pdf = items.find((i) => i.id === "resume-pdf");
-    expect(pdf).toMatchObject({ kind: "download", label: "Download resume.pdf" });
+    expect(pdf).toMatchObject({ kind: "download", label: "Download shlok_thakkar_resume.pdf" });
   });
 
   it("leaves out window commands with no windows to act on", () => {

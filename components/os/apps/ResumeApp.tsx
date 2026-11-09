@@ -33,7 +33,7 @@ export function ResumeApp() {
       status={
         <>
           resume.txt ·{" "}
-          <DownloadButton href="/resume.pdf" className={`hit-slop-y ${touch ? "min-h-[38px]" : ""}`} /> ·{" "}
+          <DownloadButton href="/shlok_thakkar_resume.pdf" className={`hit-slop-y ${touch ? "min-h-[38px]" : ""}`} /> ·{" "}
           <a href="/resume" className={link}>
             text version
           </a>

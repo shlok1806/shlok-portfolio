@@ -29,6 +29,27 @@ export const ICON_W = 104;
 export const ICON_H = 82;
 /** vertical pitch of the default grid */
 export const ICON_PITCH = 86;
+/** height one more line of label adds: 12px text at leading-tight */
+export const LABEL_LINE_H = 15;
+/** the label's room inside the button's px-1 padding */
+const LABEL_W = ICON_W - 8;
+
+let measure: CanvasRenderingContext2D | null | undefined;
+
+/**
+ * How many lines a label sets on. ICON_PITCH leaves room for one, so a name
+ * that wraps ("shlok_thakkar_resume.pdf") needs the icons under it moved down,
+ * or its second line sits on the next icon.
+ */
+export function labelLines(title: string): number {
+  if (typeof document === "undefined") return 1;
+  measure ??= document.createElement("canvas").getContext("2d");
+  if (!measure) return 1;
+  const family = getComputedStyle(document.documentElement).getPropertyValue("--font-ui").trim() || "sans-serif";
+  measure.font = `12px ${family}`;
+  return Math.max(1, Math.ceil(measure.measureText(title).width / LABEL_W));
+}
+
 /** an icon lands on this grid when dropped, the way X11 desktops arranged them */
 const SNAP = 8;
 

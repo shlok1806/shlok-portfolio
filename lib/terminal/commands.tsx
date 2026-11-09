@@ -125,9 +125,9 @@ export function runCommand(
     case "resume": {
       // `resume --pdf` hands over the real document
       if (args.some((a) => a === "--pdf" || a === "-p")) {
-        if (typeof window !== "undefined") window.open("/resume.pdf", "_blank");
+        if (typeof window !== "undefined") window.open("/shlok_thakkar_resume.pdf", "_blank");
         return {
-          output: <p className="text-accent-ink text-[13px]">Opening resume.pdf ...</p>,
+          output: <p className="text-accent-ink text-[13px]">Opening shlok_thakkar_resume.pdf ...</p>,
         };
       }
       return openWindow("resume");

@@ -86,7 +86,7 @@ describe("DownloadButton", () => {
 
   it("walks idle, saving, done and back, and ignores clicks meanwhile", () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    render(<DownloadButton href="/resume.pdf" />);
+    render(<DownloadButton href="/shlok_thakkar_resume.pdf" />);
     const button = () => screen.getByRole("button");
     expect(button().getAttribute("data-phase")).toBe("idle");
     fireEvent.click(button());
@@ -161,9 +161,9 @@ describe("NotificationTray", () => {
     const { container } = render(<NotificationTray />);
     const said = () => container.querySelector("[aria-live]")?.textContent;
     act(() => {
-      notify("ok", "resume.pdf", "Saved to your downloads");
+      notify("ok", "shlok_thakkar_resume.pdf", "Saved to your downloads");
     });
-    expect(said()).toBe("resume.pdf. Saved to your downloads");
+    expect(said()).toBe("shlok_thakkar_resume.pdf. Saved to your downloads");
     postOffer();
     expect(said()).toBe("Closed xterm");
     // The newest going away does not read the one under it out again

@@ -35,6 +35,6 @@ describe("event", () => {
     track.mockImplementationOnce(() => {
       throw new Error("blocked");
     });
-    expect(() => event("download", { file: "/resume.pdf" })).not.toThrow();
+    expect(() => event("download", { file: "/shlok_thakkar_resume.pdf" })).not.toThrow();
   });
 });

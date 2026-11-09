@@ -53,11 +53,11 @@ export const APPS: AppDef[] = [
   },
   {
     id: "resume-pdf",
-    title: "resume.pdf",
+    title: "shlok_thakkar_resume.pdf",
     icon: "download",
     w: 0,
     h: 0,
-    download: "/resume.pdf",
+    download: "/shlok_thakkar_resume.pdf",
     Component: () => null,
     onDesktop: true,
     inMenu: true,

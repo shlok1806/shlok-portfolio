@@ -30,7 +30,7 @@ import { WALLPAPERS, defaultWallpaperFor, wallpaperById, wallpaperStyle } from "
 import { Spotlight } from "./Spotlight";
 import { NotificationTray } from "./Notifications";
 import { MacBoot, type BootEnd } from "./MacBoot";
-import { DesktopIcon, ICON_H, ICON_PITCH, ICON_W, type IconPos } from "./DesktopIcon";
+import { DesktopIcon, ICON_H, ICON_PITCH, ICON_W, LABEL_LINE_H, labelLines, type IconPos } from "./DesktopIcon";
 import { RootMenu } from "./RootMenu";
 import { Screensaver } from "./Screensaver";
 import { Window } from "./Window";
@@ -66,6 +66,23 @@ export function Desktop() {
   const [iconPos, setIconPos] = useState<Record<string, IconPos>>({});
   const [idle, setIdle] = useState(false);
   const [viewport, setViewport] = useState<{ w: number; h: number } | null>(null);
+  /*
+   * Extra height each desktop icon's label takes past one line. Measured after
+   * mount (the server has no font to measure with), and again once the UI font
+   * has loaded.
+   */
+  const [labelExtra, setLabelExtra] = useState<number[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    const run = () => {
+      if (live) setLabelExtra(DESKTOP_APPS.map((a) => (labelLines(a.title) - 1) * LABEL_LINE_H));
+    };
+    run();
+    document.fonts?.ready.then(run);
+    return () => {
+      live = false;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -461,9 +478,14 @@ export function Desktop() {
         Math.ceil(DESKTOP_APPS.length / fit),
       );
       const perColumn = Math.ceil(DESKTOP_APPS.length / columns);
+      // Each icon above this one in its column, plus whatever extra lines its label wraps onto
+      let y = safe.top + 12;
+      for (let j = i - (i % perColumn); j < i; j++) {
+        y += ICON_PITCH + (labelExtra?.[j] ?? 0);
+      }
       const fallback = {
         x: safe.left + 12 + Math.floor(i / perColumn) * (ICON_W + 8),
-        y: safe.top + 12 + (i % perColumn) * ICON_PITCH,
+        y,
       };
       const pos = iconPos[id] ?? fallback;
       if (!viewport) return pos;
@@ -473,7 +495,7 @@ export function Desktop() {
         y: Math.max(safe.top, Math.min(pos.y, Math.max(safe.top, viewport.h - PANEL_H - ICON_H))),
       };
     },
-    [iconPos, viewport, PANEL_H, safe],
+    [iconPos, viewport, PANEL_H, safe, labelExtra],
   );
 
   /*
@@ -844,8 +866,10 @@ export function Desktop() {
         )}
 
         {/* Desktop icons, draggable and remembered */}
+        {/* Placed only once the viewport and label sizes are known: hydration keeps
+            whatever position the server drew, which was a guess */}
         <ul onKeyDown={onIconKeys}>
-          {DESKTOP_APPS.map((app, i) => (
+          {viewport && labelExtra && DESKTOP_APPS.map((app, i) => (
             <DesktopIcon
               key={app.id}
               id={app.id}
